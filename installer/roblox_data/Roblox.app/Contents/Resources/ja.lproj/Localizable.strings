@@ -1,3 +1,0 @@
-"Application.ConnectionError.Description.AuthFailed" = "認証できませんでした";
-"Application.ConnectionError.ErrorCode" = "エラーコード: %1$d";
-"Application.ConnectionError.Action.Ok" = "OK";

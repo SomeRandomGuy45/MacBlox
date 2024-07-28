@@ -1,3 +1,0 @@
-"Application.ConnectionError.Description.AuthFailed" = "Se ha producido un error durante la autenticación. Inténtalo de nuevo.";
-"Application.ConnectionError.ErrorCode" = "Código de error: %1$d";
-"Application.ConnectionError.Action.Ok" = "Aceptar";

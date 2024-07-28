@@ -1,3 +1,0 @@
-"Application.ConnectionError.Description.AuthFailed" = "인증 중 오류가 발생했습니다. 다시 시도하세요.";
-"Application.ConnectionError.ErrorCode" = "오류 코드: %1$d";
-"Application.ConnectionError.Action.Ok" = "확인";

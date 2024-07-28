@@ -1,3 +1,0 @@
-"Application.ConnectionError.Description.AuthFailed" = "驗證時發生錯誤，請重新嘗試。";
-"Application.ConnectionError.ErrorCode" = "錯誤碼：%1$d";
-"Application.ConnectionError.Action.Ok" = "確定";
