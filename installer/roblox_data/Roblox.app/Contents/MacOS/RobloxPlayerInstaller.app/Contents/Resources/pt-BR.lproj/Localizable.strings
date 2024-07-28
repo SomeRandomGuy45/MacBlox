@@ -1,0 +1,99 @@
+/*
+Localizable.strings
+Locale:            pt_br
+Input file:        Game.Launch_pt_br_AllConsumers.json
+Source reference:  https://dukakis.simulping.com/Translations
+*/
+
+
+"ROBLOX IS SUCCESSFULLY INSTALLED!" = "ROBLOX FOI INSTALADO COM SUCESSO!";
+
+"Click the 'Play' button on any game to join the action!" = "Clique no botão Jogar em qualquer jogo para entrar na ação!";
+
+"ROBLOX STUDIO IS SUCCESSFULLY INSTALLED!" = "ROBLOX STUDIO FOI INSTALADO COM SUCESSO!";
+
+"%@ cannot connect to the Internet." = "%@ não pôde conectar-se à internet.";
+
+"%@ has been upgraded to a new version.\nPlease restart %@." = "%@ foi atualizado para uma nova versão.\nReinicie %@.";
+
+"%@ is installing...\nIf you cancel %@ may not work properly." = "Instalando %@...\nSe você cancelar, pode ser que %@ não funcione corretamente.";
+
+"%@ is updating...\nIf you cancel %@ may not work properly." = "Atualizando %@...\nSe você cancelar, pode ser que %@ não funcione corretamente.";
+
+"%@ was not able to update." = "Não foi possível atualizar %@.";
+
+"An error occured and %@ cannot continue.\nIf problem persists please download a new version." = "Devido a um erro, não é possível continuar %@.\nSe o problema persistir, baixe uma nova versão.";
+
+"Back to develop page" = "Voltar para a página Criar";
+
+"Launch Studio" = "Iniciar Studio";
+
+"Update" = "Atualizar";
+
+"Cancel" = "Cancelar";
+
+"Close Google Chrome" = "Fechar Google Chrome";
+
+"Continue" = "Continuar";
+
+"OK" = "OK";
+
+"Retry Now" = "Tentar agora";
+
+"Copying files to %@ failed.\n\nPlease make sure you have write access to this directory.\n\nIf Roblox is already installed to this directory please delete it and download a new version." = "Falha ao copiar os arquivos para %@.\n\nVerifique se têm acesso para gravar neste diretório.\n\nCaso o Roblox já esteja instalado neste diretório, apague-o e baixe uma nova versão.";
+
+"Installation in progress" = "Instalação em andamento";
+
+"Mac OS X Version %@." = "Mac OS X versão %@.";
+
+"Please close all instances of Google Chrome before continuing." = "Feche todas as janelas do Google Chrome antes de continuar.";
+
+"Restart %@" = "Reiniciar %@";
+
+"Roblox might not launch correctly if Chrome is open during installation." = "Pode ser que Roblox não inicie corretamente caso o Chrome esteja aberto durante a instalação.";
+
+"The directory %@ is read-only and could not be updated.\n\nPlease make sure you have write access to this directory.\n\nIf Roblox is already installed to this directory please delete it and download a new version." = "O diretório %@ é somente leitura e não pôde ser atualizado.\n\nVerifique se você têm acesso para gravar neste diretório.\n\nCaso o Roblox já esteja instalado neste diretório, apague-o e baixe uma nova versão.";
+
+"Unable to connect" = "Não foi possível conectar";
+
+"Unable to download" = "Não foi possível baixar";
+
+"Unable to fetch current version" = "Não foi possível obter a versão atual";
+
+"Unable to install" = "Não foi possível instalar";
+
+"Unable to Install %@" = "Não foi possível instalar %@";
+
+"Unable to update" = "Não foi possível atualizar";
+
+"Unable to upgrade" = "Não foi possível fazer o upgrade";
+
+"Update in progress" = "Atualização em andamento";
+
+"Roblox no longer supports MacOS %@ or lower. For more information about supported platforms, please visit:" = "A Roblox não suporta mais MacOS %@ ou inferior. Para mais informações sobre as plataformas suportadas, visite:";
+
+"Click 'Launch Studio' to start building your game." = "Clique em Iniciar Studio para começar a construir o seu jogo.";
+
+"Configuring %@..." = "Configurando %@...";
+
+"Starting %@..." = "Iniciando %@...";
+
+"Upgrading %@..." = "Fazendo o upgrade de %@...";
+
+"New updates available" = "Novas atualizações disponíveis";
+
+"Roblox Studio will update in %d seconds..." = "Roblox Studio será atualizado em %d segundos...";
+
+"Roblox will update in %d seconds..." = "Roblox será atualizado em %d segundos...";
+
+"Roblox Studio needs to be updated. Please close all running Studio instances and click \"Retry Now\"" = "Roblox Studio precisa ser atualizado. Feche todas as instâncias que estão executando Studio e clique em Tentar novamente.";
+
+"On %@, Roblox will no longer support MacOS %@ or lower. For more information about supported platforms, please visit:" = "A partir de %@, a Roblox não vai mais suportar MacOS %@ ou inferior. Para mais informações sobre as plataformas suportadas, visite:";
+
+"Computer Hardware and Operating System Requirements" = "Requerimentos de hardware e sistema operacional";
+
+"Roblox no longer supports MacOS %@ or lower. For more information about supported platforms, please click \"More Info\"." = "A Roblox não suporta mais MacOS %@ ou inferior. Para mais informações sobre as plataformas suportadas, clique em \"Mais informações\".";
+
+"On %@, Roblox will no longer support MacOS %@ or lower. For more information about supported platforms, please click \"More Info\"." = "A partir de %@, a Roblox não vai mais suportar MacOS %@ ou inferior. Para mais informações sobre as plataformas suportadas, clique em \"Mais informações\".";
+
+"More Info" = "Mais informações";

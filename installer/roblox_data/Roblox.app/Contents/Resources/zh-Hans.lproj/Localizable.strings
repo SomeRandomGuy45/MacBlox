@@ -1,0 +1,4 @@
+"Application.ConnectionError.Description.AuthFailed" = "验证时发生错误。请重试。";
+"Application.ConnectionError.ErrorCode" = "错误代码：%1$d";
+"Application.ConnectionError.Action.Ok" = "好";
+"NSMicrophoneUsageDescription" = "Roblox 需要使用您的麥克風才可啟用語音聊天。"

@@ -1,0 +1,99 @@
+/*
+Localizable.strings
+Locale:            zh_cn
+Input file:        Game.Launch_zh_cn_AllConsumers.json
+Source reference:  https://dukakis.simulping.com/Translations
+*/
+
+
+"ROBLOX IS SUCCESSFULLY INSTALLED!" = "ROBLOX 已成功安装！";
+
+"Click the 'Play' button on any game to join the action!" = "点按“开始游戏”按钮即可加入！";
+
+"ROBLOX STUDIO IS SUCCESSFULLY INSTALLED!" = "ROBLOX STUDIO 已成功安装！";
+
+"%@ cannot connect to the Internet." = "%@ 无法连接至网络。";
+
+"%@ has been upgraded to a new version.\nPlease restart %@." = "%@ 已升级至最新版本。\n请重启 %@。";
+
+"%@ is installing...\nIf you cancel %@ may not work properly." = "正在安装 %@...\n如果取消 %@ 可能无法正常工作。";
+
+"%@ is updating...\nIf you cancel %@ may not work properly." = "正在更新 %@...\n如果取消 %@ 可能无法正常工作。";
+
+"%@ was not able to update." = "%@ 无法更新。";
+
+"An error occured and %@ cannot continue.\nIf problem persists please download a new version." = "发生错误，%@ 无法继续。\n如果问题仍存在，请下载新版本。";
+
+"Back to develop page" = "返回“创建”页面";
+
+"Launch Studio" = "启动 Studio";
+
+"Update" = "更新";
+
+"Cancel" = "取消";
+
+"Close Google Chrome" = "关闭 Google Chrome";
+
+"Continue" = "继续";
+
+"OK" = "好";
+
+"Retry Now" = "立即重试";
+
+"Copying files to %@ failed.\n\nPlease make sure you have write access to this directory.\n\nIf Roblox is already installed to this directory please delete it and download a new version." = "将文件复制到 %@ 失败。\n\n请确保您对此目录具有写访问权限。 \n\n如果 Roblox 已安装至此目录，请删除并下载新版本。";
+
+"Installation in progress" = "正在进行安装";
+
+"Mac OS X Version %@." = "Mac OS X 版本 %@。";
+
+"Please close all instances of Google Chrome before continuing." = "请关闭所有的 Google Chrome 实例再继续。";
+
+"Restart %@" = "重新启动 %@";
+
+"Roblox might not launch correctly if Chrome is open during installation." = "如果在安装过程中打开了 Chrome，Roblox 可能无法正确启动。";
+
+"The directory %@ is read-only and could not be updated.\n\nPlease make sure you have write access to this directory.\n\nIf Roblox is already installed to this directory please delete it and download a new version." = "目录 %@ 为只读，无法更新。\n\n请确保您对此目录具有写访问权限。\n\n如果 Roblox 已安装至此目录，请删除它并下载新版本。";
+
+"Unable to connect" = "无法连接";
+
+"Unable to download" = "无法下载";
+
+"Unable to fetch current version" = "无法获取当前版本";
+
+"Unable to install" = "无法安装";
+
+"Unable to Install %@" = "无法安装 %@";
+
+"Unable to update" = "无法更新";
+
+"Unable to upgrade" = "无法升级";
+
+"Update in progress" = "正在进行更新";
+
+"Roblox no longer supports MacOS %@ or lower. For more information about supported platforms, please visit:" = "Roblox 已不再支持 MacOS %@ 及更低版本。若要了解更多关于支持平台的信息，请访问：";
+
+"Click 'Launch Studio' to start building your game." = "点按“启动Studio”开始构建你的游戏。";
+
+"Configuring %@..." = "正在配置 %@...";
+
+"Starting %@..." = "正在开始 %@...";
+
+"Upgrading %@..." = "正在升级 %@...";
+
+"New updates available" = "有可用的更新";
+
+"Roblox Studio will update in %d seconds..." = "Roblox Studio 将在 %d 秒后更新...";
+
+"Roblox will update in %d seconds..." = "Roblox 将在 %d 秒后更新...";
+
+"Roblox Studio needs to be updated. Please close all running Studio instances and click \"Retry Now\"" = "Roblox Studio 需要更新。请关闭所有正在运行的 Studio 实例, 然后点按“立即重试”";
+
+"On %@, Roblox will no longer support MacOS %@ or lower. For more information about supported platforms, please visit:" = "从 %@ 起，Roblox 将不再支持 MacOS %@ 及更低版本。若要了解更多关于支持平台的信息，请访问：";
+
+"Computer Hardware and Operating System Requirements" = "电脑硬件及操作系统要求";
+
+"Roblox no longer supports MacOS %@ or lower. For more information about supported platforms, please click \"More Info\"." = "Roblox 已不再支持 MacOS %@ 及更低版本。若要了解更多关于支持平台的信息，请点击“更多信息”";
+
+"On %@, Roblox will no longer support MacOS %@ or lower. For more information about supported platforms, please click \"More Info\"." = "从 %@ 起，Roblox 将不再支持 MacOS %@ 及更低版本。若要了解更多关于支持平台的信息，请点击“更多信息”";
+
+"More Info" = "更多信息";

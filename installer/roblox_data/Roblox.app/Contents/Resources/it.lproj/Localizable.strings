@@ -1,0 +1,3 @@
+"Application.ConnectionError.Description.AuthFailed" = "Si è verificato un errore durante l'autenticazione. Per favore riprova.";
+"Application.ConnectionError.ErrorCode" = "Codice di errore: %1$d";
+"Application.ConnectionError.Action.Ok" = "OK";

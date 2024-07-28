@@ -1,0 +1,2 @@
+/* Localized versions of Info.plist keys */
+"NSMicrophoneUsageDescription" = "Roblox needs access to your microphone to chat with voice.";

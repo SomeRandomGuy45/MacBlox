@@ -1,0 +1,2 @@
+/* Localized versions of Info.plist keys */
+"NSMicrophoneUsageDescription" = "음성 채팅을 하려면 Roblox에 마이크에 대한 접근 권한이 필요합니다.";

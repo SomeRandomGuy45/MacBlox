@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>ApplicationFlavor</key>
+	<string>VANILLA</string>
+	<key>BaseServer</key>
+	<string>https://www.roblox.com/</string>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>English</string>
+	<key>CFBundleExecutable</key>
+	<string></string>
+	<key>CFBundleIconFile</key>
+	<string>Roblox.icns</string>
+	<key>CFBundleIconName</key>
+	<string>AppIcon</string>
+	<key>CFBundleIdentifier</key>
+	<string>com.roblox.RobloxPlayerInstaller</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string></string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>1.2.0.6350588</string>
+	<key>CFBundleSignature</key>
+	<string>????</string>
+	<key>CFBundleVersion</key>
+	<string>6350588</string>
+	<key>DefaultCdn</key>
+	<string>setup.rbxcdn.com</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>10.13</string>
+	<key>LSUIPresentationMode</key>
+	<real>0.0</real>
+	<key>NSCameraUsageDescription</key>
+	<string>Roblox needs access to your camera for beta features.</string>
+	<key>NSMainNibFile</key>
+	<string>MainMenu</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Roblox needs access to your microphone to chat with voice.</string>
+	<key>NSPrincipalClass</key>
+	<string>NSApplication</string>
+	<key>NSSupportsSuddenTermination</key>
+	<false/>
+	<key>NSUIElement</key>
+	<string>1</string>
+	<key>RobloxChannel</key>
+	<string></string>
+	<key>S3FallbackBucket</key>
+	<string>setup.roblox.com</string>
+	<key>SetupServer</key>
+	<string>https://setup.roblox.com/mac/</string>
+	<key>TargetBundleIdentifier</key>
+	<string>com.roblox.RobloxPlayer</string>
+</dict>
+</plist>

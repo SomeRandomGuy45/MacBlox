@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>ATSApplicationFontsPath</key>
+	<string>content/fonts</string>
+	<key>BreakpadReportInterval</key>
+	<string>0</string>
+	<key>BreakpadSendAndExit</key>
+	<string>NO</string>
+	<key>BreakpadSkipConfirm</key>
+	<string>YES</string>
+	<key>BreakpadVendor</key>
+	<string>Roblox</string>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>English</string>
+	<key>CFBundleExecutable</key>
+	<string>RobloxPlayer</string>
+	<key>CFBundleIconFile</key>
+	<string>AppIcon</string>
+	<key>CFBundleIconName</key>
+	<string>AppIcon</string>
+	<key>CFBundleIdentifier</key>
+	<string>com.roblox.RobloxPlayer</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>Roblox</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>0.635.0.6350588</string>
+	<key>CFBundleSignature</key>
+	<string>????</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>CFBundleURLName</key>
+			<string>Roblox Player URL</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>roblox-player</string>
+				<string>roblox</string>
+			</array>
+		</dict>
+	</array>
+	<key>CFBundleVersion</key>
+	<string>6350588</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>10.13</string>
+	<key>LSMultipleInstancesProhibited</key>
+	<true/>
+	<key>MetalCaptureEnabled</key>
+	<false/>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>Roblox needs access to your camera for beta features.</string>
+	<key>NSHighResolutionCapable</key>
+	<true/>
+	<key>NSMainNibFile</key>
+	<string>MainMenu</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Roblox needs access to your microphone to chat with voice.</string>
+	<key>NSPrincipalClass</key>
+	<string>NSApplication</string>
+	<key>NSSupportsSuddenTermination</key>
+	<false/>
+	<key>RbxBaseUrl</key>
+	<string>https://www.roblox.com/</string>
+	<key>RbxInstallHost</key>
+	<string>setup.roblox.com</string>
+	<key>RbxStartPath</key>
+	<string></string>
+	<key>UIAppFonts</key>
+	<array>
+		<string>BuilderSans-Medium.otf</string>
+	</array>
+</dict>
+</plist>
