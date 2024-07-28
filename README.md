@@ -1,5 +1,5 @@
 # Macblox
-Macblox is a funny project i wantted to do cuz yeah!
+Macblox is a funny project i wanted to do cuz yeah!
 
 > [!WARNING]
 > This project is like not even done yet so expect a lot of bugs
