@@ -5,6 +5,9 @@
 #include <vector>
 #include <libproc.h>
 #include <unistd.h>
+#include <libgen.h>
+#include <limits.h>
+#include <iostream>
 #include <cstring>
 #include <sys/types.h>
 #include <sys/sysctl.h>
@@ -19,8 +22,17 @@
 #include <map>
 #include <functional>
 #include <string>
+#include <sys/stat.h>
 #include <discord-rpc/discord_rpc.h>
 #include <discord-rpc/discord_register.h>
+#include <curl/curl.h>
+#include <libproc.h>
+#include <signal.h>  // For kill function
+#include <errno.h>   // For errno
+#include <CoreFoundation/CoreFoundation.h>
+#include <DiskArbitration/DiskArbitration.h>
+#include <mach-o/dyld.h>
+#include "json.hpp"
 
 std::string user = getenv("USER"); //gets the current user name
 std::string logfile = "/Users/" + user + "/Library/Logs/Roblox/"; //creates the log directory path
@@ -33,6 +45,7 @@ bool ActivityIsTeleport = false;
 bool _teleportMarker = false;
 bool _reservedTeleportMarker = false;
 bool ActivityInGame;
+int64_t lastRPCTime = 0;
 #ifdef __APPLE__
     bool canRun = true;
 #else
@@ -41,6 +54,7 @@ bool ActivityInGame;
 bool isDebug = false; //todo
 
 namespace fs = std::filesystem;
+using json = nlohmann::json;
 
 enum CurrentTypes {
     Home,
@@ -51,6 +65,73 @@ enum CurrentTypes {
 
 using ArgHandler = std::function<void(const std::string&)>;
 std::map<std::string, ArgHandler> argTable;
+
+size_t write_data(void *ptr, size_t size, size_t nmemb, FILE *stream) {
+    size_t written = fwrite(ptr, size, nmemb, stream);
+    return written;
+}
+
+std::string GetBashPath() {
+    char buffer[PATH_MAX];
+    uint32_t size = sizeof(buffer);
+    
+    if (_NSGetExecutablePath(buffer, &size) != 0) {
+        return ""; // Return empty string on failure
+    }
+    
+    // Ensure buffer is null-terminated
+    buffer[PATH_MAX - 1] = '\0';
+    
+    // Get the directory of the executable
+    char* dir = dirname(buffer);
+    
+    return std::string(dir);
+}
+
+// Function to download a file from a URL
+std::string DownloadFile(const std::string& baseUrl, const std::string& filename) {
+    CURL *curl;
+    FILE *fp;
+    CURLcode res;
+    std::string outfilename = GetBashPath() + "/" + filename;
+
+    // Initialize libcurl
+    curl_global_init(CURL_GLOBAL_DEFAULT);
+    curl = curl_easy_init();
+    if (curl) {
+        fp = fopen(outfilename.c_str(), "wb"); // Open file for writing in binary mode
+        if (fp == nullptr) {
+            perror("[ERROR] Error opening file");
+            curl_easy_cleanup(curl);
+            curl_global_cleanup();
+            return "Error";
+        }
+
+        // Set URL and write function
+        curl_easy_setopt(curl, CURLOPT_URL, baseUrl.c_str());
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
+
+        // Perform the request
+        res = curl_easy_perform(curl);
+        if (res != CURLE_OK) {
+            fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+        }
+
+        // Clean up
+        fclose(fp);
+        curl_easy_cleanup(curl);
+    }
+    curl_global_cleanup();
+
+    std::fstream ifs(outfilename, std::ios::in);
+    if (!ifs.is_open()) {
+        std::fstream emptyFile;
+        emptyFile.setstate(std::ios::failbit); // Set the failbit to indicate an error
+        return "error";
+    }
+    return outfilename;
+}
 
 void InitTable()
 {
@@ -71,17 +152,28 @@ void InitDiscord()
     Discord_Initialize("1267308900420419664", &handlers, 1, NULL);
 }
 
-void UpdDiscordActivity_Test()
+void UpdDiscordActivity(std::string details, std::string state, std::string button1_url, std::string button2_url, std::string button1_label, std::string button2_label, int64_t startTimestamp, int64_t endTimestamp, int AssetIDLarge, int AssetIDSmall, std::string largeImgText, std::string smallImageText)
 {
-    std::string details_Test = "test";
     DiscordRichPresence presence;
+    startTimestamp = startTimestamp != 0 ? startTimestamp : time(0);
+    endTimestamp = endTimestamp != 0 ? endTimestamp : time(0) + 5 * 60;
+    AssetIDLarge = AssetIDLarge != 0 ? AssetIDLarge : 0;
+    AssetIDSmall = AssetIDSmall != 0 ? AssetIDSmall : 0;
+    std::string key_large = "https://assetdelivery.roblox.com/v1/asset/?id=" + std::to_string(AssetIDLarge);
+    std::string key_small = "https://assetdelivery.roblox.com/v1/asset/?id=" + std::to_string(AssetIDSmall);
     memset(&presence, 0, sizeof(presence));
-    presence.button1_url = "https://roblox.com/home";
-    presence.button2_url = "https://roblox.com/home";
-    presence.button1_label = "Teleport";
-    presence.button2_label = "Reserved Teleport";
-    presence.details = details_Test.c_str();
-    presence.state = "Test";
+    presence.button1_url = button1_url.c_str();
+    presence.button2_url = button2_url.c_str();
+    presence.button1_label = button1_label.c_str();
+    presence.button2_label = button2_label.c_str();
+    presence.details = details.c_str();
+    presence.state = state.c_str();
+    presence.startTimestamp = startTimestamp;
+    presence.endTimestamp = endTimestamp;
+    presence.largeImageKey = key_large.c_str();
+    presence.largeImageText = largeImgText.c_str();
+    presence.smallImageKey = key_small.c_str();
+    presence.smallImageText = smallImageText.c_str();
     Discord_UpdatePresence(&presence);
 }
 
@@ -135,6 +227,93 @@ bool isRobloxRunning()
         }
     }
     return found;
+}
+
+std::string ReadFile(const std::string& filename) {
+    std::ifstream file(filename);
+    if (!file.is_open()) {
+        std::cerr << "[ERROR] Failed to open file: " << filename << std::endl;
+        return "";
+    }
+    return std::string((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+}
+
+std::string GetGameThumb(long customID) {
+    // Define or replace placeId with your actual value
+    customID = customID == 0 ? placeId : customID;
+
+    // Download the JSON file
+    std::string url_getunid = "https://apis.roblox.com/universes/v1/places/" + std::to_string(customID) + "/universe";
+    std::string downloadedFilePath = DownloadFile(url_getunid, "getunid.json");
+
+    // Read and parse the JSON file
+    std::string fileContent = ReadFile(downloadedFilePath);
+    json data;
+    try {
+        data = json::parse(fileContent);
+    } catch (const json::parse_error& e) {
+        std::cerr << "[ERROR] JSON parse error: " << e.what() << std::endl;
+        return "";
+    }
+
+    // Extract the universe ID
+    std::string universeID;
+    try {
+        // Check if 'universeId' is a number and convert it to string if needed
+        if (data.contains("universeId")) {
+            if (data["universeId"].is_number()) {
+                universeID = std::to_string(data["universeId"].get<int>());
+            } else if (data["universeId"].is_string()) {
+                universeID = data["universeId"].get<std::string>();
+            } else {
+                std::cerr << "[ERROR] Unexpected type for 'universeId'" << std::endl;
+                return "";
+            }
+        } else {
+            std::cerr << "[ERROR] 'universeId' not found in JSON" << std::endl;
+            return "";
+        }
+    } catch (const json::type_error& e) {
+        std::cerr << "[ERROR] JSON type error: " << e.what() << std::endl;
+        return "";
+    }
+
+    // Download the game thumbnail JSON file
+    std::string gameThumbURL = "https://thumbnails.roblox.com/v1/games/icons?universeIds=" + universeID + "&returnPolicy=PlaceHolder&size=512x512&format=Png&isCircular=false";
+    std::string universeThumbnailResponsePath = DownloadFile(gameThumbURL, "getunid.json");
+    // Read and parse the thumbnail JSON file
+    std::string thumbnailFileContent = ReadFile(universeThumbnailResponsePath);
+    json thumbnailData;
+    try {
+        thumbnailData = json::parse(thumbnailFileContent);
+    } catch (const json::parse_error& e) {
+        std::cerr << "[ERROR] JSON parse error: " << e.what() << std::endl;
+        return "";
+    }
+
+    // Extract the thumbnail URL
+    std::string thumbnailUrl;
+    try {
+        if (thumbnailData.contains("imageUrl")) {
+            if (thumbnailData["imageUrl"].is_string()) {
+                thumbnailUrl = thumbnailData["imageUrl"].get<std::string>();
+            } else {
+                std::cerr << "[ERROR] 'ImageUrl' is not a string" << std::endl;
+                return "";
+            }
+        } else {
+            std::cerr << "[ERROR] 'ImageUrl' not found in JSON" << std::endl;
+            return "";
+        }
+    } catch (const json::type_error& e) {
+        std::cerr << "[ERROR] JSON type error: " << e.what() << std::endl;
+        return "";
+    }
+
+    // Output the thumbnail URL
+    std::cout << "[INFO] Game Thumbnail: " << thumbnailUrl << std::endl;
+
+    return thumbnailUrl;
 }
 
 void doFunc(const std::string& logtxt) {
@@ -224,6 +403,20 @@ void doFunc(const std::string& logtxt) {
             std::cerr << "[ERROR] Something happened data" << logtxt << "\n";
         }
     }
+    else if (logtxt.find("[FLog::Output] [BloxstrapRPC]") != std::string::npos)
+    {
+        if (time(0) - lastRPCTime > 1)
+        {
+            return;
+        }
+        std::regex pattern("\\[BloxstrapRPC\\] (.*)");
+        std::smatch match;
+        std::regex_search(logtxt, match, pattern);
+        std::string data = match[1].str();
+        std::cout << "[INFO] BloxstrapRPC: " << data << "\n";
+        json _data = json::parse(data);
+        lastRPCTime = time(0);
+    }
     else if (!isRobloxRunning())
     {
         std::cout << "[INFO] Roblox is closing\n";
@@ -233,6 +426,7 @@ void doFunc(const std::string& logtxt) {
 
 int main(int argc, char* argv[]) {
     InitTable();
+    GetGameThumb(18419624945);
     if (argc >= 2)
     {
         for (int i = 1; i < argc; ++i) 
@@ -250,8 +444,9 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     std::cout << "[INFO] Username: " << user << " Path to log file is: " << logfile << "\n";
+    //std::cout << "[INFO] start time " << time(0) << ", add time " << time(0) + 5 * 60 << "\n";
     InitDiscord();
-    UpdDiscordActivity_Test();
+    UpdDiscordActivity("Test", "Playing", "https://roblox.com/home", "https://roblox.com/home", "roblox open test", "roblox open test", 0, 0, 154835815, 154835815, "Test", "Test");
     do {} while (!isRobloxRunning());
     isRblxRunning = isRobloxRunning();
     std::cout << "[INFO] Roblox player is running\n";
@@ -259,7 +454,7 @@ int main(int argc, char* argv[]) {
     do {latestLogFile = getLatestLogFile();} while (latestLogFile.empty());
     std::cout << "[INFO] Reading log file now!\n";
     if (latestLogFile.empty()) {
-        throw std::runtime_error("Roblox is not running");
+        throw std::runtime_error("[ERROR] Roblox log file not found!");
     } else {
         int fd[2];
         pipe(fd);
