@@ -19,6 +19,8 @@
 #include <map>
 #include <functional>
 #include <string>
+#include <discord-rpc/discord_rpc.h>
+#include <discord-rpc/discord_register.h>
 
 std::string user = getenv("USER"); //gets the current user name
 std::string logfile = "/Users/" + user + "/Library/Logs/Roblox/"; //creates the log directory path
@@ -54,6 +56,33 @@ void InitTable()
 {
     argTable["-d"] = [](const std::string&) {isDebug = true; };
     argTable["-debug"] = [](const std::string&) {isDebug = true; };
+}
+
+void InitDiscord()
+{
+    DiscordEventHandlers handlers;
+    memset(&handlers, 0, sizeof(handlers)); //memset funny
+    handlers.ready = [](const DiscordUser* user) {
+        std::cout << "[INFO] Connected as: " << user->username << "\n";
+    };
+    handlers.errored = [](int errorCode, const char* message) {
+        std::cerr << "[ERROR] " << message << " (" << errorCode << ")\n";
+    };
+    Discord_Initialize("1267308900420419664", &handlers, 1, NULL);
+}
+
+void UpdDiscordActivity_Test()
+{
+    std::string details_Test = "test";
+    DiscordRichPresence presence;
+    memset(&presence, 0, sizeof(presence));
+    presence.button1_url = "https://roblox.com/home";
+    presence.button2_url = "https://roblox.com/home";
+    presence.button1_label = "Teleport";
+    presence.button2_label = "Reserved Teleport";
+    presence.details = details_Test.c_str();
+    presence.state = "Test";
+    Discord_UpdatePresence(&presence);
 }
 
 CurrentTypes Current = Home;
@@ -221,6 +250,8 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     std::cout << "[INFO] Username: " << user << " Path to log file is: " << logfile << "\n";
+    InitDiscord();
+    UpdDiscordActivity_Test();
     do {} while (!isRobloxRunning());
     isRblxRunning = isRobloxRunning();
     std::cout << "[INFO] Roblox player is running\n";
