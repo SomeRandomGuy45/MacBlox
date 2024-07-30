@@ -15,7 +15,6 @@ jobs:
     
     - name: Install dependencies
       run: |
-        brew install curl cmake
         brew install curlpp
 
     - name: Install discord-rpc-buttons
