@@ -161,8 +161,8 @@ std::string DownloadFile(const std::string& baseUrl, const std::string& filename
 
 void InitTable()
 {
-    argTable["-d"] = [](const std::string&) {isDebug = true; };
-    argTable["-debug"] = [](const std::string&) {isDebug = true; };
+    argTable["--d"] = [](const std::string&) {isDebug = true; };
+    argTable["--debug"] = [](const std::string&) {isDebug = true; };
 }
 
 void InitDiscord()
@@ -534,7 +534,10 @@ int main(int argc, char* argv[]) {
                         std::lock_guard<std::mutex> lock(mtx);
                         logUpdated = true;
                         logUpdatedEvent.notify_one();
-                        //std::cout << "[INFO] new line: " << line << "\n";
+                        if (isDebug)
+                        {
+                            std::cout << "[INFO] new line: " << line << "\n";
+                        }
                         doFunc(line);
                     }
                 }
