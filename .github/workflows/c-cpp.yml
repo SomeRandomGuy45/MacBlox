@@ -12,20 +12,29 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - run: brew install curl curlpp cmake
-    - run: git clone https://github.com/ariloc/discord-rpc-buttons.git
-    - run: |
+    
+    - name: Install dependencies
+      run: |
+        brew install curl cmake
+        brew install curlpp
+
+    - name: Install discord-rpc-buttons
+      run: |
+        git clone https://github.com/ariloc/discord-rpc-buttons.git
         cd discord-rpc-buttons
         mkdir build
         cd build
         sudo cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local
         sudo cmake --build . --config Release --target install
-    - run: |
-        cd ..
+
+    - name: Build and test MacBlox
+      run: |
         cd MacBlox
-        sudo mkdir /usr/local/include/discord-rpc
+        sudo mkdir -p /usr/local/include/discord-rpc
         sudo mv /usr/local/include/discord_rpc.h /usr/local/include/discord-rpc/discord_rpc.h
         sudo mv /usr/local/include/discord_register.h /usr/local/include/discord-rpc/discord_register.h
-        make
+        
+        # Assuming you use a Makefile or a similar build system, make sure to include curlpp paths
+        make CXXFLAGS="-I/usr/local/include/curlpp"
         make check
         make distcheck
