@@ -78,6 +78,15 @@
         "concepts": "cpp",
         "numeric": "cpp",
         "ranges": "cpp",
-        "filesystem": "cpp"
+        "filesystem": "cpp",
+        "codecvt": "cpp",
+        "list": "cpp",
+        "shared_mutex": "cpp",
+        "typeindex": "cpp",
+        "utility": "cpp",
+        "*.ipp": "cpp",
+        "set": "cpp",
+        "unordered_set": "cpp",
+        "thread": "cpp"
     }
 }

@@ -25,13 +25,25 @@
 #include <sys/stat.h>
 #include <discord-rpc/discord_rpc.h>
 #include <discord-rpc/discord_register.h>
-#include <curl/curl.h>
+#include <curl/curl.h> //for downloading files
+#include <curlpp/cURLpp.hpp> //requests with out creating files
+#include <curlpp/Options.hpp>
 #include <libproc.h>
 #include <signal.h>  // For kill function
 #include <errno.h>   // For errno
+#include <thread>
+#include <chrono>
+#include <condition_variable>
+#include <mutex>
+#include <vector>
+#include <algorithm>
 #include <CoreFoundation/CoreFoundation.h>
 #include <DiskArbitration/DiskArbitration.h>
 #include <mach-o/dyld.h>
+#include <sstream>
+#include <condition_variable>
+#include <mutex>
+#include <ctime>
 #include "json.hpp"
 
 std::string user = getenv("USER"); //gets the current user name
@@ -39,6 +51,7 @@ std::string logfile = "/Users/" + user + "/Library/Logs/Roblox/"; //creates the 
 bool isRblxRunning = false;
 int placeId = 0;
 std::string jobId = "";
+std::string GameIMG = "";
 std::string ActivityMachineAddress = "";
 bool ActivityMachineUDMUX = false;
 bool ActivityIsTeleport = false;
@@ -69,6 +82,25 @@ std::map<std::string, ArgHandler> argTable;
 size_t write_data(void *ptr, size_t size, size_t nmemb, FILE *stream) {
     size_t written = fwrite(ptr, size, nmemb, stream);
     return written;
+}
+
+std::string GetDataFromURL(std::string URL)
+{
+    try {
+        std::ostringstream os;
+        os << curlpp::options::Url(URL);
+        return os.str();
+    } 
+    catch (curlpp::LogicError &e)
+    {
+        std::cerr << "[ERROR] curlpp::LogicError: " << e.what() << std::endl;
+        return e.what();
+    }
+    catch (curlpp::RuntimeError &e)
+    {
+        std::cerr << "[ERROR] curlpp::RuntimeError: " << e.what() << std::endl;
+        return e.what();
+    }
 }
 
 std::string GetBashPath() {
@@ -159,7 +191,7 @@ void UpdDiscordActivity(std::string details, std::string state, std::string butt
     endTimestamp = endTimestamp != 0 ? endTimestamp : time(0) + 5 * 60;
     AssetIDLarge = AssetIDLarge != 0 ? AssetIDLarge : 0;
     AssetIDSmall = AssetIDSmall != 0 ? AssetIDSmall : 0;
-    std::string key_large = "https://assetdelivery.roblox.com/v1/asset/?id=" + std::to_string(AssetIDLarge);
+    std::string key_large = AssetIDLarge != 0 ? "https://assetdelivery.roblox.com/v1/asset/?id=" + std::to_string(AssetIDLarge) : GameIMG;
     std::string key_small = "https://assetdelivery.roblox.com/v1/asset/?id=" + std::to_string(AssetIDSmall);
     memset(&presence, 0, sizeof(presence));
     presence.button1_url = button1_url.c_str();
@@ -192,6 +224,27 @@ std::string getLatestLogFile() {
         return fs::last_write_time(a) < fs::last_write_time(b);
     });
     return latestLogFile;
+}
+
+std::string getLatestLogFilePath() {
+    std::vector<std::string> logFiles;
+    
+    // Iterate through the directory entries
+    for (const auto& entry : fs::directory_iterator(logfile)) {
+        if (entry.path().extension() == ".log" && entry.path().filename().string().find("Player") != std::string::npos) {
+            logFiles.push_back(entry.path().string());
+        }
+    }
+    
+    if (logFiles.empty()) return "";
+
+    // Sort logFiles to get the latest log file
+    std::sort(logFiles.begin(), logFiles.end(), [](const std::string& a, const std::string& b) {
+        return fs::last_write_time(a) > fs::last_write_time(b);
+    });
+
+    // Return the latest log file path
+    return logFiles.front();
 }
 
 bool isRobloxRunning()
@@ -244,13 +297,11 @@ std::string GetGameThumb(long customID) {
 
     // Download the JSON file
     std::string url_getunid = "https://apis.roblox.com/universes/v1/places/" + std::to_string(customID) + "/universe";
-    std::string downloadedFilePath = DownloadFile(url_getunid, "getunid.json");
-
-    // Read and parse the JSON file
-    std::string fileContent = ReadFile(downloadedFilePath);
+    std::string downloadedFilePath = GetDataFromURL(url_getunid);
+    //std::cout << "[INFO] Got data " << downloadedFilePath << std::endl;
     json data;
     try {
-        data = json::parse(fileContent);
+        data = json::parse(downloadedFilePath);
     } catch (const json::parse_error& e) {
         std::cerr << "[ERROR] JSON parse error: " << e.what() << std::endl;
         return "";
@@ -280,9 +331,9 @@ std::string GetGameThumb(long customID) {
 
     // Download the game thumbnail JSON file
     std::string gameThumbURL = "https://thumbnails.roblox.com/v1/games/icons?universeIds=" + universeID + "&returnPolicy=PlaceHolder&size=512x512&format=Png&isCircular=false";
-    std::string universeThumbnailResponsePath = DownloadFile(gameThumbURL, "getunid.json");
+    //std::string universeThumbnailResponsePath = DownloadFile(gameThumbURL, "getunid.json");
     // Read and parse the thumbnail JSON file
-    std::string thumbnailFileContent = ReadFile(universeThumbnailResponsePath);
+    std::string thumbnailFileContent = GetDataFromURL(gameThumbURL);
     json thumbnailData;
     try {
         thumbnailData = json::parse(thumbnailFileContent);
@@ -290,24 +341,11 @@ std::string GetGameThumb(long customID) {
         std::cerr << "[ERROR] JSON parse error: " << e.what() << std::endl;
         return "";
     }
-
-    // Extract the thumbnail URL
-    std::string thumbnailUrl;
-    try {
-        if (thumbnailData.contains("imageUrl")) {
-            if (thumbnailData["imageUrl"].is_string()) {
-                thumbnailUrl = thumbnailData["imageUrl"].get<std::string>();
-            } else {
-                std::cerr << "[ERROR] 'ImageUrl' is not a string" << std::endl;
-                return "";
-            }
-        } else {
-            std::cerr << "[ERROR] 'ImageUrl' not found in JSON" << std::endl;
-            return "";
-        }
-    } catch (const json::type_error& e) {
-        std::cerr << "[ERROR] JSON type error: " << e.what() << std::endl;
-        return "";
+    std::cout << thumbnailData["data"] << std::endl;
+    std::string thumbnailUrl = "";
+    for (const auto& item : thumbnailData["data"])
+    {
+        thumbnailUrl = item["imageUrl"].get<std::string>();
     }
 
     // Output the thumbnail URL
@@ -382,6 +420,7 @@ void doFunc(const std::string& logtxt) {
             ActivityMachineUDMUX = false;
             ActivityIsTeleport = false;
             Current = CurrentTypes::Home;
+            GameIMG = "";
         }
     }
     else if (logtxt.find("[FLog::Network] UDMUX Address = ") != std::string::npos && !ActivityInGame && placeId != 0) 
@@ -416,6 +455,7 @@ void doFunc(const std::string& logtxt) {
         std::cout << "[INFO] BloxstrapRPC: " << data << "\n";
         json _data = json::parse(data);
         lastRPCTime = time(0);
+        GameIMG = GetGameThumb(placeId);
     }
     else if (!isRobloxRunning())
     {
@@ -426,7 +466,7 @@ void doFunc(const std::string& logtxt) {
 
 int main(int argc, char* argv[]) {
     InitTable();
-    GetGameThumb(18419624945);
+    //GetGameThumb(18419624945);
     if (argc >= 2)
     {
         for (int i = 1; i < argc; ++i) 
@@ -456,6 +496,7 @@ int main(int argc, char* argv[]) {
     if (latestLogFile.empty()) {
         throw std::runtime_error("[ERROR] Roblox log file not found!");
     } else {
+        /*
         int fd[2];
         pipe(fd);
         pid_t pid = fork();
@@ -480,6 +521,36 @@ int main(int argc, char* argv[]) {
                     doFunc(buffer);
                 }
             }
+        }
+        */
+        std::filesystem::directory_entry logFileInfo;
+        bool logUpdated = false;
+        std::string LogLocation = getLatestLogFilePath();
+        std::condition_variable logUpdatedEvent;
+        std::mutex mtx;
+        std::ifstream logFile(LogLocation);
+        std::thread logWatcher([&]() {
+            while (true) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(250));
+                //std::cout << "Hello world!\n";
+                std::ifstream logFileStream(LogLocation);
+                if (logFileStream) {
+                    std::string line;
+                    while (std::getline(logFileStream, line)) {
+                        std::lock_guard<std::mutex> lock(mtx);
+                        logUpdated = true;
+                        logUpdatedEvent.notify_one();
+                        //std::cout << "[INFO] new line: " << line << "\n";
+                        doFunc(line);
+                    }
+                }
+            }
+        });
+        logWatcher.detach();
+        while (isRobloxRunning()) {
+            std::unique_lock<std::mutex> lock(mtx);
+            logUpdatedEvent.wait(lock, [&] { return logUpdated; });
+            logUpdated = false;
         }
     }
     return 0;

@@ -1,5 +1,5 @@
 BUILDPATH = $(CURDIR)/build
-BUILDARGS  =-ldiscord-rpc -lcurl -lz -lminizip -framework CoreFoundation -framework DiskArbitration -framework Foundation -framework Cocoa --std=c++20
+BUILDARGS = -ldiscord-rpc -lcurl -lcurlpp -lz -lminizip -framework CoreFoundation -framework DiskArbitration -framework Foundation -framework Cocoa -lssl -lcrypto --std=c++20
 CC = clang++
 
 create_main_app:
