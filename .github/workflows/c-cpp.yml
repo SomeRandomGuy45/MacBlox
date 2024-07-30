@@ -22,6 +22,7 @@ jobs:
         sudo cmake --build . --config Release --target install
     - run: |
         cd ..
+        cd MacBlox
         echo "$PWD"
         ls $PWD
         make
