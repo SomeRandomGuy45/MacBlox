@@ -16,13 +16,14 @@ jobs:
     - run: brew install curl
     - run: brew install curlpp
     - run: brew install cmake
+    - run: cd ..
     - run: git clone https://github.com/ariloc/discord-rpc-buttons.git
     - run: cd discord-rpc-buttons
     - run: mkdir build
     - run: cd build
     - run: cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local
     - run: cmake --build . --config Release --target install
-    - run: git clone 
+    - run: cd /Users/runner/work/MacBlox
     - name: make
       run: make
     - name: make check
