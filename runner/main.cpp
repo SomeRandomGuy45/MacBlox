@@ -4,16 +4,13 @@
 #include <iostream>
 #include <vector>
 #include <libproc.h>
-#include <unistd.h>
 #include <libgen.h>
 #include <limits.h>
-#include <iostream>
 #include <cstring>
 #include <sys/types.h>
 #include <sys/sysctl.h>
 #include <string>
 #include <fstream>
-#include <algorithm>
 #include <filesystem>
 #include <regex>
 #include <stdlib.h>
@@ -21,21 +18,18 @@
 #include <unistd.h>
 #include <map>
 #include <functional>
-#include <string>
 #include <sys/stat.h>
 #include <discord-rpc/discord_rpc.h>
 #include <discord-rpc/discord_register.h>
 #include <curl/curl.h> //for downloading files
 #include <curlpp/cURLpp.hpp> //requests with out creating files
 #include <curlpp/Options.hpp>
-#include <libproc.h>
 #include <signal.h>  // For kill function
 #include <errno.h>   // For errno
 #include <thread>
 #include <chrono>
 #include <condition_variable>
 #include <mutex>
-#include <vector>
 #include <algorithm>
 #include <CoreFoundation/CoreFoundation.h>
 #include <DiskArbitration/DiskArbitration.h>
