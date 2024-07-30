@@ -30,6 +30,7 @@
 #include <chrono>
 #include <condition_variable>
 #include <mutex>
+#include <chrono>
 #include <algorithm>
 #include <CoreFoundation/CoreFoundation.h>
 #include <DiskArbitration/DiskArbitration.h>
@@ -274,27 +275,6 @@ std::string getLatestLogFile() {
     return latestLogFile;
 }
 
-std::string getLatestLogFilePath() {
-    std::vector<std::string> logFiles;
-    
-    // Iterate through the directory entries
-    for (const auto& entry : fs::directory_iterator(logfile)) {
-        if (entry.path().extension() == ".log" && entry.path().filename().string().find("Player") != std::string::npos) {
-            logFiles.push_back(entry.path().string());
-        }
-    }
-    
-    if (logFiles.empty()) return "";
-
-    // Sort logFiles to get the latest log file
-    std::sort(logFiles.begin(), logFiles.end(), [](const std::string& a, const std::string& b) {
-        return fs::last_write_time(a) > fs::last_write_time(b);
-    });
-
-    // Return the latest log file path
-    return logFiles.front();
-}
-
 bool isRobloxRunning()
 {
     bool found = false;
@@ -494,7 +474,7 @@ void doFunc(const std::string& logtxt) {
     }
     else if (logtxt.find("[FLog::Output] [BloxstrapRPC]") != std::string::npos)
     {
-        if (time(0) - lastRPCTime > 1)
+        if (time(0) - lastRPCTime <= 1)
         {
             return;
         }
@@ -512,6 +492,26 @@ void doFunc(const std::string& logtxt) {
         std::cout << "[INFO] Roblox is closing\n";
         isRblxRunning = false;
     }
+}
+
+std::string GetCoolFile(const std::string& logDirectory) {
+    std::vector<fs::directory_entry> files;
+    
+    for (const auto& entry : fs::directory_iterator(logDirectory)) {
+        if (fs::is_regular_file(entry)) {
+            files.push_back(entry);
+        }
+    }
+
+    if (files.empty()) {
+        return "";
+    }
+
+    auto latestFile = std::max_element(files.begin(), files.end(), [](const fs::directory_entry& a, const fs::directory_entry& b) {
+        return fs::last_write_time(a) < fs::last_write_time(b);
+    });
+
+    return latestFile->path().string();
 }
 
 int main(int argc, char* argv[]) {
@@ -575,15 +575,39 @@ int main(int argc, char* argv[]) {
         */
         std::filesystem::directory_entry logFileInfo;
         bool logUpdated = false;
-        std::string LogLocation = getLatestLogFilePath();
+        std::string logFilePath;
+        while (true) {
+            logFilePath = GetCoolFile(logfile);
+
+            if (!logFilePath.empty()) {
+                auto fileTime = fs::last_write_time(logFilePath);
+
+                // vscode giving weird errors
+                auto fileTimePoint = std::chrono::system_clock::time_point(
+                    std::chrono::duration_cast<std::chrono::system_clock::duration>(
+                        fileTime.time_since_epoch() - std::chrono::file_clock::now().time_since_epoch()
+                    ) + std::chrono::system_clock::now().time_since_epoch()
+                );
+
+                auto now = std::chrono::system_clock::now();
+                auto fifteenSecondsAgo = now - std::chrono::seconds(15);
+
+                if (fileTimePoint > fifteenSecondsAgo) {
+                    break;
+                }
+            }
+
+            std::cout << "[INFO] Could not find recent enough log file, waiting... (newest is " << fs::path(logFilePath).filename().string() << ")\n";
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+        }
         std::condition_variable logUpdatedEvent;
         std::mutex mtx;
-        std::ifstream logFile(LogLocation);
+        std::ifstream logFile(logFilePath);
         std::thread logWatcher([&]() {
             while (true) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(250));
                 //std::cout << "Hello world!\n";
-                std::ifstream logFileStream(LogLocation);
+                std::ifstream logFileStream(logFilePath);
                 if (logFileStream) {
                     std::string line;
                     while (std::getline(logFileStream, line)) {
