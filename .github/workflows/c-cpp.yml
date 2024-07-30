@@ -22,6 +22,8 @@ jobs:
         sudo cmake --build . --config Release --target install
     - run: |
         cd ..
+        cd ..
+        echo "$PWD"
         make
         make check
         make distcheck
