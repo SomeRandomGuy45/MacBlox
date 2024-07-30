@@ -17,6 +17,8 @@
 #include <errno.h>   // For errno
 #include <cstring>   // For strerror
 #include <libproc.h>
+#include <objc/objc.h>
+#include <objc/message.h>
 #include <CoreFoundation/CoreFoundation.h>
 #include <DiskArbitration/DiskArbitration.h>
 #include "json.hpp"

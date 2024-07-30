@@ -9,11 +9,12 @@ Macblox is a funny project i wanted to do because there wasn't bloxstrap for mac
 * discord-rpc [Github](https://github.com/ariloc/discord-rpc-buttons)
 * libcurl [Website](https://curl.se/libcurl/)
 * curlpp [Github](https://github.com/jpbarrette/curlpp/)
-### Building the project
+### Building the project:
 Just run the following command
 ``
 make
 ``
 
 # Credits
-* Bloxstrap for some code and inspiration [Bloxstrap](https://github.com/pizzaboxer/bloxstrap)
+* Bloxstrap for some code and inspiration [Github](https://github.com/pizzaboxer/bloxstrap)
+* appify.sh [Github](https://gist.github.com/advorak/1403124)

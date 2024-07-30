@@ -40,7 +40,7 @@
 #include <mutex>
 #include <stdexcept>
 #include <future>
-#include <ctime>
+#include <ctime> 
 #include "json.hpp"
 
 std::string user = getenv("USER"); //gets the current user name
