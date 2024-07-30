@@ -23,6 +23,7 @@ jobs:
     - run: |
         cd ..
         echo "$PWD"
+        ls $PWD
         make
         make check
         make distcheck
