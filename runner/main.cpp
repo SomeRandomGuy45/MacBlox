@@ -1,6 +1,13 @@
 //Some of this c++ code is from https://github.com/pizzaboxer/bloxstrap/blob/main/Bloxstrap/Integrations/ActivityWatcher.cs
 //it is in c# but i was able to translate it to c++
 
+/*
+
+    TODO:
+        Refactor and optimize the code into header files and other stuff could be like a v2
+
+*/
+
 #include <iostream>
 #include <vector>
 #include <libproc.h>

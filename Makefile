@@ -10,3 +10,4 @@ create_main_app:
 	@mkdir $(BUILDPATH)
 	$(CC) $(CXXFLAGS) -o $(BUILDPATH)/runner $(CURDIR)/runner/main.cpp $(BUILDARGS)
 	$(CC) -o $(BUILDPATH)/installer $(CURDIR)/installer/main.cpp $(BUILDARGS)
+	$(CC) -o $(BUILDPATH)/main $(CURDIR)/main_app/main.cpp $(BUILDARGS)
