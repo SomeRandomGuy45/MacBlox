@@ -37,6 +37,8 @@
 #include <sstream>
 #include <condition_variable>
 #include <mutex>
+#include <stdexcept>
+#include <future>
 #include <ctime>
 #include "json.hpp"
 
@@ -72,6 +74,7 @@ enum CurrentTypes {
 
 using ArgHandler = std::function<void(const std::string&)>;
 std::map<std::string, ArgHandler> argTable;
+std::unordered_map<std::string, std::string> GeolocationCache;
 
 size_t write_data(void *ptr, size_t size, size_t nmemb, FILE *stream) {
     size_t written = fwrite(ptr, size, nmemb, stream);
@@ -95,6 +98,57 @@ std::string GetDataFromURL(std::string URL)
         std::cerr << "[ERROR] curlpp::RuntimeError: " << e.what() << std::endl;
         return e.what();
     }
+}
+
+std::future<std::string> GetServerLocation(const std::string& ActivityMachineAddress, bool ActivityInGame_) {
+    if (GeolocationCache.find(ActivityMachineAddress) != GeolocationCache.end()) {
+        // If the address is cached, return the cached location
+        return std::async(std::launch::deferred, [ActivityMachineAddress]() {
+            return GeolocationCache[ActivityMachineAddress];
+        });
+    }
+
+    // If the address is not cached, perform a real HTTP request
+    return std::async(std::launch::async, [ActivityMachineAddress, ActivityInGame_]() {
+        try {
+            std::string location;
+            // Fetch JSON data from URL
+            std::string getData = GetDataFromURL("https://ipinfo.io/" + ActivityMachineAddress + "/json");
+            json ipInfo = json::parse(getData);
+            if (isDebug)
+            {
+                std::cout << "[INFO] Location: " << ipInfo << std::endl;
+            }
+            if (ipInfo.is_null()) {
+                return std::string("? (Lookup Failed)");
+            }
+
+            if (ipInfo.contains("country") && !ipInfo["country"].get<std::string>().empty()) {
+                if (ipInfo.contains("city") && ipInfo.contains("region")) {
+                    if (ipInfo["city"].get<std::string>() == ipInfo["region"].get<std::string>()) {
+                        location = ipInfo["region"].get<std::string>() + ", " + ipInfo["country"].get<std::string>();
+                    } else {
+                        location = ipInfo["city"].get<std::string>() + ", " + ipInfo["region"].get<std::string>() + ", " + ipInfo["country"].get<std::string>();
+                    }
+                } else {
+                    location = "?";
+                }
+            } else {
+                location = "?";
+            }
+
+            if (!ActivityInGame_) {
+                return std::string("? (Left Game)");
+            }
+
+            GeolocationCache[ActivityMachineAddress] = location;
+            return location;
+        }
+        catch (const std::exception& ex) {
+            std::cerr << "[ERROR] Failed to get server location for " << ActivityMachineAddress << ": " << ex.what() << "\n";
+            return std::string("? (Lookup Failed)");
+        }
+    });
 }
 
 std::string GetBashPath() {
@@ -401,6 +455,8 @@ void doFunc(const std::string& logtxt) {
         if (std::regex_search(logtxt, match, pattern) && match.size() == 2 && match[1].str() == ActivityMachineAddress) {
             std::cout << "[INFO] Joined Game (" << placeId << "/" << jobId << "/" << ActivityMachineAddress << ")" << std::endl;
             ActivityInGame = true;
+            std::future<std::string> test_ig = GetServerLocation(ActivityMachineAddress, ActivityInGame);
+            std::cout << "[INFO] Server location: " << test_ig.get() << std::endl;
         }
     } 
     else if (logtxt.find("[FLog::Network] Time to disconnect replication data:") != std::string::npos || logtxt.find("[FLog::SingleSurfaceApp] leaveUGCGameInternal") != std::string::npos && !ActivityInGame && placeId != 0) 
