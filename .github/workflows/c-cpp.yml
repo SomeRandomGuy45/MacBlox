@@ -23,7 +23,7 @@ jobs:
     - run: |
         cd ..
         cd MacBlox
-        sudo mkdir discord-rpc
+        sudo mkdir /usr/local/include/discord-rpc
         sudo mv /usr/local/include/discord_rpc.h /usr/local/include/discord-rpc/discord_rpc.h
         sudo mv /usr/local/include/discord_register.h /usr/local/include/discord-rpc/discord_register.h
         make
