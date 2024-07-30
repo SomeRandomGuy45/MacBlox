@@ -18,8 +18,8 @@ jobs:
         cd discord-rpc-buttons
         mkdir build
         cd build
-        cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local
-        cmake --build . --config Release --target install
+        sudo cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local
+        sudo cmake --build . --config Release --target install
     - run: |
         cd /Users/runner/work/MacBlox
         make
