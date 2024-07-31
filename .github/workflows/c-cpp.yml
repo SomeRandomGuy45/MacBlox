@@ -26,10 +26,12 @@ jobs:
     - name: Install SLL
       run: |
         git clone https://github.com/openssl/openssl.git
+        cd opensll
         perl ./Configure --prefix=/usr/local --openssldir=/usr/local/openssl no-ssl3 no-ssl3-method no-zlib darwin64-x86_64-cc enable-ec_nistp_64_gcc_128
         make
         make test
         sudo make install MANDIR=/usr/share/man MANSUFFIX=ssl
+        cd ../..
 
     - name: Install discord-rpc-buttons and minizip
       run: |
