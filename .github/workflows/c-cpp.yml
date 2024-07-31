@@ -23,14 +23,13 @@ jobs:
         sudo cmake --build . --config Release --target install
         cd ../..
 
-    - name: Install minizip
+    - name: Install discord-rpc-buttons and minizip
       run: |
         git clone https://github.com/SomeRandomGuy45/mini_zip.git
         sudo mv mini_zip/lib /usr/local/lib
         sudo mkdir -p /usr/local/include/minizip
         sudo mv mini_zip/include /usr/local/include/minizip
-    - name: Install discord-rpc-buttons
-      run: |
+        cd ../..
         git clone https://github.com/ariloc/discord-rpc-buttons.git
         cd discord-rpc-buttons
         mkdir build
