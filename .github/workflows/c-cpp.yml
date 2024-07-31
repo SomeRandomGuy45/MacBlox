@@ -54,6 +54,7 @@ jobs:
 
     - name: Build and test MacBlox
       run: |
+        echo "$PWD"
         cd MacBlox
         sudo mkdir -p /usr/local/include/discord-rpc
         sudo mv /usr/local/include/discord_rpc.h /usr/local/include/discord-rpc/discord_rpc.h
