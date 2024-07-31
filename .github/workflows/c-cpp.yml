@@ -19,7 +19,7 @@ jobs:
         cd curlpp
         mkdir build
         cd build
-        sudo cmake .. -DCMAKE_INSTALL_PREFIX=/user/local
+        sudo cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local
         sudo cmake --build . --config Release --target install
         cd ..
         echo "$PWD"
