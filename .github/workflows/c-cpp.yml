@@ -19,8 +19,8 @@ jobs:
         cd curlpp
         mkdir build
         cd build
-        cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local
-        cmake --build . --config Release --target install
+        sudo cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local
+        sudo cmake --build . --config Release --target install
         cd ../..
 
     - name: Build and install minizip
@@ -29,8 +29,8 @@ jobs:
         cd zlib
         mkdir build
         cd build
-        cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local
-        cmake --build . --config Release --target install
+        sudo cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local
+        sudo cmake --build . --config Release --target install
         cd ..
         
         # Clone minizip, which is part of zlib in this case
@@ -38,8 +38,8 @@ jobs:
         cd minizip
         mkdir build
         cd build
-        cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local
-        cmake --build . --config Release --target install
+        sudo cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local
+        sudo cmake --build . --config Release --target install
         cd ../..
 
     - name: Install discord-rpc-buttons
@@ -48,16 +48,16 @@ jobs:
         cd discord-rpc-buttons
         mkdir build
         cd build
-        cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local
-        cmake --build . --config Release --target install
+        sudo cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local
+        sudo cmake --build . --config Release --target install
         cd ../..
 
     - name: Build and test MacBlox
       run: |
         cd MacBlox
-        mkdir -p /usr/local/include/discord-rpc
-        mv /usr/local/include/discord_rpc.h /usr/local/include/discord-rpc/discord_rpc.h
-        mv /usr/local/include/discord_register.h /usr/local/include/discord-rpc/discord_register.h
+        sudo mkdir -p /usr/local/include/discord-rpc
+        sudo mv /usr/local/include/discord_rpc.h /usr/local/include/discord-rpc/discord_rpc.h
+        sudo mv /usr/local/include/discord_register.h /usr/local/include/discord-rpc/discord_register.h
         
         make
         make check
