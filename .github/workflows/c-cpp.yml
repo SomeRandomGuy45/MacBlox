@@ -27,8 +27,7 @@ jobs:
       run: |
         git clone https://github.com/SomeRandomGuy45/mini_zip.git
         sudo mv mini_zip/lib /usr/local/lib
-        sudo mkdir -p /usr/local/include/minizip
-        sudo mv mini_zip/include /usr/local/include/minizip
+        sudo mv mini_zip/include /usr/local/include
         cd ../..
         git clone https://github.com/ariloc/discord-rpc-buttons.git
         cd discord-rpc-buttons
