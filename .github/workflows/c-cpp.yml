@@ -13,46 +13,6 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Install curlpp
-      run: |
-        git clone https://github.com/SomeRandomGuy45/curlpp.git
-        cd curlpp
-        mkdir build
-        cd build
-        sudo cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local
-        sudo cmake --build . --config Release --target install
-        cd ../..
-
-    - name: Install SLL
-      run: |
-        curl -LO https://github.com/openssl/openssl/releases/download/openssl-3.3.1/openssl-3.3.1.tar.gz
-        tar -xzvf openssl-3.3.1.tar.gz
-        cd openssl-3.3.1
-        perl ./Configure --prefix=/usr/local --openssldir=/usr/local/openssl no-ssl3 no-ssl3-method no-zlib darwin64-x86_64-cc enable-ec_nistp_64_gcc_128
-        sudo make
-        sudo make test
-        sudo make install
-        sudo make clean
-        sudo make distclean
-        cd ../..
-
-    - name: Install discord-rpc-buttons and minizip
-      run: |
-        git clone https://github.com/SomeRandomGuy45/mini_zip.git
-        sudo mv mini_zip/lib/libminizip.1.dylib /usr/local/lib
-        sudo mv mini_zip/lib/libminizip.a /usr/local/lib
-        sudo mv mini_zip/lib/libminizip.dylib /usr/local/lib
-        sudo mv mini_zip/lib/pkgconfig/minizip.pc /usr/local/lib/pkgconfig
-        sudo mv mini_zip/include/minizip /usr/local/include
-        cd ../..
-        git clone https://github.com/ariloc/discord-rpc-buttons.git
-        cd discord-rpc-buttons
-        mkdir build
-        cd build
-        sudo cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local
-        sudo cmake --build . --config Release --target install
-        cd ../..
-
     - name: Build and test MacBlox
       run: |
         sudo mkdir -p /usr/local/include/discord-rpc
