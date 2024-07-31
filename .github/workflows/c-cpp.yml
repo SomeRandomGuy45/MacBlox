@@ -26,7 +26,10 @@ jobs:
     - name: Install discord-rpc-buttons and minizip
       run: |
         git clone https://github.com/SomeRandomGuy45/mini_zip.git
-        sudo mv mini_zip/lib /usr/local/lib
+        sudo mv mini_zip/lib/libminizip.1.dylib /usr/local/lib
+        sudo mv mini_zip/lib/llibminizip.a /usr/local/lib
+        sudo mv mini_zip/lib/libminizip.dylib /usr/local/lib
+        sudo mv mini_zip/lib/pkgconfig/minizip.pc /usr/local/lib/pkgconfig
         sudo mv mini_zip/include/minizip /usr/local/include
         cd ../..
         git clone https://github.com/ariloc/discord-rpc-buttons.git
