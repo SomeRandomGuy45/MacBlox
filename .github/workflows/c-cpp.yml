@@ -31,7 +31,7 @@ jobs:
         perl ./Configure --prefix=/usr/local --openssldir=/usr/local/openssl no-ssl3 no-ssl3-method no-zlib darwin64-x86_64-cc enable-ec_nistp_64_gcc_128
         sudo make
         sudo make test
-        sudo sudo make install MANDIR=/usr/share/man MANSUFFIX=ssl
+        sudo make install
         sudo make clean
         sudo make distclean
         cd ../..
