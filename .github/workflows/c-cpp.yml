@@ -42,7 +42,7 @@ jobs:
         sudo mkdir -p /usr/local/include/discord-rpc
         sudo mv /usr/local/include/discord_rpc.h /usr/local/include/discord-rpc/discord_rpc.h
         sudo mv /usr/local/include/discord_register.h /usr/local/include/discord-rpc/discord_register.h
-        ls /usr/local/include/minizip
+        ls /usr/local/include/
         
         make
         make check
