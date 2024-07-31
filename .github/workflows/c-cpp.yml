@@ -23,6 +23,14 @@ jobs:
         sudo cmake --build . --config Release --target install
         cd ../..
 
+    - name: Install SLL
+      run: |
+        git clone https://github.com/openssl/openssl.git
+        perl ./Configure --prefix=/usr/local --openssldir=/usr/local/openssl no-ssl3 no-ssl3-method no-zlib darwin64-x86_64-cc enable-ec_nistp_64_gcc_128
+        make
+        make test
+        sudo make install MANDIR=/usr/share/man MANSUFFIX=ssl
+
     - name: Install discord-rpc-buttons and minizip
       run: |
         git clone https://github.com/SomeRandomGuy45/mini_zip.git
