@@ -12,17 +12,35 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Install curlpp
       run: |
         git clone https://github.com/SomeRandomGuy45/curlpp.git
         cd curlpp
         mkdir build
         cd build
-        sudo cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local
-        sudo cmake --build . --config Release --target install
+        cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local
+        cmake --build . --config Release --target install
+        cd ../..
+
+    - name: Build and install minizip
+      run: |
+        git clone https://github.com/madler/zlib.git
+        cd zlib
+        mkdir build
+        cd build
+        cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local
+        cmake --build . --config Release --target install
         cd ..
-        brew install minizip
+        
+        # Clone minizip, which is part of zlib in this case
+        git clone https://github.com/madler/zlib.git minizip
+        cd minizip
+        mkdir build
+        cd build
+        cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local
+        cmake --build . --config Release --target install
+        cd ../..
 
     - name: Install discord-rpc-buttons
       run: |
@@ -30,16 +48,16 @@ jobs:
         cd discord-rpc-buttons
         mkdir build
         cd build
-        sudo cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local
-        sudo cmake --build . --config Release --target install
-    
+        cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local
+        cmake --build . --config Release --target install
+        cd ../..
+
     - name: Build and test MacBlox
       run: |
-        cd ..
         cd MacBlox
-        sudo mkdir -p /usr/local/include/discord-rpc
-        sudo mv /usr/local/include/discord_rpc.h /usr/local/include/discord-rpc/discord_rpc.h
-        sudo mv /usr/local/include/discord_register.h /usr/local/include/discord-rpc/discord_register.h
+        mkdir -p /usr/local/include/discord-rpc
+        mv /usr/local/include/discord_rpc.h /usr/local/include/discord-rpc/discord_rpc.h
+        mv /usr/local/include/discord_register.h /usr/local/include/discord-rpc/discord_register.h
         
         make
         make check
