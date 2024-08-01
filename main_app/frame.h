@@ -1,8 +1,11 @@
 #pragma once
 #include <wx/wx.h>
+#include <wx/notifmsg.h>
 #include <mach-o/dyld.h>
 #include <map>
 #include <iostream>
+#include <libgen.h>
+#include "EditableListBox.h"
 
 class MainFrame : public wxFrame
 {
@@ -25,23 +28,6 @@ private:
         BtnID_START = 3  // Start button IDs from a different base
     };
 };
-
-std::string GetBashPath() {
-    char buffer[PATH_MAX];
-    uint32_t size = sizeof(buffer);
-    
-    if (_NSGetExecutablePath(buffer, &size) != 0) {
-        return ""; // Return empty string on failure
-    }
-    
-    // Ensure buffer is null-terminated
-    buffer[PATH_MAX - 1] = '\0';
-    
-    // Get the directory of the executable
-    char* dir = dirname(buffer);
-    
-    return std::string(dir);
-}
 
 MainFrame::MainFrame(const wxString& title, long style, const wxSize& size)
     : wxFrame(nullptr, wxID_ANY, title, wxDefaultPosition, size, style)
@@ -91,8 +77,9 @@ void MainFrame::ReinitializePanels()
             gridSizer->Add(value);
         }
     }
-
-    panel->SetSizer(gridSizer);  // Ensure that the sizer is set for the panel
+    wxBoxSizer* mainSizer = new wxBoxSizer(wxHORIZONTAL);
+    mainSizer->Add(gridSizer, 1, wxEXPAND | wxALL, 5);
+    panel->SetSizer(mainSizer);  // Ensure that the sizer is set for the panel
     panel->Layout();
 }
 
@@ -104,10 +91,14 @@ void MainFrame::OpenPages(wxCommandEvent& event)
         wxString buttonText = clickedButton->GetLabel();
         std::string buttonName = buttonText.ToStdString();
         std::cout << "[INFO] Button clicked with text: " << buttonName << std::endl;
-
         if (buttonName == "Config")
         {
-           
+            wxEditableListBox* editableListBox = new wxEditableListBox(panel, wxID_ANY);
+            editableListBox->LoadFromFile("data.json");  // Load data from file
+            wxBoxSizer* mainSizer = new wxBoxSizer(wxHORIZONTAL);
+            mainSizer->Add(editableListBox, 1, wxEXPAND | wxALL, 5);
+            panel->SetSizer(mainSizer);  // Ensure that the sizer is set for the panel
+            panel->Layout();
         }
     }
 }
@@ -115,4 +106,12 @@ void MainFrame::OpenPages(wxCommandEvent& event)
 void MainFrame::OnLaunchButtonClick(wxCommandEvent& event)
 {
     std::cout << "[INFO] Launching..." << std::endl;
+    if (std::filesystem::exists(GetBasePath() + "/roblox_data"))
+    {
+        std::cout << "[INFO] Found roblox data directory" << std::endl;
+    }
+    else
+    {
+        std::cout << "[WARN] Could not find roblox data directory" << std::endl;
+    }
 }

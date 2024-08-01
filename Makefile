@@ -15,4 +15,4 @@ create_main_app:
 	$(CC) $(CXXFLAGS) $(LDFLAGS) -o $(BUILDPATH)/runner $(CURDIR)/runner/main.cpp
 	$(CC) $(CXXFLAGS) $(LDFLAGS) -o $(BUILDPATH)/installer $(CURDIR)/installer/main.cpp
 	$(CC) $(CXXFLAGS) $(LDFLAGS) -o $(BUILDPATH)/main $(CURDIR)/main_app/main.cpp
-	@./appify -s build/main -n Macblox
+	@./appify -s build/main -n Macblox -i test

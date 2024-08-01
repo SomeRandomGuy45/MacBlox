@@ -59,7 +59,6 @@ fi
 
 if [ ! -f ${CUSTICON} ]; then
    echo "# ${CUSTICON} file not found!" >&2
-   exit 1
 fi
 
 # define output path

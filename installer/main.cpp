@@ -225,7 +225,7 @@ bool isRobloxRunning()
 }
 
 int main() {
-    std::string robloxDataPath = "roblox_data";
+    std::string robloxDataPath = GetBashPath() + "/roblox_data";
     std::string robloxDataJsonPath = robloxDataPath + "/roblox_data.json";
 
     // Ensure the directory exists
