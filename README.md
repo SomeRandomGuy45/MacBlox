@@ -9,6 +9,7 @@ Macblox is a funny project i wanted to do because there wasn't bloxstrap for mac
 * discord-rpc [Github](https://github.com/ariloc/discord-rpc-buttons)
 * libcurl [Website](https://curl.se/libcurl/)
 * curlpp [Github](https://github.com/jpbarrette/curlpp/)
+* wxwidgets [Github](https://github.com/wxWidgets/wxWidgets)
 ### Building the project:
 Just run the following command
 ``
