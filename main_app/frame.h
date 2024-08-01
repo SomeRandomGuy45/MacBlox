@@ -7,6 +7,23 @@
 #include <libgen.h>
 #include "EditableListBox.h"
 
+void CreateNotification(const wxString &title, const wxString &message, int Timeout)
+{
+    if (Timeout != 0 && Timeout != -1)
+    {
+        Timeout = -1;
+    }
+    wxNotificationMessage notification(title, message);
+    if (!notification.Show(Timeout))
+    {
+        std::cerr << "[ERROR] Failed to show notification" << std::endl;
+    }
+    else
+    {
+        std::cout << "[INFO] Notification shown successfully" << std::endl;
+    }
+}
+
 class MainFrame : public wxFrame
 {
 public:
@@ -53,7 +70,6 @@ void MainFrame::ReinitializePanels()
 {
     // Clear and reinitialize the map
     DestroyPanel();  // Ensure the old panel is destroyed before creating a new one
-
     buttons.clear(); // Clear buttons map
     panel = new wxPanel(this);
     button = new wxButton(panel, LaunchID, "Launch", wxPoint(250, 325), wxSize(100, 35));

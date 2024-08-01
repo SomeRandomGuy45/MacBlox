@@ -57,10 +57,6 @@ else
    CUSTICON=${icon}
 fi
 
-if [ ! -f ${CUSTICON} ]; then
-   echo "# ${CUSTICON} file not found!" >&2
-fi
-
 # define output path
 DIR="${APPNAME}.app/Contents"
 mkdir -p $DIR/{MacOS,Resources} || (echo "error creating the App container" >&2; exit 1);
@@ -85,6 +81,21 @@ cat <<EOF > $DIR/Info.plist
     <string>$APPNAME</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
+    <key>CFBundleIdentifier</key>
+    <string>SomeGuy.Macblox</string>
+    <key>NSAppTransportSecurity</key>
+   <dict>
+      <key>NSAllowsArbitraryLoads</key>
+      <true/>
+   </dict>
+   <key>NSMicrophoneUsageDescription</key>
+   <string>We need access to the microphone for notifications.</string>
+   <key>NSCameraUsageDescription</key>
+   <string>We need access to the camera for notifications.</string>
+   <key>NSAppleMusicUsageDescription</key>
+   <string>We need access to Apple Music for notifications.</string>
+   <key>NSUserNotificationAlertStyle</key>
+   <string>alert</string>
 </dict>
 </plist>
 EOF

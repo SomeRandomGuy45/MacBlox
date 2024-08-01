@@ -48,6 +48,7 @@
 #include <stdexcept>
 #include <future>
 #include <ctime> 
+#include <wx/notifmsg.h>
 #include "json.hpp"
 
 std::string user = getenv("USER"); //gets the current user name
@@ -108,6 +109,23 @@ std::string GetDataFromURL(std::string URL)
     }
 }
 
+void CreateNotification(const wxString &title, const wxString &message, int Timeout)
+{
+    if (Timeout != 0 && Timeout != -1)
+    {
+        Timeout = -1;
+    }
+    wxNotificationMessage notification(title, message);
+    if (!notification.Show(Timeout))
+    {
+        std::cerr << "[ERROR] Failed to show notification" << std::endl;
+    }
+    else
+    {
+        std::cout << "[INFO] Notification shown successfully" << std::endl;
+    }
+}
+
 std::future<std::string> GetServerLocation(const std::string& ActivityMachineAddress, bool ActivityInGame_) {
     if (GeolocationCache.find(ActivityMachineAddress) != GeolocationCache.end()) {
         // If the address is cached, return the cached location
@@ -157,68 +175,6 @@ std::future<std::string> GetServerLocation(const std::string& ActivityMachineAdd
             return std::string("? (Lookup Failed)");
         }
     });
-}
-
-std::string GetBashPath() {
-    char buffer[PATH_MAX];
-    uint32_t size = sizeof(buffer);
-    
-    if (_NSGetExecutablePath(buffer, &size) != 0) {
-        return ""; // Return empty string on failure
-    }
-    
-    // Ensure buffer is null-terminated
-    buffer[PATH_MAX - 1] = '\0';
-    
-    // Get the directory of the executable
-    char* dir = dirname(buffer);
-    
-    return std::string(dir);
-}
-
-// Function to download a file from a URL
-std::string DownloadFile(const std::string& baseUrl, const std::string& filename) {
-    CURL *curl;
-    FILE *fp;
-    CURLcode res;
-    std::string outfilename = GetBashPath() + "/" + filename;
-
-    // Initialize libcurl
-    curl_global_init(CURL_GLOBAL_DEFAULT);
-    curl = curl_easy_init();
-    if (curl) {
-        fp = fopen(outfilename.c_str(), "wb"); // Open file for writing in binary mode
-        if (fp == nullptr) {
-            perror("[ERROR] Error opening file");
-            curl_easy_cleanup(curl);
-            curl_global_cleanup();
-            return "Error";
-        }
-
-        // Set URL and write function
-        curl_easy_setopt(curl, CURLOPT_URL, baseUrl.c_str());
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
-
-        // Perform the request
-        res = curl_easy_perform(curl);
-        if (res != CURLE_OK) {
-            fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
-        }
-
-        // Clean up
-        fclose(fp);
-        curl_easy_cleanup(curl);
-    }
-    curl_global_cleanup();
-
-    std::fstream ifs(outfilename, std::ios::in);
-    if (!ifs.is_open()) {
-        std::fstream emptyFile;
-        emptyFile.setstate(std::ios::failbit); // Set the failbit to indicate an error
-        return "error";
-    }
-    return outfilename;
 }
 
 void InitTable()
@@ -540,6 +496,7 @@ int main(int argc, char* argv[]) {
         std::cerr << "[ERROR] This program can only be run on macOS\n";
         return 1;
     }
+    CreateNotification("Hello world!", "Test lol", 0);
     std::cout << "[INFO] Username: " << user << " Path to log file is: " << logfile << "\n";
     //std::cout << "[INFO] start time " << time(0) << ", add time " << time(0) + 5 * 60 << "\n";
     InitDiscord();
@@ -630,8 +587,8 @@ int main(int argc, char* argv[]) {
                 }
             }
         });
-        logWatcher.detach();
-        while (isRobloxRunning()) {
+        while (isRobloxRunning()) 
+        {
             std::unique_lock<std::mutex> lock(mtx);
             logUpdatedEvent.wait(lock, [&] { return logUpdated; });
             logUpdated = false;

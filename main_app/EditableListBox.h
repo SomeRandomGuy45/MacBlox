@@ -7,9 +7,11 @@
 #include <string>
 #include <fstream>
 #include <sstream> 
+#include <filesystem>
 #include "json.hpp"  // Include the nlohmann JSON library
 
 using json = nlohmann::json;
+namespace fs = std::filesystem;
 
 class wxEditableListBox : public wxPanel
 {
@@ -22,6 +24,7 @@ public:
 
 private:
     void OnListCtrlItemActivated(wxListEvent& event);
+    void OnListCtrlItemRightClick(wxListEvent& event); // New event handler for right-click
     void OnNameTextEnter(wxCommandEvent& event);
     void OnValueTextEnter(wxCommandEvent& event);
     void OnCloseButtonClick(wxCommandEvent& event);  // Event handler for close button
@@ -44,7 +47,7 @@ enum
     ID_VALUE_TEXTCTRL,
     ID_CLOSE_BUTTON  // ID for close button
 };
-
+std::string user = getenv("USER");
 bool is_number(const std::string& s)
 {
     return !s.empty() && std::find_if(s.begin(), 
@@ -53,28 +56,38 @@ bool is_number(const std::string& s)
 
 wxBEGIN_EVENT_TABLE(wxEditableListBox, wxPanel)
     EVT_LIST_ITEM_ACTIVATED(ID_LISTCTRL, wxEditableListBox::OnListCtrlItemActivated)
+    EVT_LIST_ITEM_RIGHT_CLICK(ID_LISTCTRL, wxEditableListBox::OnListCtrlItemRightClick) // Bind the right-click event
     EVT_TEXT_ENTER(ID_NAME_TEXTCTRL, wxEditableListBox::OnNameTextEnter)
     EVT_TEXT_ENTER(ID_VALUE_TEXTCTRL, wxEditableListBox::OnValueTextEnter)
-    EVT_BUTTON(ID_CLOSE_BUTTON, wxEditableListBox::OnCloseButtonClick)  // Bind close button event
+    EVT_BUTTON(ID_CLOSE_BUTTON, wxEditableListBox::OnCloseButtonClick)
 wxEND_EVENT_TABLE()
 
-std::string GetBasePath() {
-    char buffer[PATH_MAX];
-    uint32_t size = sizeof(buffer);
-    
-    if (_NSGetExecutablePath(buffer, &size) != 0) {
-        return ""; // Return empty string on failure
+std::string getApplicationSupportPath() {
+    const char* homeDir = std::getenv("HOME");  // Get the user's home directory
+    if (!homeDir) {
+        throw std::runtime_error("Failed to get home directory");
     }
-    
-    // Ensure buffer is null-terminated
-    buffer[PATH_MAX - 1] = '\0';
-    
-    // Get the directory of the executable
-    char* dir = dirname(buffer);
-    
-    return std::string(dir);
+    return std::string(homeDir) + "/Library/Application Support/MacBlox_Data";
 }
-
+std::string GetBasePath() {
+    try {
+        std::string appSupportPath = getApplicationSupportPath();
+        
+        // Create the directory and any necessary parent directories
+        if (fs::create_directories(appSupportPath)) {
+            std::cout << "Directory created successfully: " << appSupportPath << std::endl;
+        } else {
+            std::cout << "Directory already exists or failed to create: " << appSupportPath << std::endl;
+        }
+        return appSupportPath;
+    } catch (const fs::filesystem_error& e) {
+        std::cerr << "Filesystem error: " << e.what() << std::endl;
+        return "";
+    } catch (const std::exception& e) {
+        std::cerr << "Error: " << e.what() << std::endl;
+        return "";
+    }
+}
 
 wxEditableListBox::wxEditableListBox(wxWindow* parent, wxWindowID id)
     : wxPanel(parent, id), lastSelectedItemIndex(-1)
@@ -101,13 +114,13 @@ wxEditableListBox::wxEditableListBox(wxWindow* parent, wxWindowID id)
     valueTextCtrl->SetMinSize(wxSize(200, 25));
 
     // Load existing data if available
-    LoadFromFile("data.json");
+    LoadFromFile(GetBasePath()+"/data.json");
 }
 
 wxEditableListBox::~wxEditableListBox()
 {
     // Save items to file when destructed
-    SaveToFile("data.json");
+    SaveToFile(GetBasePath()+"/data.json");
 }
 
 void wxEditableListBox::OnListCtrlItemActivated(wxListEvent& event)
@@ -126,6 +139,17 @@ void wxEditableListBox::OnListCtrlItemActivated(wxListEvent& event)
         nameTextCtrl->SetValue(name);
         valueTextCtrl->SetValue(value);
         lastSelectedItemIndex = itemIndex;
+    }
+}
+
+void wxEditableListBox::OnListCtrlItemRightClick(wxListEvent& event)
+{
+    long itemIndex = event.GetIndex();
+    if (itemIndex != -1)
+    {
+        listCtrl->DeleteItem(itemIndex); // Remove item from list control
+        items.erase(items.begin() + itemIndex); // Remove item from vector
+        SaveToFile(GetBasePath() + "/data.json"); // Save updated data
     }
 }
 
@@ -157,7 +181,7 @@ void wxEditableListBox::OnNameTextEnter(wxCommandEvent& event)
         long index = listCtrl->InsertItem(listCtrl->GetItemCount(), itemText);
         items.push_back(std::make_pair(name, value));  // Add new item
     }
-    SaveToFile("data.json");
+    SaveToFile(GetBasePath()+"/data.json");
     nameTextCtrl->Clear();
     valueTextCtrl->Clear();
     lastSelectedItemIndex = -1;
@@ -191,7 +215,7 @@ void wxEditableListBox::OnValueTextEnter(wxCommandEvent& event)
         long index = listCtrl->InsertItem(listCtrl->GetItemCount(), itemText);
         items.push_back(std::make_pair(name, value));  // Add new item
     }
-    SaveToFile("data.json");
+    SaveToFile(GetBasePath()+"/data.json");
     nameTextCtrl->Clear();
     valueTextCtrl->Clear();
     lastSelectedItemIndex = -1;
@@ -199,7 +223,8 @@ void wxEditableListBox::OnValueTextEnter(wxCommandEvent& event)
 
 void wxEditableListBox::OnCloseButtonClick(wxCommandEvent& event)
 {
-    this->Hide();
+    SaveToFile(GetBasePath() + "/data.json"); // Save updated data
+    this->Destroy();
 }
 
 void wxEditableListBox::LoadFromFile(const wxString& filePath)
@@ -259,4 +284,4 @@ void wxEditableListBox::SaveToFile(const wxString& filePath)
         }
         file.close();
     }
-} 
+}
