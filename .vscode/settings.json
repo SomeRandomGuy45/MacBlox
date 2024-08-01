@@ -87,6 +87,8 @@
         "*.ipp": "cpp",
         "set": "cpp",
         "unordered_set": "cpp",
-        "thread": "cpp"
-    }
+        "thread": "cpp",
+        "condition_variable": "cpp"
+    },
+    "C_Cpp.errorSquiggles": "enabled"
 }
