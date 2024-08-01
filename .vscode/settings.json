@@ -89,6 +89,5 @@
         "unordered_set": "cpp",
         "thread": "cpp",
         "condition_variable": "cpp"
-    },
-    "C_Cpp.errorSquiggles": "enabled"
+    }
 }
