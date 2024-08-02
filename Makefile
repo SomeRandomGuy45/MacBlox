@@ -10,7 +10,7 @@ create_main_app:
 	fi
 	@mkdir $(BUILDPATH)
 	$(CC) $(CXXFLAGS) $(LDFLAGS) -o $(BUILDPATH)/runner $(CURDIR)/runner/main.cpp
-	$(CC) $(CXXFLAGS) $(LDFLAGS) -o $(BUILDPATH)/main $(CURDIR)/main_app/main.cpp
+	$(CC) $(CXXFLAGS) $(LDFLAGS) -o $(BUILDPATH)/main $(CURDIR)/main_app/main.cpp $(CURDIR)/main_app/Downloader.mm
 	@mkdir $(BUILDPATH)/Macblox
 	@./appify -s build/main -n Macblox -i test
 	@codesign --sign - --entitlements Macblox.plist --deep Macblox.app --force

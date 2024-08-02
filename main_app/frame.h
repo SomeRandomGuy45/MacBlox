@@ -1,11 +1,59 @@
 #pragma once
 #include <wx/wx.h>
 #include <wx/notifmsg.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include <mach-o/dyld.h>
 #include <map>
 #include <iostream>
 #include <libgen.h>
+#include <libproc.h>
+#include <string>
 #include "EditableListBox.h"
+#include "Downloader.h"
+#include "json.hpp"
+
+using json = nlohmann::json;
+
+bool isRobloxRunning()
+{
+    bool found = false;
+    const int maxProcesses = 1024;
+    pid_t pids[maxProcesses];
+    int count;
+
+    // Get the list of process IDs
+    count = proc_listpids(PROC_ALL_PIDS, 0, pids, sizeof(pids));
+
+    if (count < 0) {
+        std::cerr << "[ERROR] Failed to get list of processes" << std::endl;
+        return 1;
+    }
+
+    for (int i = 0; i < count / sizeof(pid_t); ++i) {
+        pid_t pid = pids[i];
+        if (pid == 0) continue; // Skip unused slots
+
+        // Get the process name
+        char procName[PROC_PIDPATHINFO_MAXSIZE];
+        if (proc_pidpath(pid, procName, sizeof(procName)) > 0) {
+            std::string processName = procName;
+            size_t find = processName.find("RobloxPlayer");
+            if (find != std::string::npos) {
+                found = true;
+                if (kill(pid, SIGTERM) == -1)
+                {
+                    std::cerr << "[ERROR] Error terminating process with PID " << pid << ": " << std::strerror(errno) << std::endl;
+                }
+                break;
+            } 
+        } else {
+            continue;
+        }
+    }
+    return found;
+}
 
 void CreateNotification(const wxString &title, const wxString &message, int Timeout)
 {
@@ -72,7 +120,7 @@ void MainFrame::ReinitializePanels()
     DestroyPanel();  // Ensure the old panel is destroyed before creating a new one
     buttons.clear(); // Clear buttons map
     panel = new wxPanel(this);
-    button = new wxButton(panel, LaunchID, "Launch", wxPoint(250, 325), wxSize(100, 35));
+    button = new wxButton(panel, LaunchID, "Add To Install", wxPoint(250, 325), wxSize(100, 35));
     button->Bind(wxEVT_BUTTON, &MainFrame::OnLaunchButtonClick, this);
 
     // Initialize map with dummy data to create buttons
@@ -122,12 +170,11 @@ void MainFrame::OpenPages(wxCommandEvent& event)
 void MainFrame::OnLaunchButtonClick(wxCommandEvent& event)
 {
     std::cout << "[INFO] Launching..." << std::endl;
-    if (std::filesystem::exists(GetBasePath() + "/roblox_data"))
+
+    if (!fs::exists("/Applications/Roblox.app")) 
     {
-        std::cout << "[INFO] Found roblox data directory" << std::endl;
+        wxMessageBox("Cannot find Roblox install please install and rerun the application", "Error", wxOK | wxICON_ERROR);
+        return;
     }
-    else
-    {
-        std::cout << "[WARN] Could not find roblox data directory" << std::endl;
-    }
+    wxMessageBox("Added to Roblox app","Info", wxOK | wxICON_INFORMATION);
 }

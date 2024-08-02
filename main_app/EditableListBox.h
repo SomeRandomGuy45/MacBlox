@@ -75,16 +75,16 @@ std::string GetBasePath() {
         
         // Create the directory and any necessary parent directories
         if (fs::create_directories(appSupportPath)) {
-            std::cout << "Directory created successfully: " << appSupportPath << std::endl;
+            //std::cout << "[INFO] Directory created successfully: " << appSupportPath << std::endl;
         } else {
-            std::cout << "Directory already exists or failed to create: " << appSupportPath << std::endl;
+            //std::cout << "[INFO] Directory already exists or failed to create: " << appSupportPath << std::endl;
         }
         return appSupportPath;
     } catch (const fs::filesystem_error& e) {
-        std::cerr << "Filesystem error: " << e.what() << std::endl;
+        std::cerr << "[ERORR] Filesystem error: " << e.what() << std::endl;
         return "";
     } catch (const std::exception& e) {
-        std::cerr << "Error: " << e.what() << std::endl;
+        std::cerr << "[ERROR] " << e.what() << std::endl;
         return "";
     }
 }
