@@ -10,6 +10,6 @@ extern "C" void downloadFile(const char* urlString, const char* destinationPath)
 std::string downloadFile_WITHOUT_DESTINATION(const char* urlString);
 bool unzipFile(const char* zipFilePath, const char* destinationPath);
 
-void runApp(const char* appPath);
+void runApp(const std::string &launchPath, bool Check);
 
 #endif // DOWNLOADER_H

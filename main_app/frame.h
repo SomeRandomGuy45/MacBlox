@@ -170,11 +170,32 @@ void MainFrame::OpenPages(wxCommandEvent& event)
 void MainFrame::OnLaunchButtonClick(wxCommandEvent& event)
 {
     std::cout << "[INFO] Launching..." << std::endl;
-
+    std::string basePath = GetBasePath();
+    std::string robloxInstallAppPath = basePath +"/RobloxPlayerInstaller.app";
+    std::string robloxZip = basePath + "/Roblox.zip";
     if (!fs::exists("/Applications/Roblox.app")) 
     {
-        wxMessageBox("Cannot find Roblox install please install and rerun the application", "Error", wxOK | wxICON_ERROR);
-        return;
+        std::cout << "[INFO] Didn't find Roblox.app\n";
+        const char* Version_URL = "https://clientsettings.roblox.com/v2/client-version/MacPlayer";
+        std::string Version_Data = downloadFile_WITHOUT_DESTINATION(Version_URL);
+        json Version_JSON = json::parse(Version_Data);
+        std::string Latest_Version = Version_JSON["clientVersionUpload"].get<std::string>();
+        std::cout << "[INFO] Latest Roblox version: " << Latest_Version << std::endl;
+        std::string DownloadURL = "https://setup.rbxcdn.com/mac/" + Latest_Version + "-Roblox.zip";
+        std::cout << "[INFO] Download URL: " << DownloadURL << std::endl;
+        downloadFile(DownloadURL.c_str(), robloxZip.c_str());
+        if (unzipFile(robloxZip.c_str(), basePath.c_str()))
+        {
+            std::cout << "[INFO] Unzipped Roblox.zip at path: " << robloxInstallAppPath << std::endl;
+        }
+        else
+        {
+
+            std::cerr << "[ERROR] Failed to unzip file\n";
+            return;
+        }
+        runApp(robloxInstallAppPath, true);
     }
-    wxMessageBox("Added to Roblox app","Info", wxOK | wxICON_INFORMATION);
+    wxMessageBox("Added config to Roblox app","Info", wxOK | wxICON_INFORMATION);
+    runApp("/Applications/Roblox.app", false);
 }

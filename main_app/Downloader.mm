@@ -1,6 +1,7 @@
 #import <Foundation/Foundation.h>
 #import <minizip/unzip.h>
 #import <AppKit/AppKit.h>
+#import <OSAKit/OSAKit.h>
 #import "Downloader.h"
 
 void downloadFile(const char* urlString, const char* destinationPath) {
@@ -58,30 +59,33 @@ void downloadFile(const char* urlString, const char* destinationPath) {
     }
 }
 
-void runApp(const char* appPath) {
-    @autoreleasepool {
-        NSString *path = [NSString stringWithUTF8String:appPath];
-        NSURL *appURL = [NSURL fileURLWithPath:path];
-        
-        if (![[NSFileManager defaultManager] fileExistsAtPath:path]) {
-            std::cerr << "[ERROR] Path does not exist: " << appPath << std::endl;
+void runApp(const std::string &launchPath, bool Check) {
+   // Convert std::string to NSString
+    NSString *launchAppPath = [NSString stringWithUTF8String:launchPath.c_str()];
+
+    // Create an NSURL instance using the launchAppPath
+    NSURL *url = [NSURL fileURLWithPath:launchAppPath isDirectory:YES];
+
+    // Create an OpenConfiguration instance
+    NSWorkspaceOpenConfiguration *configuration = [[NSWorkspaceOpenConfiguration alloc] init];
+
+    if (Check)
+    {
+        NSString *scriptSource = [NSString stringWithFormat:@"tell application \"%@\" to activate", launchAppPath];
+        NSDictionary *errorInfo = nil;
+        NSAppleScript *appleScript = [[NSAppleScript alloc] initWithSource:scriptSource];
+        NSAppleEventDescriptor *result = [appleScript executeAndReturnError:&errorInfo];
+
+        if (errorInfo) {
+            NSLog(@"Error requesting permission: %@", errorInfo);
             return;
         }
-
-        NSWorkspace *workspace = [NSWorkspace sharedWorkspace];
-        NSWorkspaceOpenConfiguration *config = [[NSWorkspaceOpenConfiguration alloc] init];
-        NSError *error = nil;
-
-        [workspace openApplicationAtURL:appURL
-                          configuration:config
-                      completionHandler:^(NSRunningApplication * _Nullable runningApp, NSError * _Nullable error) {
-            if (error) {
-                std::cerr << "[ERROR] Failed to run app: " << error.localizedDescription.UTF8String << std::endl;
-            } else {
-                std::cout << "[INFO] App ran successfully." << std::endl;
-            }
-        }];
     }
+
+    // Open the application with the specified configuration
+    [[NSWorkspace sharedWorkspace] openApplicationAtURL:url
+                                         configuration:configuration
+                                     completionHandler:nil];
 }
 
 std::string downloadFile_WITHOUT_DESTINATION(const char* urlString) {
@@ -120,13 +124,13 @@ bool unzipFile(const char* zipFilePath, const char* destinationPath) {
         
         unzFile zipFile = unzOpen([zipPath fileSystemRepresentation]);
         if (!zipFile) {
-            NSLog(@"Failed to open zip file: %s", zipFilePath);
+            NSLog(@"[ERROR] Failed to open zip file: %s", zipFilePath);
             return false;
         }
         
         int ret = unzGoToFirstFile(zipFile);
         if (ret != UNZ_OK) {
-            NSLog(@"Failed to go to first file in zip archive");
+            NSLog(@"[ERROR] Failed to go to first file in zip archive");
             unzClose(zipFile);
             return false;
         }
@@ -136,7 +140,7 @@ bool unzipFile(const char* zipFilePath, const char* destinationPath) {
             unz_file_info fileInfo;
             ret = unzGetCurrentFileInfo(zipFile, &fileInfo, filename, sizeof(filename), NULL, 0, NULL, 0);
             if (ret != UNZ_OK) {
-                NSLog(@"Failed to get file info");
+                NSLog(@"[ERROR] Failed to get file info");
                 unzClose(zipFile);
                 return false;
             }
@@ -147,14 +151,14 @@ bool unzipFile(const char* zipFilePath, const char* destinationPath) {
             } else {
                 ret = unzOpenCurrentFile(zipFile);
                 if (ret != UNZ_OK) {
-                    NSLog(@"Failed to open file in zip archive");
+                    NSLog(@"[ERROR] Failed to open file in zip archive");
                     unzClose(zipFile);
                     return false;
                 }
 
                 FILE *outFile = fopen([filePath fileSystemRepresentation], "wb");
                 if (!outFile) {
-                    NSLog(@"Failed to open output file");
+                    NSLog(@"[ERROR] Failed to open output file");
                     unzCloseCurrentFile(zipFile);
                     unzClose(zipFile);
                     return false;
