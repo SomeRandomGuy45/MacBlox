@@ -100,7 +100,7 @@ cat <<EOF > $DIR/Info.plist
    <key>BreakpadVendor</key>
 	<string>Roblox</string>
     <key>CFBundleName</key>
-	 <string>Roblox</string>
+	 <string>MacBlox</string>
    <key>CFBundleSignature</key>
    <string>????</string>
     <key>NSAppTransportSecurity</key>
