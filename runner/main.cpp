@@ -11,8 +11,8 @@
 #include <iostream>
 #include <vector>
 #include <libproc.h>
-#include <libgen.h>
 #include <limits.h>
+#include <mach-o/dyld.h>
 #include <cstring>
 #include <sys/types.h>
 #include <sys/sysctl.h>
@@ -31,6 +31,7 @@
 #include <curl/curl.h> //for downloading files
 #include <curlpp/cURLpp.hpp> //requests with out creating files
 #include <curlpp/Options.hpp>
+#include <libgen.h>
 #include <signal.h>  // For kill function
 #include <errno.h>   // For errno
 #include <thread>
@@ -41,7 +42,6 @@
 #include <algorithm>
 #include <CoreFoundation/CoreFoundation.h>
 #include <DiskArbitration/DiskArbitration.h>
-#include <mach-o/dyld.h>
 #include <sstream>
 #include <condition_variable>
 #include <mutex>
@@ -49,10 +49,13 @@
 #include <future>
 #include <ctime> 
 #include <wx/notifmsg.h>
+#include <unordered_set>
 #include "json.hpp"
+#include "helper.h"
+#include "AppDelegate.h"
 
 std::string user = getenv("USER"); //gets the current user name
-std::string logfile = "/Users/" + user + "/Library/Logs/Roblox/"; //creates the log directory path
+std::string logfile = "~/Library/Logs/Roblox/"; //creates the log directory path
 bool isRblxRunning = false;
 int placeId = 0;
 std::string jobId = "";
@@ -64,6 +67,7 @@ bool _teleportMarker = false;
 bool _reservedTeleportMarker = false;
 bool ActivityInGame;
 int64_t lastRPCTime = 0;
+std::unordered_set<std::string> processedLogs;
 #ifdef __APPLE__
     bool canRun = true;
 #else
@@ -222,55 +226,40 @@ void UpdDiscordActivity(std::string details, std::string state, std::string butt
 }
 
 CurrentTypes Current = Home;
+std::string getApplicationSupportPath() {
+    const char* homeDir = std::getenv("HOME");  // Get the user's home directory
+    if (!homeDir) {
+        throw std::runtime_error("Failed to get home directory");
+    }
+    return std::string(homeDir);
+}
+std::string GetBasePath() {
+    try {
+        std::string appSupportPath = getApplicationSupportPath();
+        
+        // Create the directory and any necessary parent directories
+        if (fs::create_directories(appSupportPath)) {
+            //std::cout << "[INFO] Directory created successfully: " << appSupportPath << std::endl;
+        } else {
+            //std::cout << "[INFO] Directory already exists or failed to create: " << appSupportPath << std::endl;
+        }
+        return appSupportPath;
+    } catch (const fs::filesystem_error& e) {
+        std::cerr << "[ERORR] Filesystem error: " << e.what() << std::endl;
+        return "";
+    } catch (const std::exception& e) {
+        std::cerr << "[ERROR] " << e.what() << std::endl;
+        return "";
+    }
+}
 
 std::string getLatestLogFile() {
-    std::vector<std::string> logFiles;
-    for (const auto& entry : fs::directory_iterator(logfile)) {
-        if (entry.path().extension() == ".log" && entry.path().filename().string().find("Player") != std::string::npos) { //make sure that the file ends with ".log" and has "Player"
-            logFiles.push_back(entry.path().string());
-        }
-    }
-    if (logFiles.empty()) return "";
-
-    auto latestLogFile = *std::max_element(logFiles.begin(), logFiles.end(), [](const std::string& a, const std::string& b) {
-        return fs::last_write_time(a) < fs::last_write_time(b);
-    });
-    return latestLogFile;
+    return getLogFile(logfile);
 }
 
 bool isRobloxRunning()
 {
-    bool found = false;
-    const int maxProcesses = 1024;
-    pid_t pids[maxProcesses];
-    int count;
-
-    // Get the list of process IDs
-    count = proc_listpids(PROC_ALL_PIDS, 0, pids, sizeof(pids));
-
-    if (count < 0) {
-        std::cerr << "[ERROR] Failed to get list of processes" << std::endl;
-        return 1;
-    }
-
-    for (int i = 0; i < count / sizeof(pid_t); ++i) {
-        pid_t pid = pids[i];
-        if (pid == 0) continue; // Skip unused slots
-
-        // Get the process name
-        char procName[PROC_PIDPATHINFO_MAXSIZE];
-        if (proc_pidpath(pid, procName, sizeof(procName)) > 0) {
-            std::string processName = procName;
-            size_t find = processName.find("RobloxPlayer");
-            if (find != std::string::npos) {
-                found = true;
-                break;
-            } 
-        } else {
-            continue;
-        }
-    }
-    return found;
+    return isAppRunning("Roblox");
 }
 
 std::string ReadFile(const std::string& filename) {
@@ -347,6 +336,10 @@ std::string GetGameThumb(long customID) {
 
 void doFunc(const std::string& logtxt) {
     //std::cout << logtxt << std::endl;
+    if (processedLogs.find(logtxt) != processedLogs.end()) {
+        return; // Skip processing if the log entry has already been handled
+    }
+    processedLogs.insert(logtxt);
     if (logtxt.find("[FLog::GameJoinUtil] GameJoinUtil::initiateTeleportToReservedServer]") != std::string::npos) 
     {
         _teleportMarker = true;
@@ -359,10 +352,10 @@ void doFunc(const std::string& logtxt) {
     } 
     else if (logtxt.find("[FLog::GameJoinUtil] GameJoinUtil::joinGamePostPrivateServer") != std::string::npos) 
     {
-        Current = CurrentTypes::Private;
+        Current = Private;
         std::cout << "[INFO] Attempting to join private server\n";
     } 
-    else if (logtxt.find("[FLog::Output] ! Joining game") != std::string::npos && !ActivityInGame && placeId == 0) 
+    else if (logtxt.find("[FLog::Output] ! Joining game") != std::string::npos && !ActivityInGame && placeId == 0 && Current == Home) 
     {
         std::regex pattern(R"(! Joining game '([0-9a-f\-]{36})' place ([0-9]+) at ([0-9\.]+))");
         std::smatch match;
@@ -383,14 +376,18 @@ void doFunc(const std::string& logtxt) {
             }
 
             if (_reservedTeleportMarker) {
-                Current = CurrentTypes::Reserved;
+                Current = Reserved;
                 _reservedTeleportMarker = false;
+            }
+            else
+            {
+                Current = Public;
             }
 
             std::cout << "[INFO] Joining Game (" << placeId << "/" << jobId << "/" << ActivityMachineAddress << ")" << std::endl;
         }
     }
-    else if (logtxt.find("[FLog::Network] serverId:") != std::string::npos && !ActivityInGame && placeId != 0) 
+    else if (logtxt.find("[FLog::Network] serverId:") != std::string::npos && !ActivityInGame && placeId != 0 && Current != Home) 
     {
         std::regex pattern(R"(serverId: ([0-9\.]+)\|[0-9]+)");
         std::smatch match;
@@ -399,24 +396,39 @@ void doFunc(const std::string& logtxt) {
             std::cout << "[INFO] Joined Game (" << placeId << "/" << jobId << "/" << ActivityMachineAddress << ")" << std::endl;
             ActivityInGame = true;
             std::future<std::string> test_ig = GetServerLocation(ActivityMachineAddress, ActivityInGame);
-            std::cout << "[INFO] Server location: " << test_ig.get() << std::endl;
+            std::string serverLocationStr = test_ig.get();
+            std::cout << "[INFO] Server location: " << serverLocationStr << std::endl;
+            wxString Title_Text = "";
+            wxString ServerLocationText(serverLocationStr.c_str(), wxConvUTF8);
+            wxString Msg_Text = "Located at " + ServerLocationText;
+            if (Current != CurrentTypes::Home) {
+                if (Current == CurrentTypes::Private) {
+                    Title_Text = "Conntected to private server";
+                }
+                else if (Current == CurrentTypes::Reserved) {
+                    Title_Text = "Conntected to reserved server";
+                }
+                else
+                {
+                    Title_Text = "Connected to public server";
+                }
+            }
+            CreateNotification(Title_Text, Msg_Text, -1);
         }
     } 
-    else if (logtxt.find("[FLog::Network] Time to disconnect replication data:") != std::string::npos || logtxt.find("[FLog::SingleSurfaceApp] leaveUGCGameInternal") != std::string::npos && !ActivityInGame && placeId != 0) 
+    else if (logtxt.find("[FLog::Network] Time to disconnect replication data:") != std::string::npos || logtxt.find("[FLog::SingleSurfaceApp] leaveUGCGameInternal") != std::string::npos && !ActivityInGame && placeId != 0 && Current != Home) 
     {
         std::cout << "[INFO] User disconnected\n";
-        if (Current != CurrentTypes::Home) {
-            jobId = "";
-            placeId = 0;
-            ActivityInGame = false;
-            ActivityMachineAddress = "";
-            ActivityMachineUDMUX = false;
-            ActivityIsTeleport = false;
-            Current = CurrentTypes::Home;
-            GameIMG = "";
-        }
+        jobId = "";
+        placeId = 0;
+        ActivityInGame = false;
+        ActivityMachineAddress = "";
+        ActivityMachineUDMUX = false;
+        ActivityIsTeleport = false;
+        Current = Home;
+        GameIMG = "";
     }
-    else if (logtxt.find("[FLog::Network] UDMUX Address = ") != std::string::npos && !ActivityInGame && placeId != 0) 
+    else if (logtxt.find("[FLog::Network] UDMUX Address = ") != std::string::npos && !ActivityInGame && placeId != 0 && Current != Home) 
     {
         std::regex pattern(R"(UDMUX Address = ([0-9\.]+), Port = [0-9]+ \| RCC Server Address = ([0-9\.]+), Port = [0-9]+)");
         std::smatch match;
@@ -435,7 +447,7 @@ void doFunc(const std::string& logtxt) {
             std::cerr << "[ERROR] Something happened data" << logtxt << "\n";
         }
     }
-    else if (logtxt.find("[FLog::Output] [BloxstrapRPC]") != std::string::npos)
+    else if (logtxt.find("[FLog::Output] [BloxstrapRPC]") != std::string::npos && Current != Home)
     {
         if (time(0) - lastRPCTime <= 1)
         {
@@ -479,6 +491,9 @@ std::string GetCoolFile(const std::string& logDirectory) {
 
 int main(int argc, char* argv[]) {
     InitTable();
+    std::string defaultPath = "/Users/" + user + "/Library/Logs/Roblox";
+    std::cout << "[INFO] Defualt log directory url is: " << "file://localhost"+defaultPath << "\n";
+    logfile = ShowOpenFileDialog("file://localhost"+defaultPath);
     //GetGameThumb(18419624945);
     if (argc >= 2)
     {
@@ -569,6 +584,7 @@ int main(int argc, char* argv[]) {
         std::ifstream logFile(logFilePath);
         std::thread logWatcher([&]() {
             while (true) {
+                if (!isRobloxRunning()) {break;}
                 std::this_thread::sleep_for(std::chrono::milliseconds(250));
                 //std::cout << "Hello world!\n";
                 std::ifstream logFileStream(logFilePath);
@@ -589,10 +605,16 @@ int main(int argc, char* argv[]) {
         });
         while (isRobloxRunning()) 
         {
+            if (!isRobloxRunning())
+            {
+                //just incase yk
+                break;
+            }
             std::unique_lock<std::mutex> lock(mtx);
             logUpdatedEvent.wait(lock, [&] { return logUpdated; });
             logUpdated = false;
         }
     }
+    std::cout << "[INFO] App Closing..\n";
     return 0;
 }

@@ -10,7 +10,7 @@ create_main_app:
 	fi
 	@mkdir $(BUILDPATH)
 	@mkdir $(BUILDPATH)/Macblox
-	$(CC) $(CXXFLAGS) $(LDFLAGS) -o $(BUILDPATH)/runner $(CURDIR)/runner/main.cpp
+	$(CC) $(CXXFLAGS) $(LDFLAGS) -o $(BUILDPATH)/runner $(CURDIR)/runner/main.cpp $(CURDIR)/runner/helper.mm $(CURDIR)/runner/AppDelegate.mm
 	@./appify -s build/runner -n play -i test
 	@codesign --sign - --entitlements Macblox.plist --deep play.app --force
 	@mv -f play.app $(BUILDPATH)/play.app

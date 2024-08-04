@@ -71,10 +71,22 @@ cat <<EOF > $DIR/Info.plist
 <!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>CFBundleExecutable</key>
+   <key>BreakpadReportInterval</key>
+	<string>0</string>
+	<key>BreakpadSendAndExit</key>
+	<string>NO</string>
+	<key>BreakpadSkipConfirm</key>
+	<string>YES</string>
+	<key>BreakpadVendor</key>
+	<string>Roblox</string>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>English</string>
+   <key>CFBundleExecutable</key>
+   <string>$APPNAME</string>
+   <key>CFBundleGetInfoString</key>
     <string>$APPNAME</string>
-    <key>CFBundleGetInfoString</key>
-    <string>$APPNAME</string>
+    <key>CFBundleVersion</key>
+	<string>6360627</string>
     <key>CFBundleIconFile</key>
     <string>$APPNAME</string>
     <key>CFBundleName</key>
@@ -82,7 +94,15 @@ cat <<EOF > $DIR/Info.plist
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleIdentifier</key>
-    <string>SomeGuy.Macblox</string>
+   <string>com.someguy.macblox</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+   <key>BreakpadVendor</key>
+	<string>Roblox</string>
+    <key>CFBundleName</key>
+	 <string>Roblox</string>
+   <key>CFBundleSignature</key>
+   <string>????</string>
     <key>NSAppTransportSecurity</key>
    <dict>
       <key>NSAllowsArbitraryLoads</key>
