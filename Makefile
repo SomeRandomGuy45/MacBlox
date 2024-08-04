@@ -9,15 +9,15 @@ create_main_app:
 		rm -d -r $(BUILDPATH); \
 	fi
 	@mkdir $(BUILDPATH)
-	$(CC) $(CXXFLAGS) $(LDFLAGS) -o $(BUILDPATH)/runner $(CURDIR)/runner/main.cpp
-	$(CC) $(CXXFLAGS) $(LDFLAGS) -o $(BUILDPATH)/main $(CURDIR)/main_app/main.cpp $(CURDIR)/main_app/Downloader.mm
 	@mkdir $(BUILDPATH)/Macblox
-	@./appify -s build/main -n Macblox -i test
-	@codesign --sign - --entitlements Macblox.plist --deep Macblox.app --force
-	@mv -f Macblox.app $(BUILDPATH)/Macblox/Macblox.app
+	$(CC) $(CXXFLAGS) $(LDFLAGS) -o $(BUILDPATH)/runner $(CURDIR)/runner/main.cpp
 	@./appify -s build/runner -n play -i test
 	@codesign --sign - --entitlements Macblox.plist --deep play.app --force
 	@mv -f play.app $(BUILDPATH)/play.app
 	@mv $(BUILDPATH)/play.app $(BUILDPATH)/Macblox/"Play Roblox.app"
 	@rm -f $(BUILDPATH)/runner
+	$(CC) $(CXXFLAGS) $(LDFLAGS) -o $(BUILDPATH)/main $(CURDIR)/main_app/main.cpp $(CURDIR)/main_app/Downloader.mm
+	@./appify -s build/main -n Macblox -i test
+	@codesign --sign - --entitlements Macblox.plist --deep Macblox.app --force
+	@mv -f Macblox.app $(BUILDPATH)/Macblox/Macblox.app
 	@rm -f $(BUILDPATH)/main

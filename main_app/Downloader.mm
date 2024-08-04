@@ -77,7 +77,7 @@ void runApp(const std::string &launchPath, bool Check) {
         NSAppleEventDescriptor *result = [appleScript executeAndReturnError:&errorInfo];
 
         if (errorInfo) {
-            NSLog(@"Error requesting permission: %@", errorInfo);
+            NSLog(@"[ERROR] Something went wrong when requesting permission: %@", errorInfo);
             return;
         }
     }
