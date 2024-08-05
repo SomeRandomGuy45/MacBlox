@@ -10,5 +10,6 @@
 bool isAppRunning(const std::string &appName);
 std::string getLogFile(const std::string& logDir);
 std::string ShowOpenFileDialog(const std::string& defaultDirectory);
+void runApp(const std::string &launchPath, bool Check);
 
 #endif // HELPER_H

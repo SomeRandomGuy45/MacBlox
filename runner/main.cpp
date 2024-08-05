@@ -183,7 +183,7 @@ std::future<std::string> GetServerLocation(const std::string& ActivityMachineAdd
 
 void InitTable()
 {
-    argTable["--d"] = [](const std::string&) {isDebug = true; };
+    argTable["-d"] = [](const std::string&) {isDebug = true; };
     argTable["--debug"] = [](const std::string&) {isDebug = true; };
 }
 
@@ -490,6 +490,15 @@ std::string GetCoolFile(const std::string& logDirectory) {
 }
 
 int main(int argc, char* argv[]) {
+    if (!canRun)
+    {
+        std::cerr << "[ERROR] This program can only be run on macOS\n";
+        return 1;
+    }
+    if (!isRobloxRunning())
+    {
+        runApp("/Applications/Roblox.app",false);
+    }
     InitTable();
     std::string defaultPath = "/Users/" + user + "/Library/Logs/Roblox";
     std::cout << "[INFO] Defualt log directory url is: " << "file://localhost"+defaultPath << "\n";
@@ -505,11 +514,6 @@ int main(int argc, char* argv[]) {
                 argTable[arg]("");
             }
         }
-    }
-    if (!canRun)
-    {
-        std::cerr << "[ERROR] This program can only be run on macOS\n";
-        return 1;
     }
     CreateNotification("Hello world!", "Test lol", 0);
     std::cout << "[INFO] Username: " << user << " Path to log file is: " << logfile << "\n";
@@ -582,37 +586,29 @@ int main(int argc, char* argv[]) {
         std::condition_variable logUpdatedEvent;
         std::mutex mtx;
         std::ifstream logFile(logFilePath);
-        std::thread logWatcher([&]() {
-            while (true) {
-                if (!isRobloxRunning()) {break;}
-                std::this_thread::sleep_for(std::chrono::milliseconds(250));
-                //std::cout << "Hello world!\n";
-                std::ifstream logFileStream(logFilePath);
-                if (logFileStream) {
-                    std::string line;
-                    while (std::getline(logFileStream, line)) {
-                        std::lock_guard<std::mutex> lock(mtx);
-                        logUpdated = true;
-                        logUpdatedEvent.notify_one();
-                        if (isDebug)
-                        {
-                            std::cout << "[INFO] new line: " << line << "\n";
-                        }
-                        doFunc(line);
-                    }
-                }
-            }
-        });
-        while (isRobloxRunning()) 
-        {
+        while (true) {
+            //std::cout << "Hello world!\n";
             if (!isRobloxRunning())
             {
                 //just incase yk
                 break;
             }
-            std::unique_lock<std::mutex> lock(mtx);
-            logUpdatedEvent.wait(lock, [&] { return logUpdated; });
-            logUpdated = false;
+            std::ifstream logFileStream(logFilePath);
+            if (logFileStream) 
+            {
+                std::string line;
+                while (std::getline(logFileStream, line)) 
+                {
+                    std::lock_guard<std::mutex> lock(mtx);
+                    logUpdated = true;
+                    logUpdatedEvent.notify_one();
+                    if (isDebug)
+                    {
+                        std::cout << "[INFO] new line: " << line << "\n";
+                    }
+                    doFunc(line);
+                }
+            }
         }
     }
     std::cout << "[INFO] App Closing..\n";

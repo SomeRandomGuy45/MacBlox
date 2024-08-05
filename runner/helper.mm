@@ -2,6 +2,8 @@
 #import <Foundation/Foundation.h>
 #import <AppKit/AppKit.h>
 #import <Cocoa/Cocoa.h>
+#import <minizip/unzip.h>
+#import <OSAKit/OSAKit.h>
 
 namespace fs = std::filesystem;
 
@@ -18,6 +20,34 @@ bool isAppRunning(const std::string &appName) {
     return test;
 }
 
+void runApp(const std::string &launchPath, bool Check) {
+   // Convert std::string to NSString
+    NSString *launchAppPath = [NSString stringWithUTF8String:launchPath.c_str()];
+
+    // Create an NSURL instance using the launchAppPath
+    NSURL *url = [NSURL fileURLWithPath:launchAppPath isDirectory:YES];
+
+    // Create an OpenConfiguration instance
+    NSWorkspaceOpenConfiguration *configuration = [[NSWorkspaceOpenConfiguration alloc] init];
+
+    if (Check)
+    {
+        NSString *scriptSource = [NSString stringWithFormat:@"tell application \"%@\" to activate", launchAppPath];
+        NSDictionary *errorInfo = nil;
+        NSAppleScript *appleScript = [[NSAppleScript alloc] initWithSource:scriptSource];
+        NSAppleEventDescriptor *result = [appleScript executeAndReturnError:&errorInfo];
+
+        if (errorInfo) {
+            NSLog(@"[ERROR] Something went wrong when requesting permission: %@", errorInfo);
+            return;
+        }
+    }
+
+    // Open the application with the specified configuration
+    [[NSWorkspace sharedWorkspace] openApplicationAtURL:url
+                                         configuration:configuration
+                                     completionHandler:nil];
+}
 
 std::string ShowOpenFileDialog(const std::string& defaultDirectory) {
     NSOpenPanel* openPanel = [NSOpenPanel openPanel];
