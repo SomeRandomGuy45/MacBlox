@@ -43,17 +43,17 @@ set(linker_stuff
 # Add the executable for the runner
 add_executable(runner ${RUNNER_SOURCES})
 target_compile_options(runner PRIVATE -x objective-c++)
-target_link_libraries(runner ${wxWidgets_LIBRARIES} discord-rpc curl curlpp z minizip "-framework CoreFoundation" "-framework DiskArbitration" "-framework Foundation" "-framework Cocoa" "-framework UserNotifications" ssl crypto)
+target_link_libraries(runner ${wxWidgets_LIBRARIES} discord_game_sdk_cpp discord_game_sdk curl curlpp z minizip "-framework SystemConfiguration -framework CoreFoundation" "-framework DiskArbitration" "-framework Foundation" "-framework Cocoa" "-framework UserNotifications" ssl crypto)
 
 # Add the executable for the main app
 add_executable(main_app ${MAIN_APP_SOURCES})
 target_compile_options(main_app PRIVATE -x objective-c++)
-target_link_libraries(main_app ${wxWidgets_LIBRARIES} discord-rpc curl curlpp z minizip "-framework CoreFoundation" "-framework DiskArbitration" "-framework Foundation" "-framework Cocoa" "-framework UserNotifications" ssl crypto)
+target_link_libraries(main_app ${wxWidgets_LIBRARIES} discord_game_sdk_cpp discord_game_sdk curl curlpp z minizip "-framework SystemConfiguration -framework CoreFoundation" "-framework DiskArbitration" "-framework Foundation" "-framework Cocoa" "-framework UserNotifications" ssl crypto)
 
 #for testing
 add_executable(test_source ${linker_stuff})
 target_compile_options(main_app PRIVATE -x objective-c++)
-target_link_libraries(main_app ${wxWidgets_LIBRARIES} discord-rpc curl curlpp z minizip "-framework CoreFoundation" "-framework DiskArbitration" "-framework Foundation" "-framework Cocoa" "-framework UserNotifications" ssl crypto)
+target_link_libraries(main_app ${wxWidgets_LIBRARIES} discord_game_sdk_cpp discord_game_sdk curl curlpp z minizip "-framework CoreFoundation" "-framework DiskArbitration" "-framework Foundation" "-framework Cocoa" "-framework UserNotifications" ssl crypto)
 
 # Custom command to create directories
 add_custom_command(TARGET runner POST_BUILD
@@ -63,13 +63,13 @@ add_custom_command(TARGET runner POST_BUILD
 
 # Custom command to appify and codesign the main app
 add_custom_command(TARGET test_source POST_BUILD
-        COMMAND /Users/${CURRENT_USER}/Desktop/Projects/Macblox/appify -s ${CMAKE_CURRENT_SOURCE_DIR}/build/runner -n play -i test
-        COMMAND codesign --sign - --entitlements /Users/${CURRENT_USER}/Desktop/Projects/Macblox/Macblox.plist --deep ${CMAKE_CURRENT_SOURCE_DIR}/build/play.app --force
+        COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/appify -s ${CMAKE_CURRENT_SOURCE_DIR}/build/runner -n play -i test
+        COMMAND codesign --sign - --entitlements ${CMAKE_CURRENT_SOURCE_DIR}/Macblox.plist --deep ${CMAKE_CURRENT_SOURCE_DIR}/build/play.app --force
         COMMAND ${CMAKE_COMMAND} -E rename ${CMAKE_CURRENT_SOURCE_DIR}/build/play.app ${BUILDPATH}/play.app
         COMMAND ${CMAKE_COMMAND} -E rename ${BUILDPATH}/play.app ${BUILDPATH}/Macblox/"Play Roblox.app"
         COMMAND ${CMAKE_COMMAND} -E rm -f ${CMAKE_CURRENT_SOURCE_DIR}/build/runner
-        COMMAND /Users/${CURRENT_USER}/Desktop/Projects/Macblox/appify -s ${CMAKE_CURRENT_SOURCE_DIR}/build/main_app -n Macblox -i test
-        COMMAND codesign --sign - --entitlements /Users/${CURRENT_USER}/Desktop/Projects/Macblox/Macblox.plist --deep ${CMAKE_CURRENT_SOURCE_DIR}/build/Macblox.app --force
+        COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/appify -s ${CMAKE_CURRENT_SOURCE_DIR}/build/main_app -n Macblox -i test
+        COMMAND codesign --sign - --entitlements /${CMAKE_CURRENT_SOURCE_DIR}/Macblox.plist --deep ${CMAKE_CURRENT_SOURCE_DIR}/build/Macblox.app --force
         COMMAND ${CMAKE_COMMAND} -E rename ${CMAKE_CURRENT_SOURCE_DIR}/build/Macblox.app ${BUILDPATH}/Macblox/Macblox.app
         COMMAND ${CMAKE_COMMAND} -E rm -f ${CMAKE_CURRENT_SOURCE_DIR}/build/main
 )
