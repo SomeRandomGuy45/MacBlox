@@ -1,5 +1,7 @@
-//
-// Created by edward on 8/6/24.
-//
+#include <iostream>
 
-#include "main.h"
+int main()
+{
+    std::cout << "Hello world!";
+    return 0;
+}
