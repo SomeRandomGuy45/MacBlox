@@ -103,6 +103,10 @@
         "stdfloat": "cpp",
         "stop_token": "cpp",
         "text_encoding": "cpp",
-        "cinttypes": "cpp"
-    }
+        "cinttypes": "cpp",
+        "hash_map": "cpp"
+    },
+    "java.project.sourcePaths": [
+        ""
+    ]
 }

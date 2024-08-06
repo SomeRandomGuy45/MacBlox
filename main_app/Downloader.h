@@ -12,4 +12,6 @@ bool unzipFile(const char* zipFilePath, const char* destinationPath);
 
 void runApp(const std::string &launchPath, bool Check);
 
+bool isAppRunning(const std::string &appName);
+
 #endif // DOWNLOADER_H

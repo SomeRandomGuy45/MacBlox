@@ -26,11 +26,14 @@
 #include <map>
 #include <functional>
 #include <sys/stat.h>
+/*
 #include <discord-rpc/discord_rpc.h>
 #include <discord-rpc/discord_register.h>
+*/
+#include "discord-game-sdk/discord.h"
 #include <curl/curl.h> //for downloading files
-#include <curlpp/cURLpp.hpp> //requests with out creating files
-#include <curlpp/Options.hpp>
+#include "curlpp/cURLpp.hpp" //requests with out creating files
+#include "curlpp/Options.hpp"
 #include <libgen.h>
 #include <signal.h>  // For kill function
 #include <errno.h>   // For errno
@@ -49,10 +52,12 @@
 #include <future>
 #include <ctime> 
 #include <wx/notifmsg.h>
+#include <wx/msgdlg.h> 
 #include <unordered_set>
 #include "json.hpp"
 #include "helper.h"
-#include "AppDelegate.h"
+
+discord::Core* core{};
 
 std::string user = getenv("USER"); //gets the current user name
 std::string logfile = "~/Library/Logs/Roblox/"; //creates the log directory path
@@ -187,42 +192,82 @@ void InitTable()
     argTable["--debug"] = [](const std::string&) {isDebug = true; };
 }
 
-void InitDiscord()
-{
-    DiscordEventHandlers handlers;
-    memset(&handlers, 0, sizeof(handlers)); //memset funny
-    handlers.ready = [](const DiscordUser* user) {
-        std::cout << "[INFO] Connected as: " << user->username << "\n";
-    };
-    handlers.errored = [](int errorCode, const char* message) {
-        std::cerr << "[ERROR] " << message << " (" << errorCode << ")\n";
-    };
-    Discord_Initialize("1267308900420419664", &handlers, 1, NULL);
-}
 
-void UpdDiscordActivity(std::string details, std::string state, std::string button1_url, std::string button2_url, std::string button1_label, std::string button2_label, int64_t startTimestamp, int64_t endTimestamp, int AssetIDLarge, int AssetIDSmall, std::string largeImgText, std::string smallImageText)
+void UpdDiscordActivity(const char *details, const char *state, int64_t startTimestamp, 
+                        int64_t endTimestamp, int AssetIDLarge, int AssetIDSmall, const char *largeImgText, 
+                        const char *smallImageText)
 {
-    DiscordRichPresence presence;
+    auto result = discord::Core::Create(1236762772549927045, DiscordCreateFlags_Default | DiscordCreateFlags_NoRequireDiscord, &core);
+    if (result != discord::Result::Ok) {
+        std::cerr << "[ERROR] Failed to create Discord core!\n";
+        return;
+    }
+
+    if (core == nullptr) {
+        std::cerr << "[ERROR] Core is a nullptr!!!\n";
+        return;
+    }
+
+    std::cout << "[INFO] Discord core created\n";
+    // Initialize timestamps
     startTimestamp = startTimestamp != 0 ? startTimestamp : time(0);
     endTimestamp = endTimestamp != 0 ? endTimestamp : time(0) + 5 * 60;
-    AssetIDLarge = AssetIDLarge != 0 ? AssetIDLarge : 0;
-    AssetIDSmall = AssetIDSmall != 0 ? AssetIDSmall : 0;
-    std::string key_large = AssetIDLarge != 0 ? "https://assetdelivery.roblox.com/v1/asset/?id=" + std::to_string(AssetIDLarge) : GameIMG;
-    std::string key_small = "https://assetdelivery.roblox.com/v1/asset/?id=" + std::to_string(AssetIDSmall);
-    memset(&presence, 0, sizeof(presence));
-    presence.button1_url = button1_url.c_str();
-    presence.button2_url = button2_url.c_str();
-    presence.button1_label = button1_label.c_str();
-    presence.button2_label = button2_label.c_str();
-    presence.details = details.c_str();
-    presence.state = state.c_str();
-    presence.startTimestamp = startTimestamp;
-    presence.endTimestamp = endTimestamp;
-    presence.largeImageKey = key_large.c_str();
-    presence.largeImageText = largeImgText.c_str();
-    presence.smallImageKey = key_small.c_str();
-    presence.smallImageText = smallImageText.c_str();
-    Discord_UpdatePresence(&presence);
+
+    // Prepare asset URLs
+    const char* base_URL = "https://assetdelivery.roblox.com/v1/asset/?id=";
+    char temp_URL[256];
+
+    char key_large[256];
+    if (AssetIDLarge != 0) {
+        snprintf(key_large, sizeof(key_large), "%s%d", base_URL, AssetIDLarge);
+    } else {
+        key_large[0] = '\0'; // Empty string
+    }
+
+    char key_small[256]; 
+    if (AssetIDSmall != 0) {
+        snprintf(key_small, sizeof(key_small), "%s%d", base_URL, AssetIDSmall);
+    } else {
+        key_small[0] = '\0'; // Empty string
+    }
+
+    // Set up activity
+    discord::Activity activity;
+    activity.SetState(state);
+    activity.SetDetails(details);
+    activity.SetType(discord::ActivityType::Playing);
+
+    // Check if URLs are valid and not empty
+    if (strlen(key_large) > 0) {
+        activity.GetAssets().SetLargeImage(key_large);
+    } else {
+        std::cout << "[WARN] Large image key is empty or invalid.\n";
+    }
+
+    if (strlen(key_small) > 0) {
+        activity.GetAssets().SetSmallImage(key_small);
+    } else {
+        std::cout << "[WARN] Small image key is empty or invalid.\n";
+    }
+
+    // Set text for images if available
+    if (largeImgText != nullptr && std::string(largeImgText) != "") {
+        activity.GetAssets().SetLargeText(largeImgText);
+    }
+
+    if (smallImageText != nullptr && std::string(smallImageText) != "") {
+        activity.GetAssets().SetSmallText(smallImageText);
+    }
+    core->ActivityManager().UpdateActivity(activity, [](discord::Result result) {
+    	if (result == discord::Result::Ok)
+		{
+			std::cout << "[INFO] Successfully updated Activity/RPC!\n";
+		}
+		else
+		{
+			std::cerr << "[ERROR] Failed to update Activity/RPC!\n";
+		}
+	});
 }
 
 CurrentTypes Current = Home;
@@ -259,7 +304,19 @@ std::string getLatestLogFile() {
 
 bool isRobloxRunning()
 {
-    return isAppRunning("Roblox");
+    std::string script = R"(
+        tell application "System Events"
+            set appList to name of every process
+        end tell
+
+        if "RobloxPlayer" is in appList then
+            return "true"
+        else
+            return "false"
+        end if
+    )";
+    std::string output = runAppleScriptAndGetOutput(script);
+    return output == "true" ? true : false;
 }
 
 std::string ReadFile(const std::string& filename) {
@@ -413,7 +470,7 @@ void doFunc(const std::string& logtxt) {
                     Title_Text = "Connected to public server";
                 }
             }
-            CreateNotification(Title_Text, Msg_Text, -1);
+            CreateNotification(Title_Text, Msg_Text, wxNotificationMessage::Timeout_Auto);
         }
     } 
     else if (logtxt.find("[FLog::Network] Time to disconnect replication data:") != std::string::npos || logtxt.find("[FLog::SingleSurfaceApp] leaveUGCGameInternal") != std::string::npos && !ActivityInGame && placeId != 0 && Current != Home) 
@@ -462,11 +519,6 @@ void doFunc(const std::string& logtxt) {
         lastRPCTime = time(0);
         GameIMG = GetGameThumb(placeId);
     }
-    else if (!isRobloxRunning())
-    {
-        std::cout << "[INFO] Roblox is closing\n";
-        isRblxRunning = false;
-    }
 }
 
 std::string GetCoolFile(const std::string& logDirectory) {
@@ -489,7 +541,13 @@ std::string GetCoolFile(const std::string& logDirectory) {
     return latestFile->path().string();
 }
 
+void Update()
+{
+   core->RunCallbacks();
+}
+
 int main(int argc, char* argv[]) {
+    UpdDiscordActivity("Test", "Playing", 0, 0, 154835815, 154835815, "Test", "Test");
     if (!canRun)
     {
         std::cerr << "[ERROR] This program can only be run on macOS\n";
@@ -497,7 +555,12 @@ int main(int argc, char* argv[]) {
     }
     if (!isRobloxRunning())
     {
-        runApp("/Applications/Roblox.app",false);
+        runApp("/Applications/Roblox.app", false);
+    }
+    else
+    {
+        terminateApplicationByName("Roblox");
+        runApp("/Applications/Roblox.app", false);
     }
     InitTable();
     std::string defaultPath = "/Users/" + user + "/Library/Logs/Roblox";
@@ -515,11 +578,18 @@ int main(int argc, char* argv[]) {
             }
         }
     }
-    CreateNotification("Hello world!", "Test lol", 0);
-    std::cout << "[INFO] Username: " << user << " Path to log file is: " << logfile << "\n";
+    CreateNotification("Hello world!", "Test lol", wxNotificationMessage::Timeout_Auto);
+    std::cout << "[INFO] Username: " << user << ", path to log file is: " << logfile << "\n";
+    if (logfile != "/Users/" + user + "/Library/Logs/Roblox")
+    {
+        std::string path = "The location of the Roblox log file isn't correct. The location of is /Users/" + user + "/Library/Logs/Roblox";
+        wxString toWxString(path.c_str(), wxConvUTF8);
+        int answer = wxMessageBox(toWxString, "Error", wxOK | wxICON_ERROR);
+        if (answer == wxID_OK) {
+            return -1;
+        }
+    }
     //std::cout << "[INFO] start time " << time(0) << ", add time " << time(0) + 5 * 60 << "\n";
-    InitDiscord();
-    UpdDiscordActivity("Test", "Playing", "https://roblox.com/home", "https://roblox.com/home", "roblox open test", "roblox open test", 0, 0, 154835815, 154835815, "Test", "Test");
     do {} while (!isRobloxRunning());
     isRblxRunning = isRobloxRunning();
     std::cout << "[INFO] Roblox player is running\n";
@@ -529,33 +599,6 @@ int main(int argc, char* argv[]) {
     if (latestLogFile.empty()) {
         throw std::runtime_error("[ERROR] Roblox log file not found!");
     } else {
-        /*
-        int fd[2];
-        pipe(fd);
-        pid_t pid = fork();
-        if (pid == 0) {
-            // Child process
-            close(fd[0]);
-            dup2(fd[1], STDOUT_FILENO);
-            execlp("tail", "tail", "-f", latestLogFile.c_str(), nullptr);
-            exit(1);
-        } else {
-            // Parent process
-            close(fd[1]);
-            char buffer[512];
-            while (isRobloxRunning()) {
-                ssize_t bytesRead = read(fd[0], buffer, sizeof(buffer) - 1);
-                if (isDebug)
-                {
-                    std::cout << "[INFO] new buffer: " << buffer << "\n";
-                }
-                if (bytesRead > 0) {
-                    buffer[bytesRead] = '\0';
-                    doFunc(buffer);
-                }
-            }
-        }
-        */
         std::filesystem::directory_entry logFileInfo;
         bool logUpdated = false;
         std::string logFilePath;
@@ -586,31 +629,40 @@ int main(int argc, char* argv[]) {
         std::condition_variable logUpdatedEvent;
         std::mutex mtx;
         std::ifstream logFile(logFilePath);
-        while (true) {
-            //std::cout << "Hello world!\n";
-            if (!isRobloxRunning())
-            {
-                //just incase yk
-                break;
-            }
-            std::ifstream logFileStream(logFilePath);
-            if (logFileStream) 
-            {
-                std::string line;
-                while (std::getline(logFileStream, line)) 
-                {
-                    std::lock_guard<std::mutex> lock(mtx);
-                    logUpdated = true;
-                    logUpdatedEvent.notify_one();
-                    if (isDebug)
-                    {
-                        std::cout << "[INFO] new line: " << line << "\n";
-                    }
-                    doFunc(line);
+        std::thread logThread([&]() {
+            while (true) {
+                if (!isRobloxRunning()) {
+                    // Just in case
+                    break;
                 }
+                std::this_thread::sleep_for(std::chrono::milliseconds(250));
+                std::ifstream logFileStream(logFilePath);
+                if (logFileStream) {
+                    std::string line;
+                    while (std::getline(logFileStream, line)) {
+                        std::lock_guard<std::mutex> lock(mtx);
+                        logUpdated = true;
+                        logUpdatedEvent.notify_one();
+                        if (isDebug) {
+                            std::cout << "[INFO] new line: " << line << "\n";
+                        }
+                        doFunc(line);
+                    }
+                } else {
+                    std::cerr << "[ERROR] Failed to open log file: " << logFilePath << std::endl;
+                }
+
+                // Sleep or wait for a condition to avoid tight loop (optional)
             }
+        });
+        logThread.detach();
+        std::cout << "[INFO] Started main thread\n";
+        while (isRobloxRunning()) {
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+            //Update();
         }
+        logThread.~thread();
     }
-    std::cout << "[INFO] App Closing..\n";
+    std::cout << "[INFO] Closing program\n";
     return 0;
 }

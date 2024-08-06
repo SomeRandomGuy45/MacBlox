@@ -88,6 +88,26 @@ void runApp(const std::string &launchPath, bool Check) {
                                      completionHandler:nil];
 }
 
+bool isAppRunning(const std::string &appName) {
+    @autoreleasepool {
+        // Convert std::string to NSString
+        NSString *searchAppName = [NSString stringWithUTF8String:appName.c_str()];
+        
+        // Get the list of running applications
+        NSArray *runningApps = [[NSWorkspace sharedWorkspace] runningApplications];
+        
+        // Iterate through the list to find the application with the specified name
+        for (NSRunningApplication *app in runningApps) {
+            NSString *localizedName = [app localizedName];
+            if ([localizedName isEqualToString:searchAppName]) {
+                [app terminate];
+                return true; // Application is running
+            }
+        }
+    }
+    return false; // Application is not running
+}
+
 std::string downloadFile_WITHOUT_DESTINATION(const char* urlString) {
     @autoreleasepool {
         NSString *urlStr = [NSString stringWithUTF8String:urlString];

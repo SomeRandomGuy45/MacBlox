@@ -18,41 +18,7 @@ using json = nlohmann::json;
 
 bool isRobloxRunning()
 {
-    bool found = false;
-    const int maxProcesses = 1024;
-    pid_t pids[maxProcesses];
-    int count;
-
-    // Get the list of process IDs
-    count = proc_listpids(PROC_ALL_PIDS, 0, pids, sizeof(pids));
-
-    if (count < 0) {
-        std::cerr << "[ERROR] Failed to get list of processes" << std::endl;
-        return 1;
-    }
-
-    for (int i = 0; i < count / sizeof(pid_t); ++i) {
-        pid_t pid = pids[i];
-        if (pid == 0) continue; // Skip unused slots
-
-        // Get the process name
-        char procName[PROC_PIDPATHINFO_MAXSIZE];
-        if (proc_pidpath(pid, procName, sizeof(procName)) > 0) {
-            std::string processName = procName;
-            size_t find = processName.find("RobloxPlayer");
-            if (find != std::string::npos) {
-                found = true;
-                if (kill(pid, SIGTERM) == -1)
-                {
-                    std::cerr << "[ERROR] Error terminating process with PID " << pid << ": " << std::strerror(errno) << std::endl;
-                }
-                break;
-            } 
-        } else {
-            continue;
-        }
-    }
-    return found;
+    return isAppRunning("Roblox");
 }
 
 void CreateNotification(const wxString &title, const wxString &message, int Timeout)

@@ -84,26 +84,26 @@ cat <<EOF > $DIR/Info.plist
    <key>CFBundleExecutable</key>
    <string>$APPNAME</string>
    <key>CFBundleGetInfoString</key>
-    <string>$APPNAME</string>
-    <key>CFBundleVersion</key>
+   <string>$APPNAME</string>
+   <key>CFBundleVersion</key>
 	<string>6360627</string>
-    <key>CFBundleIconFile</key>
-    <string>$APPNAME</string>
-    <key>CFBundleName</key>
-    <string>$APPNAME</string>
-    <key>CFBundlePackageType</key>
-    <string>APPL</string>
-    <key>CFBundleIdentifier</key>
+   <key>CFBundleIconFile</key>
+   <string>$APPNAME</string>
+   <key>CFBundleName</key>
+   <string>$APPNAME</string>
+   <key>CFBundlePackageType</key>
+   <string>APPL</string>
+   <key>CFBundleIdentifier</key>
    <string>com.someguy.macblox</string>
-    <key>CFBundleInfoDictionaryVersion</key>
+   <key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
    <key>BreakpadVendor</key>
 	<string>Roblox</string>
-    <key>CFBundleName</key>
-	 <string>MacBlox</string>
+   <key>CFBundleName</key>
+	<string>MacBlox</string>
    <key>CFBundleSignature</key>
    <string>????</string>
-    <key>NSAppTransportSecurity</key>
+   <key>NSAppTransportSecurity</key>
    <dict>
       <key>NSAllowsArbitraryLoads</key>
       <true/>
@@ -116,6 +116,8 @@ cat <<EOF > $DIR/Info.plist
    <string>We need access to Apple Music for notifications.</string>
    <key>NSUserNotificationAlertStyle</key>
    <string>alert</string>
+   <key>NSAppleEventsUsageDescription</key>
+   <string>We need to control System Events for roblox!</string>   
 </dict>
 </plist>
 EOF

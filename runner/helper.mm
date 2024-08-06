@@ -2,23 +2,51 @@
 #import <Foundation/Foundation.h>
 #import <AppKit/AppKit.h>
 #import <Cocoa/Cocoa.h>
-#import <minizip/unzip.h>
+#import "minizip/unzip.h"
 #import <OSAKit/OSAKit.h>
+#import <ScriptingBridge/ScriptingBridge.h>
 
 namespace fs = std::filesystem;
 
 bool isAppRunning(const std::string &appName) {
-    NSString *nsAppName = [NSString stringWithUTF8String:appName.c_str()];
-    NSArray *runningApps = [[NSWorkspace sharedWorkspace] runningApplications];
-    bool test = false;
-    for (NSRunningApplication *app in runningApps) {
-        if ([app.localizedName isEqualToString:nsAppName]) {
-            test = true;
-            break;
+    @autoreleasepool {
+        // Convert std::string to NSString
+        NSString *searchAppName = [NSString stringWithUTF8String:appName.c_str()];
+        
+        // Get the list of running applications
+        NSArray *runningApps = [[NSWorkspace sharedWorkspace] runningApplications];
+        
+        // Iterate through the list to find the application with the specified name
+        for (NSRunningApplication *app in runningApps) {
+            NSString *localizedName = [app localizedName];
+            if ([localizedName isEqualToString:searchAppName]) {
+                return true; // Application is running
+            }
         }
     }
-    return test;
+    return false; // Application is not running
 }
+
+void terminateApplicationByName(const std::string& appName) {
+    // Convert std::string to NSString
+    NSString *nsAppName = [NSString stringWithUTF8String:appName.c_str()];
+    
+    // Get the list of running applications
+    NSArray *runningApps = [[NSWorkspace sharedWorkspace] runningApplications];
+    
+    // Iterate through the running applications
+    for (NSRunningApplication *app in runningApps) {
+        // Check if the application name matches
+        if ([[app localizedName] isEqualToString:nsAppName]) {
+            // Terminate the application
+            [app terminate];
+            NSLog(@"[INFO] Application %@ terminated.", nsAppName);
+            return;
+        }
+    }
+    
+    NSLog(@"[INFO] Application %@ not found.", nsAppName);
+} 
 
 void runApp(const std::string &launchPath, bool Check) {
    // Convert std::string to NSString
@@ -47,6 +75,58 @@ void runApp(const std::string &launchPath, bool Check) {
     [[NSWorkspace sharedWorkspace] openApplicationAtURL:url
                                          configuration:configuration
                                      completionHandler:nil];
+}
+
+std::string runAppleScriptAndGetOutput(const std::string &script) {
+    @autoreleasepool {
+        // Convert std::string to NSString
+        NSString *scriptNSString = [NSString stringWithUTF8String:script.c_str()];
+
+        // Create an NSAppleScript object with the script
+        NSAppleScript *appleScript = [[NSAppleScript alloc] initWithSource:scriptNSString];
+
+        // Execute the script
+        NSDictionary *errorDict = nil;
+        NSAppleEventDescriptor *result = [appleScript executeAndReturnError:&errorDict];
+
+        if (errorDict) {
+            // Print error details
+            NSLog(@"[ERROR] AppleScript error: %@", errorDict);
+            if ([errorDict objectForKey:NSAppleScriptErrorMessage]) {
+                NSLog(@"[ERROR] Error message: %@", [errorDict objectForKey:NSAppleScriptErrorMessage]);
+            }
+
+            // Handle specific error for permissions issues
+            NSNumber *errorNumber = [errorDict objectForKey:NSAppleScriptErrorNumber];
+            if ([errorNumber integerValue] == -600) {
+                // Show an alert to the user
+                NSAlert *alert = [[NSAlert alloc] init];
+                [alert setMessageText:@"Permission Required"];
+                [alert setInformativeText:@"Your application needs permission to control other applications. Please grant access in System Preferences."];
+                [alert addButtonWithTitle:@"Open System Preferences"];
+                [alert addButtonWithTitle:@"Cancel"];
+
+                // Show the alert and handle user response
+                NSModalResponse response = [alert runModal];
+                if (response == NSAlertFirstButtonReturn) {
+                    // Open the System Preferences pane
+                    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"x-apple.systempreferences:com.apple.preference.security?Privacy_Automation"]];
+                }
+
+                return "";
+            }
+
+            return "";
+        }
+
+        // Extract the string result from NSAppleEventDescriptor
+        NSString *resultString = [result stringValue];
+        if (resultString) {
+            return std::string([resultString UTF8String]);
+        }
+
+        return "";
+    }
 }
 
 std::string ShowOpenFileDialog(const std::string& defaultDirectory) {
