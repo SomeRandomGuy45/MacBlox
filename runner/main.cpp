@@ -22,16 +22,13 @@
 #include <regex>
 #include <stdlib.h>
 #include <stdio.h>
-#include <cstdint>
 #include <unistd.h>
 #include <map>
 #include <functional>
 #include <sys/stat.h>
-/**
 #include <discord-rpc/discord_rpc.h>
 #include <discord-rpc/discord_register.h>
-**/
-#include "discord-game-sdk/discord.h"
+//#include "discord-game-sdk/discord.h"
 #include <curl/curl.h> //for downloading files
 #include "curlpp/cURLpp.hpp" //requests with out creating files
 #include "curlpp/Options.hpp"
@@ -58,7 +55,15 @@
 #include "json.hpp"
 #include "helper.h"
 
-discord::Core* core{};
+/*
+struct DiscordState {
+	std::unique_ptr<discord::Core> core;
+};
+
+namespace {
+	volatile bool interrupted{ false };
+}
+*/
 
 std::string user = getenv("USER"); //gets the current user name
 std::string logfile = "~/Library/Logs/Roblox/"; //creates the log directory path
@@ -193,36 +198,39 @@ void InitTable()
     argTable["--debug"] = [](const std::string&) {isDebug = true; };
 }
 
+
+void InitDiscord()
+{
+    DiscordEventHandlers handlers;
+    memset(&handlers, 0, sizeof(handlers)); //memset funny
+    handlers.ready = [](const DiscordUser* user) {
+        std::cout << "[INFO] Connected as: " << user->username << "\n";
+    };
+    handlers.errored = [](int errorCode, const char* message) {
+        std::cerr << "[ERROR] " << message << " (" << errorCode << ")\n";
+    };
+    Discord_Initialize("1267308900420419664", &handlers, 1, NULL);
+}
+
 static void UpdDiscordActivity(std::string details, std::string state, int64_t startTimestamp, int64_t endTimestamp, int AssetIDLarge, int AssetIDSmall, std::string largeImgText, std::string smallImageText)
 {
+    DiscordRichPresence presence;
     startTimestamp = startTimestamp != 0 ? startTimestamp : time(0);
     endTimestamp = endTimestamp != 0 ? endTimestamp : time(0) + 5 * 60;
     AssetIDLarge = AssetIDLarge != 0 ? AssetIDLarge : 0;
     AssetIDSmall = AssetIDSmall != 0 ? AssetIDSmall : 0;
     std::string key_large = AssetIDLarge != 0 ? "https://assetdelivery.roblox.com/v1/asset/?id=" + std::to_string(AssetIDLarge) : GameIMG;
     std::string key_small = "https://assetdelivery.roblox.com/v1/asset/?id=" + std::to_string(AssetIDSmall);
-    /*
-     */
-    discord::Activity activity{};
-    activity.SetState(state.c_str());
-    activity.SetDetails(details.c_str());
-    activity.GetAssets().SetLargeImage(key_large.c_str());
-    activity.GetAssets().SetSmallImage(key_small.c_str());
-    if (!largeImgText.empty()) {
-        activity.GetAssets().SetLargeText(largeImgText.c_str());
-    }
-    if (!smallImageText.empty()) {
-        activity.GetAssets().SetSmallText(smallImageText.c_str());
-    }
-    activity.GetTimestamps().SetStart(startTimestamp);
-    activity.GetTimestamps().SetEnd(endTimestamp);
-    activity.SetType(discord::ActivityType::Playing);
-    /*
-    core->ActivityManager().UpdateActivity(activity, [](discord::Result result) {
-    std::cout << ((result == discord::Result::Ok) ? "Succeeded" : "Failed")
-    << " updating activity!\n";
-    });
-    */
+    memset(&presence, 0, sizeof(presence));
+    presence.details = details.c_str();
+    presence.state = state.c_str();
+    presence.startTimestamp = startTimestamp;
+    presence.endTimestamp = endTimestamp;
+    presence.largeImageKey = key_large.c_str();
+    presence.largeImageText = largeImgText.c_str();
+    presence.smallImageKey = key_small.c_str();
+    presence.smallImageText = smallImageText.c_str();
+    Discord_UpdatePresence(&presence);
 }
 
 CurrentTypes Current = Home;
@@ -496,34 +504,17 @@ std::string GetCoolFile(const std::string& logDirectory) {
     return latestFile->path().string();
 }
 
-void Update(discord::Core* core)
+/*
+void Update(DiscordState& state_)
 {
-   if (core != nullptr) {
-       core->RunCallbacks();
-   }
+   state_.core->RunCallbacks();
 }
+*/
 
 int main(int argc, char* argv[]) {
-    std::string script = R"(
-        tell application "System Events"
-            set appList to name of every process
-        end tell
-
-        if "Discord" is in appList then
-            return "true"
-        else
-            return "false"
-        end if
-    )";
-    std::string output = runAppleScriptAndGetOutput(script);
-    if (output == "true") {
-        if (discord::Core::Create(1267308900420419664, DiscordCreateFlags_Default, &core) != discord::Result::Ok) {
-            std::cerr << "[ERROR] Failed to create Discord core!\n";
-        }
-    }
-    if (core == nullptr) {
-        std::cout << "[INFO] Core is nullptr \n";
-    }
+    //discord::Core* core = nullptr;
+    //DiscordState state;
+    InitDiscord();
     UpdDiscordActivity("Test", "Playing", 0, 0, 154835815, 154835815, "Test", "Test");
     if (!canRun)
     {
@@ -634,7 +625,7 @@ int main(int argc, char* argv[]) {
         std::cout << "[INFO] Started main thread\n";
         while (isRobloxRunning()) {
             std::this_thread::sleep_for(std::chrono::milliseconds(16));
-            Update(core);
+            //Update(state);
         }
         logThread.~thread();
     }

@@ -11,10 +11,9 @@ Macblox is a funny project i wanted to do because there wasn't bloxstrap for mac
 * curlpp [Github](https://github.com/jpbarrette/curlpp/)
 * wxwidgets [Github](https://github.com/wxWidgets/wxWidgets)
 ### Building the project:
-Just run the following commands
-
+Just run the following command
 ``
-cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_MAKE_PROGRAM=ninja -DCMAKE_TOOLCHAIN_FILE= <user path here>/.vcpkg/vcpkg/scripts/buildsystems/vcpkg.cmake -G Ninja -S <path to project>s/Macblox -B <path to project>/build
+make
 ``
 
 # Credits
