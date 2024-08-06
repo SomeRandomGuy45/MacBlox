@@ -6,7 +6,7 @@ Macblox is a funny project i wanted to do because there wasn't bloxstrap for mac
 
 # Building
 ### Libraries needed:
-* discord-game-sdk [Download](https://dl-game-sdk.discordapp.net/3.2.1/discord_game_sdk.zip)
+* discord-rpc [Download](https://github.com/discord/discord-rpc)
 * libcurl [Website](https://curl.se/libcurl/)
 * curlpp [Github](https://github.com/jpbarrette/curlpp/)
 * wxwidgets [Github](https://github.com/wxWidgets/wxWidgets)

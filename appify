@@ -117,7 +117,7 @@ cat <<EOF > $DIR/Info.plist
    <key>NSUserNotificationAlertStyle</key>
    <string>alert</string>
    <key>NSAppleEventsUsageDescription</key>
-   <string>We need to control System Events for roblox!</string>   
+   <string>We need to control System Events for roblox!</string> 
 </dict>
 </plist>
 EOF
