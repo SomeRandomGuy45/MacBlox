@@ -140,7 +140,7 @@ std::string ShowOpenFileDialog(const std::string& defaultDirectory) {
         NSString* nsDefaultDirectory = [NSString stringWithUTF8String:defaultDirectory.c_str()];
         [openPanel setDirectoryURL:[NSURL fileURLWithPath:nsDefaultDirectory]];
     }
-    [openPanel setPrompt:@"Select at ~/Library/Logs/Roblox"];
+    [openPanel setPrompt:@"Select folder (do ~/Library/Logs/Roblox)"];
     if ([openPanel runModal] == NSModalResponseOK) {
         NSURL* fileURL = [[openPanel URLs] objectAtIndex:0];
         NSString* filePath = [fileURL path];
