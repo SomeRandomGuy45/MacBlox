@@ -54,6 +54,37 @@ void terminateApplicationByName(const std::string& appName) {
     NSLog(@"[INFO] Application %@ not found.", nsAppName);
 } 
 
+std::string GetDownloadsFolderPath() {
+    @autoreleasepool {
+        // Get the path to the Downloads folder
+        NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDownloadsDirectory, NSUserDomainMask, YES);
+        NSString *downloadsPath = [paths firstObject];
+
+        // Request access to the Downloads folder
+        NSURL *downloadsURL = [NSURL fileURLWithPath:downloadsPath];
+        NSError *error = nil;
+        [downloadsURL startAccessingSecurityScopedResource];
+        
+        // Check if the application has access
+        BOOL accessGranted = [downloadsURL checkResourceIsReachableAndReturnError:&error];
+        
+        if (!accessGranted) {
+            NSLog(@"Permission denied for Downloads folder: %@", error);
+            [downloadsURL stopAccessingSecurityScopedResource];
+            return ""; // Return an empty string if access is denied
+        }
+        
+        // Convert NSString to std::string and return
+        std::string path = std::string([downloadsPath UTF8String]);
+        
+        // Stop accessing the resource when done
+        [downloadsURL stopAccessingSecurityScopedResource];
+        
+        return path;
+    }
+}
+
+
 void runApp(const std::string &launchPath, bool Check) {
    // Convert std::string to NSString
     NSString *launchAppPath = [NSString stringWithUTF8String:launchPath.c_str()];

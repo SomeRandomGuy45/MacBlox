@@ -37,4 +37,6 @@ void RenameFile(const char* oldPath, const char* newPath);
 
 std::string GetResourcesFolderPath();
 
+std::string GetDownloadsFolderPath();
+
 #endif // HELPER_H

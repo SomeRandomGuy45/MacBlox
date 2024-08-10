@@ -85,11 +85,12 @@ private:
     std::string RobloxApplicationPath;
     std::string GetBasePath = GetPath();
     std::string ResourcePath = GetResourcesFolderPath();
+    std::string Download = GetDownloadsFolderPath();
     json bootstrapData;
     wxPanel* panel = nullptr;
     wxStaticText* statusText = nullptr;
     wxGauge* progressGauge = nullptr;
-    //Fix al of this
+    //Fix all of this
     int bootStrapVersion = 0;
     int statusText_X = 235;
     int statusText_Y = 270;
@@ -191,6 +192,15 @@ void BootstrapperFrame::LoadBootstrapData(json BootStrapData)
     }
 }
 
+void Check(int result)
+{
+    if (result == 0) {
+        std::cout << "Command executed successfully." << std::endl;
+    } else {
+        std::cerr << "Command failed with exit code: " << result << std::endl;
+    }
+}
+
 void BootstrapperFrame::UpdateProgress(double progress)
 {
     int targetProgress = static_cast<int>(progress * 100);
@@ -220,6 +230,7 @@ void BootstrapperFrame::DoLogic()
     else
     {
         RobloxApplicationPath = "/Applications/Roblox.app/Contents/MacOS";
+        NeedToReinstall = true;
     }
     std::cout << "[INFO] Path: " << RobloxApplicationPath << "\n";
     std::string bootstrapDataFileData = FileChecker(GetBasePath + "/bootstrap_data.json");
@@ -280,7 +291,7 @@ void BootstrapperFrame::DoLogic()
     }
     if (NeedToReinstall)
     {
-        std::string DownloadPath = GetBasePath + "/RobloxPlayer.zip";
+        std::string DownloadPath = Download +"/RobloxPlayer.zip";
         std::cout << "[INFO] Reinstalling Roblox" << std::endl;
         if (!CustomChannel.empty())
         {
@@ -304,22 +315,35 @@ void BootstrapperFrame::DoLogic()
         }
         if (!unzipFile(DownloadPath.c_str(), "/Applications"))
         {
-            std::cerr << "[ERROR] Failed to extract RobloxPlayer.zip" << std::endl;
+            std::cerr << "[ERROR] Failed to extract Roblox.zip" << std::endl;
             Close(true);
             return;
         }
-        RenameFile("/Applications/RobloxPlayer.app", "/Applications/Roblox.app");
         std::string defaultPath = "/Applications/Roblox.app/Contents/MacOS";
         RobloxApplicationPath = ShowOpenFileDialog("file://localhost"+defaultPath);
-        if (RobloxApplicationPath != "/Applications/Roblox.app/Contents/MacOS")
+        if (RobloxApplicationPath != "/Applications/RobloxPlayer.app/Contents/MacOS")
         {
             std::cerr << "[ERROR] Thats not the right path!" << std::endl;
-            std::string path = "The location of the Roblox MacOS folder isn't correct. The location of is /Applications/Roblox.app/Contents/MacOS";
+            std::string path = "The location of the Roblox MacOS folder isn't correct. The location of is /Applications/RobloxPlayer.app/Contents/MacOS";
             wxString toWxString(path.c_str(), wxConvUTF8);
             wxMessageBox(toWxString, "Error", wxOK | wxICON_ERROR);
             Close(true);
             return;
         }
+        RenameFile("/Applications/RobloxPlayer.app", "/Applications/Roblox.app");
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+        std::string command1 = "chmod +x /Applications/Roblox.app/Contents/MacOS/RobloxPlayer";
+        std::string command2 = "chmod +x /Applications/Roblox.app/Contents/MacOS/RobloxCrashHandler";
+        std::string command3 = "chmod +x /Applications/Roblox.app/Contents/MacOS/Roblox.app/Contents/MacOS/Roblox";
+        std::string command4 = "chmod +x /Applications/Roblox.app/Contents/MacOS/RobloxPlayerInstaller.app/Contents/MacOS/RobloxPlayerInstaller";
+        int result = system(command1.c_str());
+        Check(result);
+        result = system(command2.c_str());
+        Check(result);
+        result = system(command3.c_str());
+        Check(result);
+        result = system(command4.c_str());
+        Check(result);
         if (!FolderExists("/Applications/Roblox.app/Contents/MacOS/ClientSettings"))
         {
             CreateFolder("/Applications/Roblox.app/Contents/MacOS/ClientSettings");
@@ -380,4 +404,5 @@ BootstrapperFrame::BootstrapperFrame(const wxString& title, long style, const wx
     // Raise the controls so they are displayed on top
     statusText->Raise();
     progressGauge->Raise();
+    std::cout << "[INFO] " << Download << std::endl;
 }
