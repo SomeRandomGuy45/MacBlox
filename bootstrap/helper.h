@@ -25,6 +25,8 @@ bool FolderExists(const std::string& path);
 
 bool CanAccessFolder(const std::string& path);
 
+bool doesAppExist(const std::string& path);
+
 void copyFile(const std::string& oldPath, const std::string& newPath);
 
 extern "C" void downloadFile(const char* urlString, const char* destinationPath);
@@ -34,6 +36,10 @@ std::string FileChecker(std::string path);
 bool unzipFile(const char* zipFilePath, const char* destinationPath);
 
 void RenameFile(const char* oldPath, const char* newPath);
+
+void TestCommand();
+
+void fixInstall(std::string path);
 
 std::string GetResourcesFolderPath();
 

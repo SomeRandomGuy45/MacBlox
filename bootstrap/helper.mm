@@ -14,6 +14,15 @@
 
 namespace fs = std::filesystem;
 
+BOOL isAdminUser;
+static NSString * const sAppAdminInstallPath = @"/Applications";
+static NSString * const sAppUserInstallPath  =@"~/Applications";
+
+void TestCommand() {
+    isAdminUser = [[NSFileManager defaultManager] isWritableFileAtPath:sAppAdminInstallPath];
+    NSLog(@"Is admin user: %@", isAdminUser? @"Yes" : @"No");
+}
+
 bool isAppRunning(const std::string &appName) {
     @autoreleasepool {
         // Convert std::string to NSString
@@ -54,36 +63,70 @@ void terminateApplicationByName(const std::string& appName) {
     NSLog(@"[INFO] Application %@ not found.", nsAppName);
 } 
 
-std::string GetDownloadsFolderPath() {
-    @autoreleasepool {
-        // Get the path to the Downloads folder
-        NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDownloadsDirectory, NSUserDomainMask, YES);
-        NSString *downloadsPath = [paths firstObject];
-
-        // Request access to the Downloads folder
-        NSURL *downloadsURL = [NSURL fileURLWithPath:downloadsPath];
-        NSError *error = nil;
-        [downloadsURL startAccessingSecurityScopedResource];
-        
-        // Check if the application has access
-        BOOL accessGranted = [downloadsURL checkResourceIsReachableAndReturnError:&error];
-        
-        if (!accessGranted) {
-            NSLog(@"[ERROR] Permission denied for Downloads folder: %@", error);
-            [downloadsURL stopAccessingSecurityScopedResource];
-            return ""; // Return an empty string if access is denied
-        }
-        
-        // Convert NSString to std::string and return
-        std::string path = std::string([downloadsPath UTF8String]);
-        
-        // Stop accessing the resource when done
-        [downloadsURL stopAccessingSecurityScopedResource];
-        
-        return path;
+bool ensureDirectoryExists(const std::string& path) {
+    NSString *nsPath = [NSString stringWithUTF8String:path.c_str()];
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    BOOL isDirectory;
+    
+    // Check if the directory exists
+    BOOL exists = [fileManager fileExistsAtPath:nsPath isDirectory:&isDirectory];
+    if (exists && isDirectory) {
+        return true; // Directory exists
     }
+    
+    // Attempt to create the directory
+    NSError *error = nil;
+    BOOL success = [fileManager createDirectoryAtPath:nsPath withIntermediateDirectories:YES attributes:nil error:&error];
+    if (!success) {
+        NSLog(@"Failed to create directory: %@", [error localizedDescription]);
+        return false;
+    }
+    
+    return true;
 }
 
+std::string GetDownloadsFolderPath() {
+    NSString *downloadsPath = [NSSearchPathForDirectoriesInDomains(NSDownloadsDirectory, NSUserDomainMask, YES) firstObject];
+    // Convert NSString to std::string
+    const char *pathCString = [downloadsPath UTF8String];
+    std::string pathString(pathCString);
+    
+    // Ensure the directory exists
+    if (!ensureDirectoryExists(pathString)) {
+        std::cerr << "Failed to ensure the Downloads folder exists." << std::endl;
+        return "";
+    }
+    
+    return pathString;
+}
+
+
+void fixInstall(std::string path) {
+    // Convert the std::string to an NSString
+    NSString *applicationPath = [NSString stringWithUTF8String:path.c_str()];
+
+    // Create the command with the application path
+    NSString *cmd = [NSString stringWithFormat:@"xattr -w com.apple.quarantine \"\" %@", applicationPath];
+
+    // Execute the command
+    system([cmd UTF8String]);
+}
+
+bool doesAppExist(const std::string& path) {
+    // Convert std::string to NSString
+    NSString* nsPath = [NSString stringWithUTF8String:path.c_str()];
+
+    // Create an NSURL from the NSString path
+    NSURL* url = [NSURL fileURLWithPath:nsPath];
+
+    // Use NSFileManager to check if the file exists
+    NSFileManager* fileManager = [NSFileManager defaultManager];
+    BOOL isDirectory;
+    BOOL exists = [fileManager fileExistsAtPath:[url path] isDirectory:&isDirectory];
+    
+    // Check if the file exists and if it is a directory (i.e., .app bundle)
+    return exists && isDirectory;
+}
 
 void runApp(const std::string &launchPath, bool Check) {
    // Convert std::string to NSString

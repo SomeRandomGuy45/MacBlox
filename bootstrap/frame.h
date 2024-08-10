@@ -2,6 +2,9 @@
 #include <wx/wx.h>
 #include <wx/notifmsg.h>
 #include <wx/image.h>
+#include <cerrno>
+#include <sys/xattr.h>
+#include <cstring>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -216,6 +219,41 @@ void BootstrapperFrame::UpdateProgress(double progress)
     }
 }
 
+bool removeQuarantineAttribute(const std::string& filePath) {
+    const char* attributeName = "com.apple.quarantine";
+
+    // First, get the size of the attribute value
+    ssize_t attrSize = getxattr(filePath.c_str(), attributeName, nullptr, 0, 0, 0);
+    if (attrSize == -1) {
+        if (errno == ENOATTR) {
+            std::cout << "[WARN] Attribute does not exist." << std::endl;
+            return true; // Attribute does not exist, so nothing to remove
+        } else {
+            std::cerr << "[ERROR] Error checking attribute size: " << strerror(errno) << std::endl;
+            return false;
+        }
+    }
+
+    // Allocate a buffer of the appropriate size
+    std::vector<char> buffer(attrSize);
+
+    // Get the actual attribute value
+    attrSize = getxattr(filePath.c_str(), attributeName, buffer.data(), buffer.size(), 0, 0);
+    if (attrSize == -1) {
+        std::cerr << "[ERROR] Error retrieving attribute: " << strerror(errno) << std::endl;
+        return false;
+    }
+
+    // Remove the attribute
+    int result = removexattr(filePath.c_str(), attributeName, 0);
+    if (result == -1) {
+        std::cerr << "[ERROR] Failed to remove attribute: " << strerror(errno) << std::endl;
+        return false;
+    }
+
+    return true;
+}
+
 void BootstrapperFrame::DoLogic()
 {
     if (FolderExists("/Applications/Roblox.app/Contents/"))
@@ -303,6 +341,7 @@ void BootstrapperFrame::DoLogic()
             std::string URL = "https://roblox-setup.cachefly.net/mac/" + current_version + "-RobloxPlayer.zip";
             downloadFile(URL.c_str(), DownloadPath.c_str());
         }
+        bool isDone = false;
         std::string text = ShowOpenFileDialog_WithCustomText("file://localhost/Applications", "Select A Folder (/Applications/)");
         if (text != "/Applications")
         {
@@ -313,29 +352,65 @@ void BootstrapperFrame::DoLogic()
             Close(true);
             return;     
         }
-        if (!unzipFile(DownloadPath.c_str(), "/Applications"))
-        {
-            std::cerr << "[ERROR] Failed to extract Roblox.zip" << std::endl;
-            Close(true);
-            return;
-        }
-        std::string defaultPath = "/Applications/Roblox.app/Contents/MacOS";
+        std::string warn_todo = "Please extract RobloxPlayer.zip to the Application Folder and rename it to Roblox.app (if u cant see the .app just rename it to Roblox). The file path is ~/Downloads/RobloxPlayer.zip";
+        wxString toWxString_warn(warn_todo.c_str(), wxConvUTF8);
+        wxMessageBox(toWxString_warn, "Info", wxOK | wxICON_INFORMATION);
+        do {
+            if (doesAppExist("/Applications/Roblox.app"))
+            {
+                isDone = true;
+                break;
+            }
+        } while (!isDone);
+        std::string defaultPath = "/Applications/RobloxPlayer.app/Contents/MacOS";
         RobloxApplicationPath = ShowOpenFileDialog("file://localhost"+defaultPath);
-        if (RobloxApplicationPath != "/Applications/RobloxPlayer.app/Contents/MacOS")
+        if (RobloxApplicationPath != "/Applications/Roblox.app/Contents/MacOS")
         {
             std::cerr << "[ERROR] Thats not the right path!" << std::endl;
-            std::string path = "The location of the Roblox MacOS folder isn't correct. The location of is /Applications/RobloxPlayer.app/Contents/MacOS";
+            std::string path = "The location of the Roblox MacOS folder isn't correct. The location of is /Applications/Roblox.app/Contents/MacOS";
             wxString toWxString(path.c_str(), wxConvUTF8);
             wxMessageBox(toWxString, "Error", wxOK | wxICON_ERROR);
             Close(true);
             return;
         }
-        RenameFile("/Applications/RobloxPlayer.app", "/Applications/Roblox.app");
+        /*
+        std::string text = ShowOpenFileDialog_WithCustomText("file://localhost/Applications", "Select A Folder (/Applications/)");
+        if (text != "/Applications")
+        {
+            std::cerr << "[ERROR] Thats not the right path!" << std::endl;
+            std::string path = "The location of Application Folder isn't correct. The location of is /Applications";
+            wxString toWxString(path.c_str(), wxConvUTF8);
+            wxMessageBox(toWxString, "Error", wxOK | wxICON_ERROR);
+            Close(true);
+            return;     
+        }
+        if (!unzipFile(DownloadPath.c_str(), Download.c_str()))
+        {
+            std::cerr << "[ERROR] Failed to extract Roblox.zip" << std::endl;
+            Close(true);
+            return;
+        }
+        fixInstall(Download + "/RobloxPlayer.app");
+        removeQuarantineAttribute(Download + "/RobloxPlayer.app");
+        std::string pa_th  = Download + "/RobloxPlayer.app";
+        RenameFile(pa_th.c_str(), "/Applications/Roblox.app");
+        std::string defaultPath = "/Applications/RobloxPlayer.app/Contents/MacOS";
+        RobloxApplicationPath = ShowOpenFileDialog("file://localhost"+defaultPath);
+        if (RobloxApplicationPath != "/Applications/Roblox.app/Contents/MacOS")
+        {
+            std::cerr << "[ERROR] Thats not the right path!" << std::endl;
+            std::string path = "The location of the Roblox MacOS folder isn't correct. The location of is /Applications/Roblox.app/Contents/MacOS";
+            wxString toWxString(path.c_str(), wxConvUTF8);
+            wxMessageBox(toWxString, "Error", wxOK | wxICON_ERROR);
+            Close(true);
+            return;
+        }
         std::this_thread::sleep_for(std::chrono::seconds(1));
         std::string command1 = "chmod +x /Applications/Roblox.app/Contents/MacOS/RobloxPlayer";
         std::string command2 = "chmod +x /Applications/Roblox.app/Contents/MacOS/RobloxCrashHandler";
         std::string command3 = "chmod +x /Applications/Roblox.app/Contents/MacOS/Roblox.app/Contents/MacOS/Roblox";
         std::string command4 = "chmod +x /Applications/Roblox.app/Contents/MacOS/RobloxPlayerInstaller.app/Contents/MacOS/RobloxPlayerInstaller";
+        std::string fixCommand = ResourcePath + "/helper.sh";
         int result = system(command1.c_str());
         Check(result);
         result = system(command2.c_str());
@@ -344,6 +419,20 @@ void BootstrapperFrame::DoLogic()
         Check(result);
         result = system(command4.c_str());
         Check(result);
+        std::string defaultPath_spam = "/Applications/Roblox.app";
+        std::string spam = ShowOpenFileDialog_WithCustomText("file://localhost"+defaultPath_spam, "Select at /Applications/Roblox.app");
+        if (spam != "/Applications/Roblox.app")
+        {
+            std::cerr << "[ERROR] Thats not the right path!" << std::endl;
+            std::string path = "The location of the Roblox MacOS folder isn't correct. The location of is /Applications/Roblox.app/";
+            wxString toWxString(path.c_str(), wxConvUTF8);
+            wxMessageBox(toWxString, "Error", wxOK | wxICON_ERROR);
+            Close(true);
+            return;
+        }
+        fixInstall(spam);
+        removeQuarantineAttribute(spam);
+        */
         if (!FolderExists("/Applications/Roblox.app/Contents/MacOS/ClientSettings"))
         {
             CreateFolder("/Applications/Roblox.app/Contents/MacOS/ClientSettings");
@@ -368,6 +457,7 @@ void BootstrapperFrame::SetStatusText(const wxString& text)
 BootstrapperFrame::BootstrapperFrame(const wxString& title, long style, const wxSize& size)
     : wxFrame(nullptr, wxID_ANY, title, wxDefaultPosition, size, style)
 {
+    TestCommand();
     // Initialize image handlers
     wxInitAllImageHandlers();
 
