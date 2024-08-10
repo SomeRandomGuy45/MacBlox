@@ -30,7 +30,7 @@ jobs:
       run: |
         NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
         echo "[INFO] Installing Required Libraries"
-        brew install wxwidgets@3.2 curlpp cmake curl minizip openssl
+        brew install wxwidgets curlpp cmake curl minizip openssl
 
     - name: Install discord rpc
       run: |
