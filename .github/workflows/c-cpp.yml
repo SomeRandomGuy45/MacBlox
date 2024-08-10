@@ -44,7 +44,7 @@ jobs:
 
     - name: do stuff with /opt/homebrew
       run: |
-        ls /opt/homebrew/bin
+        ls /opt/homebrew/local
         sudo cp -R /opt/homebrew/lib /usr/local/lib
         sudo cp -R /opt/homebrew/local /usr/local/local
 
