@@ -27,7 +27,7 @@ jobs:
           fi
     - name: Install brew and libs
       run: |
-            NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/SomeRandomGuy45/brew_install/main/installer.sh)"
+            NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
             echo "[INFO] Install Required Libs"
             brew install wxwidgets@3.2
             brew install curlpp
