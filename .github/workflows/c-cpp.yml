@@ -9,7 +9,7 @@ on:
 jobs:
   build:
 
-    runs-on: macos-latest
+    runs-on: macos-13
 
     steps:
     - uses: actions/checkout@v4
@@ -41,12 +41,6 @@ jobs:
         sudo mkdir -p /usr/local/include/discord-rpc
         sudo mv discord_rpc/include/discord_register.h /usr/local/include/discord-rpc
         sudo mv discord_rpc/include/discord_rpc.h /usr/local/include/discord-rpc
-
-    - name: do stuff with /opt/homebrew
-      run: |
-        export CPATH=/opt/homebrew/include
-        export LIBRARY_PATH=/opt/homebrew/lib
-        export CPATH=/opt/homebrew/include
 
     - name: Building
       run: |
