@@ -195,9 +195,9 @@ void BootstrapperFrame::LoadBootstrapData(json BootStrapData)
 void Check(int result)
 {
     if (result == 0) {
-        std::cout << "Command executed successfully." << std::endl;
+        std::cout << "[INFO] Command executed successfully." << std::endl;
     } else {
-        std::cerr << "Command failed with exit code: " << result << std::endl;
+        std::cerr << "[ERROR] Command failed with exit code: " << result << std::endl;
     }
 }
 

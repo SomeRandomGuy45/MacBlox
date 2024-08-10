@@ -69,7 +69,7 @@ std::string GetDownloadsFolderPath() {
         BOOL accessGranted = [downloadsURL checkResourceIsReachableAndReturnError:&error];
         
         if (!accessGranted) {
-            NSLog(@"Permission denied for Downloads folder: %@", error);
+            NSLog(@"[ERROR] Permission denied for Downloads folder: %@", error);
             [downloadsURL stopAccessingSecurityScopedResource];
             return ""; // Return an empty string if access is denied
         }
