@@ -1,0 +1,83 @@
+name: C/C++ CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install xcode
+      run: |
+        xcode-select -p &> /dev/null
+        if [ $? -ne 0 ]; then
+          echo "[INFO] Command Line Tools for Xcode not found. Installing from softwareupdate…"
+          touch /tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress
+          PROD=$(softwareupdate -l | grep "\*.*Command Line" | tail -n 1 | sed 's/^[^C]* //')
+          softwareupdate -i "$PROD" --verbose
+        else
+          echo "[INFO] Command Line Tools for Xcode have been installed."
+        fi
+
+    - name: Install Homebrew and Required Libraries
+      run: |
+        NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        echo "[INFO] Installing Required Libraries"
+        brew install wxwidgets@3.2 curlpp cmake curl minizip openssl
+
+    - name: Install discord rpc
+      run: |
+        git clone https://github.com/SomeRandomGuy45/discord_rpc.git
+        sudo mv discord_rpc/lib/libdiscord-rpc.a /usr/local/lib
+        sudo mkdir -p /usr/local/include/discord-rpc
+        sudo mv discord_rpc/include/discord_register.h /usr/local/include/discord-rpc
+        sudo mv discord_rpc/include/discord_rpc.h /usr/local/include/discord-rpc
+
+    - name: Copy include and lib directories from /opt/homebrew
+      run: |
+        # Function to copy directories if they exist and do not already exist at the destination
+        copy_if_not_exists() {
+          local src="$1"
+          local dest="$2"
+          if [ -d "$src" ]; then
+            if [ ! -d "$dest" ]; then
+              echo "Creating destination directory: $dest"
+              sudo mkdir -p "$dest"
+            fi
+            echo "Copying from $src to $dest"
+            sudo cp -R "$src"/* "$dest"/
+          fi
+        }
+
+        # Define source and destination directories
+        SOURCE_DIR="/opt/homebrew"
+        DEST_INCLUDE="/usr/local/include"
+        DEST_LIB="/usr/local/lib"
+
+        # Find and copy include directories
+        find "$SOURCE_DIR" -type d -name 'include' | while read -r include_dir; do
+          dest_include="$DEST_INCLUDE/$(basename "$(dirname "$include_dir")")"
+          copy_if_not_exists "$include_dir" "$dest_include"
+        done
+
+        # Find and copy lib directories
+        find "$SOURCE_DIR" -type d -name 'lib' | while read -r lib_dir; do
+          dest_lib="$DEST_LIB/$(basename "$(dirname "$lib_dir")")"
+          copy_if_not_exists "$lib_dir" "$dest_lib"
+        done
+
+        echo "[INFO] Copying complete."
+
+    - name: Building
+      run: |
+        git clone https://github.com/SomeRandomGuy45/MacBlox.git
+        cd MacBlox
+        make
+        echo "[INFO] Finished building MacBlox"
