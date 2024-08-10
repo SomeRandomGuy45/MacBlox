@@ -38,10 +38,10 @@ jobs:
     - name: Install discord rpc
       run: |
             git clone https://github.com/SomeRandomGuy45/discord_rpc.git
-            sudo mv /discord_rpc/lib/libdiscord-rpc.a /usr/local/lib
+            sudo mv discord_rpc/lib/libdiscord-rpc.a /usr/local/lib
             sudo mkdir /usr/local/include/discord-rpc
-            sudo mv /discord_rpc/include/discord_register.h /usr/local/include/discord-rpc
-            sudo mv /discord_rpc/include/discord_rpc.h /usr/local/include/discord-rpc
+            sudo mv discord_rpc/include/discord_register.h /usr/local/include/discord-rpc
+            sudo mv discord_rpc/include/discord_rpc.h /usr/local/include/discord-rpc
     - name: Building
       run: |
         git clone https://github.com/SomeRandomGuy45/MacBlox.git
