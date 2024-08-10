@@ -42,6 +42,7 @@ jobs:
 
     - name: Copy include and lib directories from /opt/homebrew
       run: |
+        # Function to copy directories if they exist and do not already exist at the destination
         copy_if_not_exists() {
           local src="$1"
           local dest="$2"
@@ -61,12 +62,16 @@ jobs:
         DEST_LIB="/usr/local/lib"
         # Find and copy include directories
         find "$SOURCE_DIR" -type d -name 'include' | while read -r include_dir; do
-          dest_include="$DEST_INCLUDE/$(basename "$(dirname "$include_dir")")"
+          # Extract the parent directory name (e.g., libxext from /opt/homebrew/Cellar/libxext/1.3.6/include)
+          parent_dir=$(basename "$(dirname "$(dirname "$include_dir")")")
+          dest_include="$DEST_INCLUDE/$parent_dir"
           copy_if_not_exists "$include_dir" "$dest_include"
         done
         # Find and copy lib directories
         find "$SOURCE_DIR" -type d -name 'lib' | while read -r lib_dir; do
-          dest_lib="$DEST_LIB/$(basename "$(dirname "$lib_dir")")"
+          # Extract the parent directory name (e.g., libxext from /opt/homebrew/Cellar/libxext/1.3.6/lib)
+          parent_dir=$(basename "$(dirname "$(dirname "$lib_dir")")")
+          dest_lib="$DEST_LIB/$parent_dir"
           copy_if_not_exists "$lib_dir" "$dest_lib"
         done
         echo "[INFO] Copying complete."
