@@ -35,6 +35,8 @@ jobs:
     - name: Install discord rpc
       run: |
         git clone https://github.com/SomeRandomGuy45/discord_rpc.git
+        sudo rm -rf /usr/local/lib
+        sudo mkdir -p /usr/local/lib
         sudo mv discord_rpc/lib/libdiscord-rpc.a /usr/local/lib
         sudo mkdir -p /usr/local/include/discord-rpc
         sudo mv discord_rpc/include/discord_register.h /usr/local/include/discord-rpc
