@@ -12,40 +12,84 @@ jobs:
     runs-on: macos-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
     - name: Install xcode
       run: |
-          xcode-select -p &> /dev/null
-          if [ $? -ne 0 ]; then
-            echo "[INFO] Command Line Tools for Xcode not found. Installing from softwareupdate…"
-          # This temporary file prompts the 'softwareupdate' utility to list the Command Line Tools
-            touch /tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress;
-            PROD=$(softwareupdate -l | grep "\*.*Command Line" | tail -n 1 | sed 's/^[^C]* //')
-            softwareupdate -i "$PROD" --verbose;
-          else
-            echo "[INFO] Command Line Tools for Xcode have been installed."
-          fi
-    - name: Install brew and libs
+        xcode-select -p &> /dev/null
+        if [ $? -ne 0 ]; then
+          echo "[INFO] Command Line Tools for Xcode not found. Installing from softwareupdate…"
+          touch /tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress
+          PROD=$(softwareupdate -l | grep "\*.*Command Line" | tail -n 1 | sed 's/^[^C]* //')
+          softwareupdate -i "$PROD" --verbose
+        else
+          echo "[INFO] Command Line Tools for Xcode have been installed."
+        fi
+
+    - name: Install Homebrew and Dependencies
       run: |
-            NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-            echo "[INFO] Install Required Libs"
-            brew install wxwidgets@3.2
-            brew install curlpp
-            brew install cmake
-            brew install curl
-            brew install minizip
-            brew install openssl
+        NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        echo "[INFO] Installing Required Libraries"
+        brew install wxwidgets@3.2 curlpp cmake curl minizip openssl
+
     - name: Install discord rpc
       run: |
-            git clone https://github.com/SomeRandomGuy45/discord_rpc.git
-            sudo mv discord_rpc/lib/libdiscord-rpc.a /usr/local/lib
-            sudo mkdir /usr/local/include
-            sudo mkdir /usr/local/include/discord-rpc
-            sudo mv discord_rpc/include/discord_register.h /usr/local/include/discord-rpc
-            sudo mv discord_rpc/include/discord_rpc.h /usr/local/include/discord-rpc
-    - name: Building
+        git clone https://github.com/SomeRandomGuy45/discord_rpc.git
+        sudo mv discord_rpc/lib/libdiscord-rpc.a /usr/local/lib
+        sudo mkdir -p /usr/local/include/discord-rpc
+        sudo mv discord_rpc/include/discord_register.h /usr/local/include/discord-rpc
+        sudo mv discord_rpc/include/discord_rpc.h /usr/local/include/discord-rpc
+
+    - name: Build and Package
       run: |
+        echo "[INFO] Cloning MacBlox repository"
         git clone https://github.com/SomeRandomGuy45/MacBlox.git
         cd MacBlox
-        make
-        echo "[INFO] Finshed building MacBlox"
+
+        echo "[INFO] Creating build directory"
+        mkdir -p build
+
+        echo "[INFO] Building main app"
+        clang++ -x objective-c++ $(shell wx-config --cxxflags --libs) -o build/runner $(CURDIR)/runner/main.cpp $(CURDIR)/runner/helper.mm \
+          $(shell wx-config --libs) -ldiscord-rpc -lcurl -lcurlpp -lz -lminizip \
+          -framework CoreFoundation -framework DiskArbitration -framework Foundation \
+          -framework Cocoa -framework UserNotifications -lssl -lcrypto --std=c++20
+
+        echo "[INFO] Packaging main app"
+        ./appify -s build/runner -n play -i test
+        codesign --sign - --entitlements Macblox.plist --deep play.app --force
+        mv -f play.app build/play.app
+        mv build/play.app build/Macblox/"Play Roblox.app"
+        rm -f build/runner
+
+        echo "[INFO] Building bootstrap app"
+        clang++ -x objective-c++ $(shell wx-config --cxxflags --libs) -o build/bootstrap $(CURDIR)/bootstrap/app.cpp $(CURDIR)/bootstrap/helper.mm \
+          $(shell wx-config --libs) -ldiscord-rpc -lcurl -lcurlpp -lz -lminizip \
+          -framework CoreFoundation -framework DiskArbitration -framework Foundation \
+          -framework Cocoa -framework UserNotifications -lssl -lcrypto --std=c++20
+
+        echo "[INFO] Packaging bootstrap app"
+        ./appify -s build/bootstrap -n bootstrap -i test
+        codesign --sign - --entitlements Macblox.plist --deep bootstrap.app --force
+        mv -f bootstrap.app build/bootstrap.app
+        mv build/bootstrap.app build/Macblox/"Bootstrap.app"
+        cp -R $(CURDIR)/bootstrap/bootstrap_data.json build/Macblox/"Bootstrap.app"/Contents/Resources/
+        cp -R $(CURDIR)/bootstrap/bootstrap_icon.png build/Macblox/"Bootstrap.app"/Contents/Resources/
+        cp -R $(CURDIR)/bootstrap/helper.sh build/Macblox/"Bootstrap.app"/Contents/Resources/
+        chmod +x build/Macblox/"Bootstrap.app"/Contents/Resources/helper.sh
+        rm -f build/bootstrap
+
+        echo "[INFO] Building main application"
+        clang++ -x objective-c++ $(shell wx-config --cxxflags --libs) -o build/main $(CURDIR)/main_app/main.cpp $(CURDIR)/main_app/Downloader.mm \
+          $(shell wx-config --libs) -ldiscord-rpc -lcurl -lcurlpp -lz -lminizip \
+          -framework CoreFoundation -framework DiskArbitration -framework Foundation \
+          -framework Cocoa -framework UserNotifications -lssl -lcrypto --std=c++20
+
+        echo "[INFO] Packaging main application"
+        ./appify -s build/main -n Macblox -i test
+        codesign --sign - --entitlements Macblox.plist --deep Macblox.app --force
+        mv -f Macblox.app build/Macblox/Macblox.app
+        rm -f build/main
+
+        echo "[INFO] Build and packaging complete"
