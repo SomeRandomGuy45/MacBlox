@@ -42,55 +42,9 @@ jobs:
         sudo mv discord_rpc/include/discord_register.h /usr/local/include/discord-rpc
         sudo mv discord_rpc/include/discord_rpc.h /usr/local/include/discord-rpc
 
-    - name: Copy include and lib directories from /opt/homebrew
+    - name: do stuff with /opt/homebrew
       run: |
-        # Function to copy directories if they exist and do not already exist at the destination
-        copy_if_not_exists() {
-          local src="$1"
-          local dest="$2"
-          if [ -d "$src" ]; then
-            if [ ! -d "$dest" ]; then
-              echo "Creating destination directory: $dest"
-              sudo mkdir -p "$dest"
-            fi
-            echo "Copying from $src to $dest"
-            find "$src" -type d -exec sudo mkdir -p "$dest/{}" \;  # Create any directories in destination
-            find "$src" -type f -exec sudo cp -n {} "$dest/{}" \;  # Copy files only if they do not already exist
-          fi
-        }
-    
-        # Ensure /usr/local/lib is a directory
-        if [ -e /usr/local/lib ] && [ ! -d /usr/local/lib ]; then
-          echo "Error: /usr/local/lib exists and is not a directory."
-          echo "Renaming the existing file to /usr/local/lib_backup"
-          sudo mv /usr/local/lib /usr/local/lib_backup
-        fi
-    
-        # Ensure the directory exists now
-        sudo mkdir -p /usr/local/lib
-    
-        # Define source and destination directories
-        SOURCE_DIR="/opt/homebrew"
-        DEST_INCLUDE="/usr/local/include"
-        DEST_LIB="/usr/local/lib"
-    
-        # Find and copy include directories
-        find "$SOURCE_DIR" -type d -name 'include' | while read -r include_dir; do
-          # Extract the parent directory name (e.g., libxext from /opt/homebrew/Cellar/libxext/1.3.6/include)
-          parent_dir=$(basename "$(dirname "$(dirname "$include_dir")")")
-          dest_include="$DEST_INCLUDE/$parent_dir"
-          copy_if_not_exists "$include_dir" "$dest_include"
-        done
-    
-        # Find and copy lib directories
-        find "$SOURCE_DIR" -type d -name 'lib' | while read -r lib_dir; do
-          # Extract the parent directory name (e.g., libxext from /opt/homebrew/Cellar/libxext/1.3.6/lib)
-          parent_dir=$(basename "$(dirname "$(dirname "$lib_dir")")")
-          dest_lib="$DEST_LIB/$parent_dir"
-          copy_if_not_exists "$lib_dir" "$dest_lib"
-        done
-    
-        echo "[INFO] Copying complete."
+        ls /opt/homebrew
 
     - name: Building
       run: |
