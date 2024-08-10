@@ -46,6 +46,7 @@ jobs:
       run: |
         export CPATH=/opt/homebrew/include
         export LIBRARY_PATH=/opt/homebrew/lib
+        export CPATH=/opt/homebrew/include
 
     - name: Building
       run: |
