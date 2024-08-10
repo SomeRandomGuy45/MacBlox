@@ -1,0 +1,42 @@
+{
+    "_ohyeahbtw" : "You can remove all comments if you want (and this one)",
+    "_comment": "BootstrapVersion is how the data will be process with different formats",
+    "_comment1" : "if you want to change the image just rename your image to bootstrap_icon.png and place it in the resources rolder",
+    "_comment2" : "BootstrapVersion is like a api it will change with different versions",
+    "BootstrapVersion" : "1",
+    "_comment3" : "WinName is what macos displays on the top bar",
+    "WinName" : "MacBlox",
+    "_comment4" : "Self explanatory (sets the window size with x and y coordinates)",
+    "win_size" : {
+        "x" : "600",
+        "y" : "400"
+    },
+    "_comment5" : "same here with progressGauge and statusText but now with position",
+    "progressGauge" : {
+        "size" : {
+            "x" : "515",
+            "y" : "-1"
+        },
+        "position" : {
+            "x" : "41",
+            "y" : "300"
+        }
+    },
+    "statusText" : {
+        "_comment6" : "MacOS doesnt support size",
+        "position" : {
+            "x" : "235",
+            "y" : "270"
+        }
+    },
+    "image" : {
+        "size" : {
+            "x" : "128",
+            "y" : "128"
+        },
+        "position" : {
+            "x" : "235",
+            "y" : "300"
+        }
+    }
+}

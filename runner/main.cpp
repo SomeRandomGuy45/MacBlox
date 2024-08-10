@@ -523,8 +523,23 @@ int main(int argc, char* argv[]) {
     }
     InitTable();
     std::string defaultPath = "/Users/" + user + "/Library/Logs/Roblox";
-    std::cout << "[INFO] Defualt log directory url is: " << "file://localhost"+defaultPath << "\n";
-    logfile = ShowOpenFileDialog("file://localhost"+defaultPath);
+    if (!CanAccessFolder(defaultPath))
+    {
+        std::cout << "[INFO] Defualt log directory url is: " << "file://localhost"+defaultPath << "\n";
+        logfile = ShowOpenFileDialog("file://localhost"+defaultPath);
+        if (logfile != "/Users/" + user + "/Library/Logs/Roblox")
+        {
+            std::string path = "The location of the Roblox log file isn't correct. The location of is /Users/" + user + "/Library/Logs/Roblox";
+            wxString toWxString(path.c_str(), wxConvUTF8);
+            int answer = wxMessageBox(toWxString, "Error", wxOK | wxICON_ERROR);
+            return -1;
+        }
+    }
+    else
+    {
+        std::cout << "[INFO] We have access\n";
+        logfile = defaultPath;
+    }
     //GetGameThumb(18419624945);
     if (argc >= 2)
     {
@@ -539,13 +554,6 @@ int main(int argc, char* argv[]) {
     }
     CreateNotification("Hello world!", "Test lol", wxNotificationMessage::Timeout_Auto);
     std::cout << "[INFO] Username: " << user << ", path to log file is: " << logfile << "\n";
-    if (logfile != "/Users/" + user + "/Library/Logs/Roblox")
-    {
-        std::string path = "The location of the Roblox log file isn't correct. The location of is /Users/" + user + "/Library/Logs/Roblox";
-        wxString toWxString(path.c_str(), wxConvUTF8);
-        int answer = wxMessageBox(toWxString, "Error", wxOK | wxICON_ERROR);
-        return -1;
-    }
     //std::cout << "[INFO] start time " << time(0) << ", add time " << time(0) + 5 * 60 << "\n";
     if (!isRobloxRunning())
     {

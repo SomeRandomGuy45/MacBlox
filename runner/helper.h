@@ -17,4 +17,6 @@ std::string runAppleScriptAndGetOutput(const std::string &script);
 
 void terminateApplicationByName(const std::string& appName);
 
+bool CanAccessFolder(const std::string& path);
+
 #endif // HELPER_H

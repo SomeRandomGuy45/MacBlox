@@ -150,6 +150,32 @@ std::string ShowOpenFileDialog(const std::string& defaultDirectory) {
     return "";
 }
 
+bool CanAccessFolder(const std::string& path) {
+    // Convert std::string to NSString
+    NSString *nsPath = [NSString stringWithUTF8String:path.c_str()];
+    
+    // Create a file manager
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    
+    // Check if the path exists and is a directory
+    BOOL isDirectory;
+    BOOL exists = [fileManager fileExistsAtPath:nsPath isDirectory:&isDirectory];
+    
+    if (!exists || !isDirectory) {
+        return false; // The folder doesn't exist or is not a directory
+    }
+    
+    // Try to access the folder
+    NSError *error = nil;
+    BOOL isAccessible = [fileManager isReadableFileAtPath:nsPath] && [fileManager isWritableFileAtPath:nsPath];
+    
+    if (!isAccessible) {
+        NSLog(@"[ERROR] Cannot access folder at %@: %@", nsPath, [error localizedDescription]);
+    }
+    
+    return isAccessible;
+}
+
 std::string getLogFile(const std::string& logDir) {
     NSString *nsLogDir = [NSString stringWithUTF8String:logDir.c_str()];
     NSFileManager *fileManager = [NSFileManager defaultManager];

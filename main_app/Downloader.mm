@@ -17,18 +17,18 @@ void downloadFile(const char* urlString, const char* destinationPath) {
             if (error) {
                 // Check if error is of type NSError
                 if ([error isKindOfClass:[NSError class]]) {
-                    NSLog(@"Download failed with error: %@", [error localizedDescription]);
+                    NSLog(@"[ERROR] Download failed with error: %@", [error localizedDescription]);
                 } else {
-                    NSLog(@"Download failed with unknown error: %@", error);
+                    NSLog(@"[ERROR] Download failed with unknown error: %@", error);
                 }
             } else {
                 // Log the NSURLResponse details
                 if ([response isKindOfClass:[NSHTTPURLResponse class]]) {
                     NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
-                    NSLog(@"Response status code: %ld", (long)[httpResponse statusCode]);
-                    NSLog(@"Response headers: %@", [httpResponse allHeaderFields]);
+                    NSLog(@"[INFO] Response status code: %ld", (long)[httpResponse statusCode]);
+                    NSLog(@"[INFO] Response headers: %@", [httpResponse allHeaderFields]);
                 } else {
-                    NSLog(@"Response: %@", response);
+                    NSLog(@"[INFO] Response: %@", response);
                 }
                 
                 NSFileManager *fileManager = [NSFileManager defaultManager];
@@ -39,12 +39,12 @@ void downloadFile(const char* urlString, const char* destinationPath) {
                 
                 if (!success) {
                     if ([fileError isKindOfClass:[NSError class]]) {
-                        NSLog(@"File move failed with error: %@", [fileError localizedDescription]);
+                        NSLog(@"[ERROR] File move failed with error: %@", [fileError localizedDescription]);
                     } else {
-                        NSLog(@"File move failed with unknown error: %@", fileError);
+                        NSLog(@"[ERROR] File move failed with unknown error: %@", fileError);
                     }
                 } else {
-                    NSLog(@"File downloaded successfully to %@", destPath);
+                    NSLog(@"[INFO] File downloaded successfully to %@", destPath);
                 }
             }
             

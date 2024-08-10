@@ -129,16 +129,21 @@ void wxEditableListBox::OnListCtrlItemActivated(wxListEvent& event)
     if (itemIndex != -1)
     {
         wxString itemText = listCtrl->GetItemText(itemIndex);
-        // Extract name and value from formatted string {name: value}
         wxString name, value;
-        if (itemText.BeforeFirst(':').Trim().AfterFirst('{').Trim().BeforeLast('}').Trim().Length())
-        {
-            name = itemText.BeforeFirst(':').Trim();
-            value = itemText.AfterFirst(':').Trim().BeforeLast('}').Trim();
-        }
+
+        // Extract the name and value from the itemText
+        name = itemText.BeforeFirst(':').Trim().AfterFirst('{').Trim();
+        value = itemText.AfterFirst(':').Trim().BeforeLast('}').Trim();
+
+        // Set the text controls with the extracted values
         nameTextCtrl->SetValue(name);
         valueTextCtrl->SetValue(value);
+        
+        // Store the index of the selected item for further updates
         lastSelectedItemIndex = itemIndex;
+        
+        // Set focus on the value text control to allow immediate editing
+        valueTextCtrl->SetFocus();
     }
 }
 
@@ -157,31 +162,31 @@ void wxEditableListBox::OnNameTextEnter(wxCommandEvent& event)
 {
     wxString name = nameTextCtrl->GetValue().Trim();
     wxString value = valueTextCtrl->GetValue().Trim();
+
     if (name.IsEmpty())
         return;
 
-    bool found = false;
-    for (size_t i = 0; i < items.size(); ++i)
+    if (lastSelectedItemIndex != -1)
     {
-        if (items[i].first == name)
-        {
-            // Update existing item
-            wxString itemText = wxString::Format("{%s: %s}", name, value);
-            listCtrl->SetItem(i, 0, itemText);
-            items[i].second = value;
-            found = true;
-            break;
-        }
-    }
+        // Update the selected item in the list
+        wxString itemText = wxString::Format("{%s: %s}", name, value);
+        listCtrl->SetItem(lastSelectedItemIndex, 0, itemText);
 
-    if (!found)
+        // Update the corresponding item in the items vector
+        items[lastSelectedItemIndex] = std::make_pair(name, value);
+    }
+    else
     {
-        // Add new item if name is not found
+        // Add new item if no item is selected
         wxString itemText = wxString::Format("{%s: %s}", name, value);
         long index = listCtrl->InsertItem(listCtrl->GetItemCount(), itemText);
-        items.push_back(std::make_pair(name, value));  // Add new item
+        items.push_back(std::make_pair(name, value));
     }
-    SaveToFile(GetBasePath()+"/data.json");
+
+    // Save changes to the file
+    SaveToFile(GetBasePath() + "/data.json");
+
+    // Clear the text controls and reset the selection index
     nameTextCtrl->Clear();
     valueTextCtrl->Clear();
     lastSelectedItemIndex = -1;
