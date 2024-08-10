@@ -1,8 +1,8 @@
 BUILDPATH = $(CURDIR)/build
 WX_CONFIG = $(shell wx-config --cxxflags --libs)
 CC = clang++
-CXXFLAGS = -x objective-c++ $(WX_CONFIG)
-LDFLAGS = $(WX_CONFIG) -ldiscord-rpc -lcurl -lcurlpp -lz -lminizip -framework CoreFoundation -framework DiskArbitration -framework Foundation -framework Cocoa -framework UserNotifications -lssl -lcrypto --std=c++20
+CXXFLAGS = -x objective-c++ $(WX_CONFIG) $(LIBRARY_PATH)
+LDFLAGS = $(WX_CONFIG) $(CPATH) -ldiscord-rpc -lcurl -lcurlpp -lz -lminizip -framework CoreFoundation -framework DiskArbitration -framework Foundation -framework Cocoa -framework UserNotifications -lssl -lcrypto --std=c++20
 
 create_main_app:
 	@if [ -d $(BUILDPATH) ]; then \
