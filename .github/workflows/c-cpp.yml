@@ -41,39 +41,40 @@ jobs:
         sudo mv discord_rpc/include/discord_rpc.h /usr/local/include/discord-rpc
 
     - name: Copy include and lib directories from /opt/homebrew
-      run: |
-        # Function to copy directories if they exist and do not already exist at the destination
-        copy_if_not_exists() {
-          local src="$1"
-          local dest="$2"
-          if [ -d "$src" ]; then
-            if [ ! -d "$dest" ]; then
-              echo "Creating destination directory: $dest"
-              sudo mkdir -p "$dest"
-            fi
-            echo "Copying from $src to $dest"
-            sudo cp -R "$src"/* "$dest"/
+    run: |
+      # Function to copy directories if they exist and do not already exist at the destination
+      copy_if_not_exists() {
+        local src="$1"
+        local dest="$2"
+        if [ -d "$src" ]; then
+          if [ ! -d "$dest" ]; then
+            echo "Creating destination directory: $dest"
+            sudo mkdir -p "$dest"
           fi
-        }
-
-        # Define source and destination directories
-        SOURCE_DIR="/opt/homebrew"
-        DEST_INCLUDE="/usr/local/include"
-        DEST_LIB="/usr/local/lib"
-
-        # Find and copy include directories
-        find "$SOURCE_DIR" -type d -name 'include' | while read -r include_dir; do
-          dest_include="$DEST_INCLUDE/$(basename "$(dirname "$include_dir")")"
-          copy_if_not_exists "$include_dir" "$dest_include"
-        done
-
-        # Find and copy lib directories
-        find "$SOURCE_DIR" -type d -name 'lib' | while read -r lib_dir; do
-          dest_lib="$DEST_LIB/$(basename "$(dirname "$lib_dir")")"
-          copy_if_not_exists "$lib_dir" "$dest_lib"
-        done
-
-        echo "[INFO] Copying complete."
+          echo "Copying from $src to $dest"
+          find "$src" -type d -exec sudo mkdir -p "$dest/{}" \;  # Create any directories in destination
+          find "$src" -type f -exec sudo cp -n {} "$dest/{}" \;  # Copy files only if they do not already exist
+        fi
+      }
+  
+      # Define source and destination directories
+      SOURCE_DIR="/opt/homebrew"
+      DEST_INCLUDE="/usr/local/include"
+      DEST_LIB="/usr/local/lib"
+  
+      # Find and copy include directories
+      find "$SOURCE_DIR" -type d -name 'include' | while read -r include_dir; do
+        dest_include="$DEST_INCLUDE/$(basename "$(dirname "$include_dir")")"
+        copy_if_not_exists "$include_dir" "$dest_include"
+      done
+  
+      # Find and copy lib directories
+      find "$SOURCE_DIR" -type d -name 'lib' | while read -r lib_dir; do
+        dest_lib="$DEST_LIB/$(basename "$(dirname "$lib_dir")")"
+        copy_if_not_exists "$lib_dir" "$dest_lib"
+      done
+  
+      echo "[INFO] Copying complete."
 
     - name: Building
       run: |
