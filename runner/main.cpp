@@ -625,8 +625,6 @@ int main(int argc, char* argv[]) {
                 } else {
                     std::cerr << "[ERROR] Failed to open log file: " << logFilePath << std::endl;
                 }
-
-                // Sleep or wait for a condition to avoid tight loop (optional)
             }
         });
         logThread.detach();
