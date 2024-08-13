@@ -7,7 +7,7 @@ Macblox is a funny project i wanted to do because there wasn't bloxstrap for mac
 # The TODO List
 - [ ] aarch64 support (currently unknown since I don't have a aarch64 mac)
 - [x] Some basic bootstrap support
-- [ ] Figure out how to get access to /Applications/ with out file prompt (and stop using alot of file prompts)
+- [x] Figure out how to get access to /Applications/ with out file prompt (and stop using alot of file prompts)
 - [x] Discord RPC support
 - [x] Checking for roblox updates
 - [x] Adding ClientAppSettings
