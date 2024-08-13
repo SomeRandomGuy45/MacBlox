@@ -48,6 +48,8 @@
 #include <stdexcept>
 #include <future>
 #include <ctime> 
+#include <spawn.h>
+#include <sys/wait.h>
 #include <wx/notifmsg.h>
 #include <wx/msgdlg.h> 
 #include <unordered_set>
@@ -88,6 +90,11 @@ bool ActivityInGame;
 int64_t lastRPCTime = 0;
 std::unordered_set<std::string> processedLogs;
 std::thread discordThread; //CHANGE ME LATER WHEN DISCORD RPC C++ IS FIX LOL
+std::mutex mtx;
+std::condition_variable cv;
+bool scriptFinished = true;
+pid_t currentScriptPID = -1;
+extern char **environ;
 std::string basePythonScript = "python3 " + GetResourcesFolderPath() + "/discord.py";
 bool isDiscordFound = true;
 std::string temp_dir;
@@ -258,10 +265,36 @@ std::string fixPath(const std::string& path) {
 }
 
 void executeScript(const std::string& script) {
-    std::cout << "[INFO] Executing script: " << script << "\n";
-    system(script.c_str());
-}
+    std::string path = GetResourcesFolderPath() + "/helper.sh";
+    std::string chmodCommand = "chmod +x " + path;
+    system(chmodCommand.c_str());
+    scriptFinished = false;
 
+    std::string appleScript = R"(osascript -e '
+            tell application "System Events"
+                set isTerminalRunning to (exists (processes whose name is "Terminal"))
+            end tell
+
+            if isTerminalRunning then
+                do shell script "killall -QUIT Terminal"
+            end if
+            -- Wait a bit to ensure windows are closed
+            delay 2
+            -- Open a new Terminal window and run the script
+            tell application "Terminal"
+                do script ")" + path + R"("
+            end tell')";
+
+    std::cout << "[INFO] Running AppleScript command: " << appleScript << "\n";
+
+    // Run the AppleScript command
+    int result = system(appleScript.c_str());
+
+    if (result != 0) {
+        std::cerr << "[ERROR] Failed to execute the AppleScript." << std::endl;
+        return;
+    }
+}
 
 //Maybe make this a struct
 static void UpdDiscordActivity(
@@ -299,13 +332,31 @@ static void UpdDiscordActivity(
     }
 
     std::string new_script = basePythonScript + " \"" + details + "\" \"" + state + "\" " +
-                             std::to_string(startTimestamp) + " " +
-                             "\"" + key_large + "\" \"" + key_small + "\" \"" + largeImgText + "\" \"" + smallImageText + "\" " +
-                             "\"" + button1Text + "\" \"" + button2Text + "\" \"" + button1url + "\" \"" + button2url + "\" \"/" + (tempDirStr) + "discord-ipc-0\"";
+                         std::to_string(startTimestamp) + " " +
+                         "\"" + key_large + "\" \"" + key_small + "\" \"" + largeImgText + "\" \"" + smallImageText + "\" " +
+                         "\"" + button1Text + "\" \"" + button2Text + "\" \"" + button1url + "\" \"" + button2url + "\" " +
+                         "\"/" + tempDirStr + "/discord-ipc-0\"";
 
     std::cout << "[INFO] Running script: " << new_script << "\n";
     std::cout << canAccessFile("/" + (tempDirStr) + "discord-ipc-0") << "\n";
+    std::ofstream scriptFile(GetResourcesFolderPath() + "/helper.sh");
+    if (!scriptFile.is_open()) {
+        return;
+    }
+    scriptFile << new_script;
+    scriptFile.close();
+    pid_t pidToTerminate = -1;
+    {
+        pidToTerminate = currentScriptPID;
+        std::cout << "[INFO] PID is " << pidToTerminate << "\n";
+    }
     
+    if (pidToTerminate != -1) {
+        std::cout << "[INFO] Terminating previous script with PID: " << pidToTerminate << "\n";
+        kill(pidToTerminate, SIGINT);
+        currentScriptPID = -1; // Reset PID after waiting
+    }
+
     // Run the custom function in a separate thread
     discordThread = std::thread([new_script]() {
         executeScript(new_script);
@@ -664,6 +715,14 @@ void doFunc(const std::string& logtxt) {
         Current = Home;
         GameIMG = "";
         TimeStartedUniverse = 0;
+        std::string ScriptNeededToRun = R"(
+            tell application "System Events"
+                set isTerminalRunning to (exists (processes whose name is "Terminal"))
+            end tell
+            if isTerminalRunning then
+                do shell script "killall -QUIT Terminal"
+            end if)";
+        runAppleScriptAndGetOutput(ScriptNeededToRun);
     }
     else if (logtxt.find("[FLog::Network] UDMUX Address = ") != std::string::npos && !ActivityInGame && placeId != 0 && Current != Home) 
     {
@@ -751,12 +810,6 @@ int main(int argc, char* argv[]) {
     if (doesAppExist("/Applications/Discord.app"))
     {
         std::cout << "[INFO] Temp Directory: " << tempDirStr << std::endl;
-        std::string appleScriptCommand = 
-            "set defaultLocation to POSIX file \"" + tempDirStr + "\"\n"
-            "set chosenFolder to (choose folder with prompt \"Select a folder:\" default location defaultLocation) as text\n"
-            "return chosenFolder";
-        tempDirStr = runAppleScriptAndGetOutput(appleScriptCommand);
-        tempDirStr = fixPath(tempDirStr);
         if (canAccessFile("/" + (tempDirStr) + "discord-ipc-0"))
         {
             std::cout << "[INFO] Discord IPC found\n";
@@ -889,6 +942,14 @@ int main(int argc, char* argv[]) {
         logThread.~thread();
         discordThread.~thread();
     }
+    std::string ScriptNeededToRun = R"(
+            tell application "System Events"
+                set isTerminalRunning to (exists (processes whose name is "Terminal"))
+            end tell
+            if isTerminalRunning then
+                do shell script "killall -QUIT Terminal"
+            end if)";
+    runAppleScriptAndGetOutput(ScriptNeededToRun);
     std::cout << "[INFO] Closing program\n";
     return 0;
 }

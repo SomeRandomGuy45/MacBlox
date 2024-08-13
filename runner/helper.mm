@@ -28,21 +28,6 @@ bool isAppRunning(const std::string &appName) {
 }
 
 std::string getTemp() {
-    NSOpenPanel *openPanel = [NSOpenPanel openPanel];
-    [openPanel setDirectoryURL:[NSURL fileURLWithPath:@"/var/folders"]];
-    [openPanel setAllowsMultipleSelection:NO];
-    [openPanel setCanChooseDirectories:YES];
-    [openPanel setCanChooseFiles:NO];
-    
-    // Show the file dialog
-    if ([openPanel runModal] == NSModalResponseOK) {
-        NSURL *selectedURL = [[openPanel URLs] firstObject];
-        if (selectedURL) {
-            NSString *path = [selectedURL path];
-            // Optionally do something with the selected path here
-        }
-    }
-    
     NSString *basePath = @"/var/folders";
     NSFileManager *fileManager = [NSFileManager defaultManager];
     

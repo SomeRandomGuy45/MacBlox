@@ -345,6 +345,7 @@ void BootstrapperFrame::DoLogic()
             downloadFile(URL.c_str(), DownloadPath.c_str());
         }
         bool isDone = false;
+        /*
         std::string warn_todo = "Please extract RobloxPlayer.zip to the Application Folder and rename it to Roblox.app (if u cant see the .app just rename it to Roblox). The file path is ~/Downloads/RobloxPlayer.zip";
         wxString toWxString_warn(warn_todo.c_str(), wxConvUTF8);
         wxMessageBox(toWxString_warn, "Info", wxOK | wxICON_INFORMATION);
@@ -366,17 +367,7 @@ void BootstrapperFrame::DoLogic()
             Close(true);
             return;
         }
-        /*
-        std::string text = ShowOpenFileDialog_WithCustomText("file://localhost/Applications", "Select A Folder (/Applications/)");
-        if (text != "/Applications")
-        {
-            std::cerr << "[ERROR] Thats not the right path!" << std::endl;
-            std::string path = "The location of Application Folder isn't correct. The location of is /Applications";
-            wxString toWxString(path.c_str(), wxConvUTF8);
-            wxMessageBox(toWxString, "Error", wxOK | wxICON_ERROR);
-            Close(true);
-            return;     
-        }
+        */
         if (!unzipFile(DownloadPath.c_str(), Download.c_str()))
         {
             std::cerr << "[ERROR] Failed to extract Roblox.zip" << std::endl;
@@ -387,17 +378,6 @@ void BootstrapperFrame::DoLogic()
         removeQuarantineAttribute(Download + "/RobloxPlayer.app");
         std::string pa_th  = Download + "/RobloxPlayer.app";
         RenameFile(pa_th.c_str(), "/Applications/Roblox.app");
-        std::string defaultPath = "/Applications/RobloxPlayer.app/Contents/MacOS";
-        RobloxApplicationPath = ShowOpenFileDialog("file://localhost"+defaultPath);
-        if (RobloxApplicationPath != "/Applications/Roblox.app/Contents/MacOS")
-        {
-            std::cerr << "[ERROR] Thats not the right path!" << std::endl;
-            std::string path = "The location of the Roblox MacOS folder isn't correct. The location of is /Applications/Roblox.app/Contents/MacOS";
-            wxString toWxString(path.c_str(), wxConvUTF8);
-            wxMessageBox(toWxString, "Error", wxOK | wxICON_ERROR);
-            Close(true);
-            return;
-        }
         std::this_thread::sleep_for(std::chrono::seconds(1));
         std::string command1 = "chmod +x /Applications/Roblox.app/Contents/MacOS/RobloxPlayer";
         std::string command2 = "chmod +x /Applications/Roblox.app/Contents/MacOS/RobloxCrashHandler";
@@ -412,20 +392,9 @@ void BootstrapperFrame::DoLogic()
         Check(result);
         result = system(command4.c_str());
         Check(result);
-        std::string defaultPath_spam = "/Applications/Roblox.app";
-        std::string spam = ShowOpenFileDialog_WithCustomText("file://localhost"+defaultPath_spam, "Select at /Applications/Roblox.app");
-        if (spam != "/Applications/Roblox.app")
-        {
-            std::cerr << "[ERROR] Thats not the right path!" << std::endl;
-            std::string path = "The location of the Roblox MacOS folder isn't correct. The location of is /Applications/Roblox.app/";
-            wxString toWxString(path.c_str(), wxConvUTF8);
-            wxMessageBox(toWxString, "Error", wxOK | wxICON_ERROR);
-            Close(true);
-            return;
-        }
+        std::string spam = "/Applications/Roblox.app";
         fixInstall(spam);
         removeQuarantineAttribute(spam);
-        */
         if (!FolderExists("/Applications/Roblox.app/Contents/MacOS/ClientSettings"))
         {
             CreateFolder("/Applications/Roblox.app/Contents/MacOS/ClientSettings");

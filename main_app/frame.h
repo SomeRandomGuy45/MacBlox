@@ -124,7 +124,6 @@ void MainFrame::OpenPages(wxCommandEvent& event)
         if (buttonName == "Config")
         {
             wxEditableListBox* editableListBox = new wxEditableListBox(panel, wxID_ANY);
-            editableListBox->LoadFromFile("data.json");  // Load data from file
             wxBoxSizer* mainSizer = new wxBoxSizer(wxHORIZONTAL);
             mainSizer->Add(editableListBox, 1, wxEXPAND | wxALL, 5);
             panel->SetSizer(mainSizer);  // Ensure that the sizer is set for the panel

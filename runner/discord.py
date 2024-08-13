@@ -9,8 +9,8 @@ from pypresence import Presence
 import time
 args = sys.argv
 print(args)
-if (len(args) < 11):
-    print("Usage: python discord_rpc.py <details> <state> <startTimestamp> <AssetIDLarge> <AssetIDSmall> <largeImgText> <smallImageText> <button1label> <button2label> <button1url> <button2url>")
+if (len(args) < 12):
+    print("Usage: python discord_rpc.py <details> <state> <startTimestamp> <AssetIDLarge> <AssetIDSmall> <largeImgText> <smallImageText> <button1label> <button2label> <button1url> <button2url> <pipe_location>")
     sys.exit(1)
 
 state = args[2]
@@ -24,11 +24,9 @@ small_image=args[5]
 small_text=args[7]
 label1=args[8]
 label2=args[9]
-print(args[8],args[9],args[10],args[11])
 url1=args[10]
 url2=args[11]
 client_id = '1267308900420419664'
-print(args)
 RPC = Presence(client_id)
 RPC.connect(
     pathToFile=args[12]

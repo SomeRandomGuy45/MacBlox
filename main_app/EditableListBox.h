@@ -114,7 +114,9 @@ wxEditableListBox::wxEditableListBox(wxWindow* parent, wxWindowID id)
     valueTextCtrl->SetMinSize(wxSize(200, 25));
 
     // Load existing data if available
-    LoadFromFile(GetBasePath()+"/data.json");
+    std::string path = GetBasePath()+"/data.json";
+    wxString toWxString(path.c_str(), wxConvUTF8);
+    LoadFromFile(toWxString);
 }
 
 wxEditableListBox::~wxEditableListBox()
@@ -234,25 +236,64 @@ void wxEditableListBox::OnCloseButtonClick(wxCommandEvent& event)
 
 void wxEditableListBox::LoadFromFile(const wxString& filePath)
 {
+    std::cout << "[INFO] Loading from file " << filePath.ToStdString() << std::endl;
+
+    // Open file
     std::ifstream file(filePath.ToStdString());
-    if (file.is_open())
-    {
-        json jsonData;
+    if (!file.is_open()) {
+        std::cerr << "[ERROR] Could not open file " << filePath.ToStdString() << std::endl;
+        return;
+    }
+
+    try {
+        // Parse JSON
+        nlohmann::json jsonData;
         file >> jsonData;
+
+        // Close file
         file.close();
 
+        // Clear current items
         listCtrl->DeleteAllItems();
         items.clear();
 
-        for (auto& el : jsonData.items())
-        {
+        // Process JSON data
+        for (const auto& el : jsonData.items()) {
             wxString name = wxString::FromUTF8(el.key().c_str());
-            wxString value = wxString::FromUTF8(el.value().get<std::string>().c_str());
+            wxString value;
+
+            if (el.value().is_string()) {
+                value = wxString::FromUTF8(el.value().get<std::string>().c_str());
+            } else if (el.value().is_number_integer()) {
+                try {
+                    int intValue = el.value().get<int>();
+                    value = wxString::Format("%d", intValue);
+                } catch (const std::out_of_range&) {
+                    value = wxString::FromUTF8("Out of range integer value");
+                }
+            } else if (el.value().is_number_float()) {
+                try {
+                    double floatValue = el.value().get<double>();
+                    value = wxString::Format("%g", floatValue);
+                } catch (const std::out_of_range&) {
+                    value = wxString::FromUTF8("Out of range float value");
+                }
+            } else {
+                value = wxString::FromUTF8(el.value().dump().c_str());
+            }
+
             wxString itemText = wxString::Format("{%s: %s}", name, value);
             long index = listCtrl->InsertItem(listCtrl->GetItemCount(), itemText);
             items.push_back(std::make_pair(name, value));
         }
+
+    } catch (const nlohmann::json::parse_error& e) {
+        std::cerr << "[ERROR] JSON parse error: " << e.what() << std::endl;
+    } catch (const std::exception& e) {
+        std::cerr << "[ERROR] Exception: " << e.what() << std::endl;
     }
+
+    std::cout << "[INFO] Loading finished from file " << filePath.ToStdString() << std::endl;
 }
 
 void wxEditableListBox::SaveToFile(const wxString& filePath)
@@ -266,7 +307,7 @@ void wxEditableListBox::SaveToFile(const wxString& filePath)
     {
         if (is_number(item.second.ToStdString()))
         {
-            jsonData[item.first.ToStdString()] = std::stoi(item.second.ToStdString());
+            jsonData[item.first.ToStdString()] = std::stol(item.second.ToStdString());
         }
         else
         {

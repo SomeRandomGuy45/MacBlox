@@ -11,6 +11,8 @@ Macblox is a funny project i wanted to do because there wasn't bloxstrap for mac
 - [x] Discord RPC support
 - [x] Checking for roblox updates
 - [x] Adding ClientAppSettings
+- [ ] Find a different way to close the terminal
+- [ ] Make a background thing that checks if roblox is being open
 
 # Building
 ### Libraries needed:
