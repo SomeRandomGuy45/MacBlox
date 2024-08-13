@@ -2,7 +2,7 @@ BUILDPATH = $(CURDIR)/build
 WX_CONFIG = $(shell wx-config --cxxflags --libs)
 CC = clang++
 CXXFLAGS = -x objective-c++ $(WX_CONFIG) $(LIBRARY_PATH)
-LDFLAGS = $(WX_CONFIG) $(CPATH) -ldiscord-rpc -lcurl -lcurlpp -lz -lminizip -framework CoreFoundation -framework DiskArbitration -framework Foundation -framework Cocoa -framework UserNotifications -lssl -lcrypto --std=c++20
+LDFLAGS = $(WX_CONFIG) $(CPATH) -lcurl -lcurlpp -lz -lminizip -framework CoreFoundation -framework DiskArbitration -framework Foundation -framework Cocoa -framework UserNotifications -lssl -lcrypto --std=c++20
 
 create_main_app:
 	@if [ -d $(BUILDPATH) ]; then \
@@ -14,7 +14,8 @@ create_main_app:
 	@./appify -s build/runner -n play -i test
 	@codesign --sign - --entitlements Macblox.plist --deep play.app --force
 	@mv -f play.app $(BUILDPATH)/play.app
-	@mv $(BUILDPATH)/play.app $(BUILDPATH)/Macblox/"Play Roblox.app"
+	@mv $(BUILDPATH)/play.app $(BUILDPATH)/Macblox/"Play.app"
+	@cp -R $(CURDIR)/runner/discord.py $(BUILDPATH)/Macblox/"Play.app"/Contents/Resources/
 	@rm -f $(BUILDPATH)/runner
 	$(CC) $(CXXFLAGS) $(LDFLAGS) -o $(BUILDPATH)/bootstrap $(CURDIR)/bootstrap/app.cpp $(CURDIR)/bootstrap/helper.mm
 	@./appify -s build/bootstrap -n bootstrap -i test

@@ -27,6 +27,83 @@ bool isAppRunning(const std::string &appName) {
     return false; // Application is not running
 }
 
+std::string getTemp() {
+    NSOpenPanel *openPanel = [NSOpenPanel openPanel];
+    [openPanel setDirectoryURL:[NSURL fileURLWithPath:@"/var/folders"]];
+    [openPanel setAllowsMultipleSelection:NO];
+    [openPanel setCanChooseDirectories:YES];
+    [openPanel setCanChooseFiles:NO];
+    
+    // Show the file dialog
+    if ([openPanel runModal] == NSModalResponseOK) {
+        NSURL *selectedURL = [[openPanel URLs] firstObject];
+        if (selectedURL) {
+            NSString *path = [selectedURL path];
+            // Optionally do something with the selected path here
+        }
+    }
+    
+    NSString *basePath = @"/var/folders";
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    
+    NSError *error = nil;
+    NSArray *subfolders = [fileManager contentsOfDirectoryAtPath:basePath error:&error];
+    
+    if (error) {
+        std::cerr << "[ERROR] Unable accessing directory: " << [[error localizedDescription] UTF8String] << std::endl;
+        return "";
+    }
+    
+    // Loop through the subfolders
+    for (NSString *subfolder in subfolders) {
+        if ([subfolder isEqualToString:@"zz"]) {
+            // Skip processing this subfolder if its name is "zz"
+            continue;
+        }
+
+        NSString *subfolderPath = [basePath stringByAppendingPathComponent:subfolder];
+        
+        BOOL isDirectory;
+        if (![fileManager fileExistsAtPath:subfolderPath isDirectory:&isDirectory] || !isDirectory) {
+            // Skip if it's not a directory
+            continue;
+        }
+
+        NSArray *innerFolders = [fileManager contentsOfDirectoryAtPath:subfolderPath error:&error];
+        
+        if (error) {
+            std::cerr << "[ERROR] accessing subdirectory: " << [[error localizedDescription] UTF8String] << std::endl;
+            continue;
+        }
+        
+        // Loop through the innerFolders and check if each one is a directory
+        for (NSString *innerFolder in innerFolders) {
+            NSString *innerFolderPath = [subfolderPath stringByAppendingPathComponent:innerFolder];
+            BOOL isInnerDirectory;
+            if ([fileManager fileExistsAtPath:innerFolderPath isDirectory:&isInnerDirectory] && isInnerDirectory) {
+                // Print contents of innerFolder if it is a directory
+                std::cout << "[INFO] Contents of " << [innerFolderPath UTF8String] << ":" << std::endl;
+                NSArray *innerInnerFolders = [fileManager contentsOfDirectoryAtPath:innerFolderPath error:&error];
+                
+                if (error) {
+                    std::cerr << "[ERROR] accessing inner subdirectory: " << [[error localizedDescription] UTF8String] << std::endl;
+                    continue;
+                }
+                
+                for (NSString *innerInnerFolder in innerInnerFolders) {
+                    std::cout << "  " << [innerInnerFolder UTF8String] << std::endl;
+                    if ([innerInnerFolder isEqualToString:@"T"]) {
+                        NSString *resultPath = [innerFolderPath stringByAppendingPathComponent:innerInnerFolder];
+                        return [resultPath UTF8String];
+                    }
+                }
+            }
+        }
+    }
+    
+    return "";
+}
+
 void terminateApplicationByName(const std::string& appName) {
     // Convert std::string to NSString
     NSString *nsAppName = [NSString stringWithUTF8String:appName.c_str()];
@@ -47,6 +124,18 @@ void terminateApplicationByName(const std::string& appName) {
     
     NSLog(@"[INFO] Application %@ not found.", nsAppName);
 } 
+
+std::string GetResourcesFolderPath()
+{
+    // Get the main bundle
+    NSBundle *mainBundle = [NSBundle mainBundle];
+
+    // Get the path to the resources folder
+    NSString *resourcesFolderPath = [mainBundle resourcePath];
+
+    // Convert NSString to std::string and return
+    return std::string([resourcesFolderPath UTF8String]);
+}
 
 void runApp(const std::string &launchPath, bool Check) {
    // Convert std::string to NSString
@@ -148,6 +237,62 @@ std::string ShowOpenFileDialog(const std::string& defaultDirectory) {
         return std::string([filePath UTF8String]);
     }
     return "";
+}
+
+bool doesAppExist(const std::string& path) {
+    // Convert std::string to NSString
+    NSString* nsPath = [NSString stringWithUTF8String:path.c_str()];
+
+    // Create an NSURL from the NSString path
+    NSURL* url = [NSURL fileURLWithPath:nsPath];
+
+    // Use NSFileManager to check if the file exists
+    NSFileManager* fileManager = [NSFileManager defaultManager];
+    BOOL isDirectory;
+    BOOL exists = [fileManager fileExistsAtPath:[url path] isDirectory:&isDirectory];
+    
+    // Check if the file exists and if it is a directory (i.e., .app bundle)
+    return exists && isDirectory;
+}
+
+
+std::string ShowOpenFileDialog_WithCustomText(const std::string& defaultDirectory, const std::string& customText) {
+    NSOpenPanel* openPanel = [NSOpenPanel openPanel];
+    [openPanel setCanChooseFiles:YES];
+    [openPanel setCanChooseDirectories:YES];
+    [openPanel setAllowsMultipleSelection:NO];
+    [openPanel setTreatsFilePackagesAsDirectories:YES];
+    NSString* text = [NSString stringWithUTF8String:customText.c_str()];
+    // Set default directory
+    if (!defaultDirectory.empty()) {
+        NSString* nsDefaultDirectory = [NSString stringWithUTF8String:defaultDirectory.c_str()];
+        [openPanel setDirectoryURL:[NSURL fileURLWithPath:nsDefaultDirectory]];
+    }
+    [openPanel setPrompt:text];
+    
+    if ([openPanel runModal] == NSModalResponseOK) {
+        NSURL* directoryURL = [[openPanel URLs] objectAtIndex:0];
+        NSString* directoryPath = [directoryURL path];
+        
+        // Convert to std::string
+        return std::string([directoryPath UTF8String]);
+    }
+    return "";
+}
+
+bool canAccessFile(const std::string& path) {
+    // Convert std::string to NSString
+    NSString* nsPath = [NSString stringWithUTF8String:path.c_str()];
+    
+    // Create an NSFileManager instance
+    NSFileManager* fileManager = [NSFileManager defaultManager];
+    
+    // Check if the file exists at the specified path
+    BOOL isDirectory;
+    BOOL fileExists = [fileManager fileExistsAtPath:nsPath isDirectory:&isDirectory];
+    
+    // You can also check if it's a file or a directory, but this example only checks existence
+    return fileExists;
 }
 
 bool CanAccessFolder(const std::string& path) {

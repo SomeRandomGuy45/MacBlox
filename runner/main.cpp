@@ -24,10 +24,9 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <map>
+#include <cstdlib>
 #include <functional>
-#include <sys/stat.h>
-#include <discord-rpc/discord_rpc.h>
-#include <discord-rpc/discord_register.h>
+#include <sys/stat.h>   
 //#include "discord-game-sdk/discord.h"
 #include <curl/curl.h> //for downloading files
 #include "curlpp/cURLpp.hpp" //requests with out creating files
@@ -52,6 +51,7 @@
 #include <wx/notifmsg.h>
 #include <wx/msgdlg.h> 
 #include <unordered_set>
+#include <utility>
 #include "json.hpp"
 #include "helper.h"
 
@@ -65,10 +65,18 @@ namespace {
 }
 */
 
+#ifdef __APPLE__
+    bool canRun = true;
+#else
+    bool canRun = false;
+#endif
+bool isDebug = false;
+
+std::string tempDirStr = getTemp();
 std::string user = getenv("USER"); //gets the current user name
-std::string logfile = "~/Library/Logs/Roblox/"; //creates the log directory path
+std::string logfile = "~/Library/Logs/Roblox/"; //gets the log directory path
 bool isRblxRunning = false;
-int placeId = 0;
+long placeId = 0;
 std::string jobId = "";
 std::string GameIMG = "";
 std::string ActivityMachineAddress = "";
@@ -79,12 +87,12 @@ bool _reservedTeleportMarker = false;
 bool ActivityInGame;
 int64_t lastRPCTime = 0;
 std::unordered_set<std::string> processedLogs;
-#ifdef __APPLE__
-    bool canRun = true;
-#else
-    bool canRun = false;
-#endif
-bool isDebug = false; //todo
+std::thread discordThread; //CHANGE ME LATER WHEN DISCORD RPC C++ IS FIX LOL
+std::string basePythonScript = "python3 " + GetResourcesFolderPath() + "/discord.py";
+bool isDiscordFound = true;
+std::string temp_dir;
+std::mutex temp_dir_mutex;
+int64_t TimeStartedUniverse = 0;
 
 namespace fs = std::filesystem;
 using json = nlohmann::json;
@@ -95,6 +103,8 @@ enum CurrentTypes {
     Reserved,
     Private,
 };
+
+CurrentTypes Current = Home;
 
 using ArgHandler = std::function<void(const std::string&)>;
 std::map<std::string, ArgHandler> argTable;
@@ -122,6 +132,34 @@ std::string GetDataFromURL(std::string URL)
         std::cerr << "[ERROR] curlpp::RuntimeError: " << e.what() << std::endl;
         return e.what();
     }
+}
+
+// Helper function to get the default temporary directory
+std::string get_default_temp_dir() {
+    #ifdef _WIN32
+        char temp_path[MAX_PATH];
+        if (GetTempPathA(MAX_PATH, temp_path)) {
+            return std::string(temp_path);
+        }
+        return "";
+    #else
+        return fs::temp_directory_path().string();
+    #endif
+}
+
+// Function to get the temporary directory as a string
+std::string get_temp_dir() {
+    std::lock_guard<std::mutex> lock(temp_dir_mutex);
+    if (temp_dir.empty()) {
+        temp_dir = get_default_temp_dir();
+    }
+    return temp_dir;
+}
+
+// Function to get the temporary directory as a byte vector
+std::vector<uint8_t> get_temp_dir_bytes() {
+    std::string temp_dir_str = get_temp_dir();
+    return std::vector<uint8_t>(temp_dir_str.begin(), temp_dir_str.end());
 }
 
 void CreateNotification(const wxString &title, const wxString &message, int Timeout)
@@ -198,42 +236,87 @@ void InitTable()
     argTable["--debug"] = [](const std::string&) {isDebug = true; };
 }
 
+std::string fixPath(const std::string& path) {
+    // Find the position of "private" in the path
+    std::string delimiter = "private";
+    size_t pos = path.find(delimiter);
 
-void InitDiscord()
-{
-    DiscordEventHandlers handlers;
-    memset(&handlers, 0, sizeof(handlers)); //memset funny
-    handlers.ready = [](const DiscordUser* user) {
-        std::cout << "[INFO] Connected as: " << user->username << "\n";
-    };
-    handlers.errored = [](int errorCode, const char* message) {
-        std::cerr << "[ERROR] " << message << " (" << errorCode << ")\n";
-    };
-    Discord_Initialize("1267308900420419664", &handlers, 1, NULL);
+    // If "private" is found, extract the substring starting from "private"
+    if (pos != std::string::npos) {
+        std::string fixedPath = path.substr(pos);
+        // Replace all colons with slashes
+        for (char& ch : fixedPath) {
+            if (ch == ':') {
+                ch = '/';
+            }
+        }
+        return fixedPath;
+    }
+    
+    // If "private" is not found, return an empty string or handle accordingly
+    return "";
 }
 
-static void UpdDiscordActivity(std::string details, std::string state, int64_t startTimestamp, int64_t endTimestamp, int AssetIDLarge, int AssetIDSmall, std::string largeImgText, std::string smallImageText)
+void executeScript(const std::string& script) {
+    std::cout << "[INFO] Executing script: " << script << "\n";
+    system(script.c_str());
+}
+
+
+//Maybe make this a struct
+static void UpdDiscordActivity(
+    const std::string& details, 
+    const std::string& state, 
+    int64_t startTimestamp, 
+    int AssetIDLarge, 
+    int AssetIDSmall, 
+    const std::string& largeImgText, 
+    const std::string& smallImageText, 
+    const std::string& button1Text, 
+    const std::string& button2Text, 
+    const std::string& button1url, 
+    const std::string& button2url)
 {
-    DiscordRichPresence presence;
+    if (!isDiscordFound) {
+        return;
+    }
+
+    // Set default timestamps if not provided
     startTimestamp = startTimestamp != 0 ? startTimestamp : time(0);
-    endTimestamp = endTimestamp != 0 ? endTimestamp : time(0) + 5 * 60;
+
+    // Set default asset IDs if not provided
     AssetIDLarge = AssetIDLarge != 0 ? AssetIDLarge : 0;
     AssetIDSmall = AssetIDSmall != 0 ? AssetIDSmall : 0;
-    std::string key_large = AssetIDLarge != 0 ? "https://assetdelivery.roblox.com/v1/asset/?id=" + std::to_string(AssetIDLarge) : GameIMG;
+
+    // Generate asset URLs
+    std::string key_large = AssetIDLarge != 0 
+        ? "https://assetdelivery.roblox.com/v1/asset/?id=" + std::to_string(AssetIDLarge) 
+        : GameIMG;
+
     std::string key_small = "https://assetdelivery.roblox.com/v1/asset/?id=" + std::to_string(AssetIDSmall);
-    memset(&presence, 0, sizeof(presence));
-    presence.details = details.c_str();
-    presence.state = state.c_str();
-    presence.startTimestamp = startTimestamp;
-    presence.endTimestamp = endTimestamp;
-    presence.largeImageKey = key_large.c_str();
-    presence.largeImageText = largeImgText.c_str();
-    presence.smallImageKey = key_small.c_str();
-    presence.smallImageText = smallImageText.c_str();
-    Discord_UpdatePresence(&presence);
+    if (AssetIDSmall == -1) {
+        key_small = "roblox";
+    }
+
+    std::string new_script = basePythonScript + " \"" + details + "\" \"" + state + "\" " +
+                             std::to_string(startTimestamp) + " " +
+                             "\"" + key_large + "\" \"" + key_small + "\" \"" + largeImgText + "\" \"" + smallImageText + "\" " +
+                             "\"" + button1Text + "\" \"" + button2Text + "\" \"" + button1url + "\" \"" + button2url + "\" \"/" + (tempDirStr) + "discord-ipc-0\"";
+
+    std::cout << "[INFO] Running script: " << new_script << "\n";
+    std::cout << canAccessFile("/" + (tempDirStr) + "discord-ipc-0") << "\n";
+    
+    // Run the custom function in a separate thread
+    discordThread = std::thread([new_script]() {
+        executeScript(new_script);
+    });
+
+    discordThread.detach();
+
+    std::cout << "[INFO] Updated activity" << "\n";
 }
 
-CurrentTypes Current = Home;
+
 std::string getApplicationSupportPath() {
     const char* homeDir = std::getenv("HOME");  // Get the user's home directory
     if (!homeDir) {
@@ -291,10 +374,59 @@ std::string ReadFile(const std::string& filename) {
     return std::string((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
 }
 
-std::string GetGameThumb(long customID) {
-    // Define or replace placeId with your actual value
+std::string GetGameURL(long customID) {
     customID = customID == 0 ? placeId : customID;
+    return "roblox://experiences/start?placeId="+ std::to_string(customID) +"&gameInstanceId=" + jobId;
+}
 
+json GetGameData(long customID) {
+    customID = customID == 0 ? placeId : customID;
+    // Download the JSON file
+    std::string url_getunid = "https://apis.roblox.com/universes/v1/places/" + std::to_string(customID) + "/universe";
+    std::string downloadedFilePath = GetDataFromURL(url_getunid);
+    //std::cout << "[INFO] Got data " << downloadedFilePath << std::endl;
+    json data;
+    try {
+        data = json::parse(downloadedFilePath);
+    } catch (const json::parse_error& e) {
+        std::cerr << "[ERROR] JSON parse error: " << e.what() << std::endl;
+    }
+
+    // Extract the universe ID
+    std::string universeID;
+    try {
+        // Check if 'universeId' is a number and convert it to string if needed
+        if (data.contains("universeId")) {
+            if (data["universeId"].is_number()) {
+                universeID = std::to_string(data["universeId"].get<int>());
+            } else if (data["universeId"].is_string()) {
+                universeID = data["universeId"].get<std::string>();
+            } else {
+                std::cerr << "[ERROR] Unexpected type for 'universeId'" << std::endl;
+            }
+        } else {
+            std::cerr << "[ERROR] 'universeId' not found in JSON" << std::endl;
+        }
+    } catch (const json::type_error& e) {
+        std::cerr << "[ERROR] JSON type error: " << e.what() << std::endl;
+    }
+    if (!universeID.empty() && universeID[0] == '-') {
+        universeID.erase(0, 1);
+    }
+    std::string URL = "https://games.roblox.com/v1/games?universeIds=" + universeID;
+    std::cout << "[INFO] Downloading URL: " << URL << "\n";
+    std::string downloadData = GetDataFromURL(URL);
+    json data_game_data;
+    try {
+        data_game_data = json::parse(downloadData);
+    } catch (const json::parse_error& e) {
+        std::cerr << "[ERROR] JSON parse error: " << e.what() << std::endl;
+    }
+    return data_game_data;
+}
+
+std::string GetGameThumb(long customID) {
+    customID = customID == 0 ? placeId : customID;
     // Download the JSON file
     std::string url_getunid = "https://apis.roblox.com/universes/v1/places/" + std::to_string(customID) + "/universe";
     std::string downloadedFilePath = GetDataFromURL(url_getunid);
@@ -329,6 +461,10 @@ std::string GetGameThumb(long customID) {
         return "";
     }
 
+    if (!universeID.empty() && universeID[0] == '-') {
+        universeID.erase(0, 1);
+    }
+
     // Download the game thumbnail JSON file
     std::string gameThumbURL = "https://thumbnails.roblox.com/v1/games/icons?universeIds=" + universeID + "&returnPolicy=PlaceHolder&size=512x512&format=Png&isCircular=false";
     //std::string universeThumbnailResponsePath = DownloadFile(gameThumbURL, "getunid.json");
@@ -353,6 +489,26 @@ std::string GetGameThumb(long customID) {
 
     return thumbnailUrl;
 }
+
+template <typename T>
+std::string to_string(const T& value) {
+    std::ostringstream oss;
+    oss << value;
+    return oss.str();
+}
+
+
+int64_t getCurrentTimeMillis() {
+    // Get the current time point
+    auto now = std::chrono::system_clock::now();
+    
+    // Convert time point to milliseconds since epoch
+    auto duration = now.time_since_epoch();
+    auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
+    
+    return millis;
+}
+
 
 void doFunc(const std::string& logtxt) {
     //std::cout << logtxt << std::endl;
@@ -379,10 +535,11 @@ void doFunc(const std::string& logtxt) {
     {
         std::regex pattern(R"(! Joining game '([0-9a-f\-]{36})' place ([0-9]+) at ([0-9\.]+))");
         std::smatch match;
-
+        std::cout << logtxt << std::endl;
         if (std::regex_search(logtxt, match, pattern) && match.size() == 4) {
             ActivityInGame = false;
-            placeId = std::stoll(match[2].str());
+            placeId = std::stol(match[2].str());
+            std::cout << "[INFO] Place id: " << placeId << std::endl;
             if (placeId <= 0)
             {
                 placeId = placeId * -1; //this fixes a bug making the placeid negative
@@ -405,6 +562,65 @@ void doFunc(const std::string& logtxt) {
             }
 
             std::cout << "[INFO] Joining Game (" << placeId << "/" << jobId << "/" << ActivityMachineAddress << ")" << std::endl;
+            //https://github.com/pizzaboxer/bloxstrap/blob/7e95fb4d8fc4d132ee4633ba38b68a384ff897da/Bloxstrap/Integrations/DiscordRichPresence.cs
+            GameIMG = GetGameThumb(placeId);
+            std::vector<std::pair<std::string, std::string>> buttonPairs;
+            if (Current != CurrentTypes::Reserved && Current != CurrentTypes::Private)
+            {
+                std::string URL = GetGameURL(placeId);
+                buttonPairs.emplace_back("Join Server", URL);
+            }
+            else
+            {
+                std::string URL = "https://www.roblox.com/home";
+                buttonPairs.emplace_back("Roblox", URL);
+            }
+            std::string page = "https://www.roblox.com/games/" + std::to_string(placeId);
+            buttonPairs.emplace_back("See game page",page);
+            json GameDetails = GetGameData(placeId);
+            std::string status = "";
+            if (Current == CurrentTypes::Private)
+            {
+                status = "In a private server";
+            }
+            else if (Current == CurrentTypes::Reserved)
+            {
+                status = "In a reserved server";
+            }
+            else
+            {
+                status = "by " + to_string(GameDetails["data"][0]["creator"]["name"]);
+                status.erase(std::remove(status.begin(), status.end(), '"'), status.end());
+                if (GameDetails["data"][0]["creator"]["hasVerifiedBadge"])
+                {
+                    status += " ☑️";
+                }
+            }
+            TimeStartedUniverse = getCurrentTimeMillis();
+                        std::string gameName = to_string(GameDetails["data"][0]["name"]);
+            if (!gameName.empty() && gameName.front() == '"' && gameName.back() == '"') {
+                gameName = gameName.substr(1, gameName.size() - 2);
+            }
+            auto it = std::find_if(buttonPairs.begin(), buttonPairs.end(),
+                [](const std::pair<std::string, std::string>& pair) {
+                    return pair.first == "Join Server";
+                });
+            auto it2 = std::find_if(buttonPairs.begin(), buttonPairs.end(),
+                [](const std::pair<std::string, std::string>& pair) {
+                    return pair.first == "See game page";
+                });
+            if (it != buttonPairs.end())
+            {
+                UpdDiscordActivity("Playing " + gameName, status, TimeStartedUniverse, 0, -1, gameName, "Roblox", it->first, it2->first, it->second, it2->second);
+            }
+            else
+            {
+                it = std::find_if(buttonPairs.begin(), buttonPairs.end(),
+                    [](const std::pair<std::string, std::string>& pair) {
+                        return pair.first == "Roblox";
+                    });
+                UpdDiscordActivity("Playing " + gameName, status, TimeStartedUniverse, 0, -1, gameName, "Roblox", it->first, it2->first, it->second, it2->second);
+            }
         }
     }
     else if (logtxt.find("[FLog::Network] serverId:") != std::string::npos && !ActivityInGame && placeId != 0 && Current != Home) 
@@ -447,6 +663,7 @@ void doFunc(const std::string& logtxt) {
         ActivityIsTeleport = false;
         Current = Home;
         GameIMG = "";
+        TimeStartedUniverse = 0;
     }
     else if (logtxt.find("[FLog::Network] UDMUX Address = ") != std::string::npos && !ActivityInGame && placeId != 0 && Current != Home) 
     {
@@ -511,16 +728,52 @@ void Update(DiscordState& state_)
 }
 */
 
+std::string GetBashPath() {
+    char buffer[PATH_MAX];
+    uint32_t size = sizeof(buffer);
+    
+    if (_NSGetExecutablePath(buffer, &size) != 0) {
+        return ""; // Return empty string on failure
+    }
+    
+    // Ensure buffer is null-terminated
+    buffer[PATH_MAX - 1] = '\0';
+    
+    // Get the directory of the executable
+    char* dir = dirname(buffer);
+    
+    return std::string(dir);
+}
+
 int main(int argc, char* argv[]) {
     //discord::Core* core = nullptr;
     //DiscordState state;
-    InitDiscord();
-    UpdDiscordActivity("Test", "Playing", 0, 0, 154835815, 154835815, "Test", "Test");
+    if (doesAppExist("/Applications/Discord.app"))
+    {
+        std::cout << "[INFO] Temp Directory: " << tempDirStr << std::endl;
+        std::string appleScriptCommand = 
+            "set defaultLocation to POSIX file \"" + tempDirStr + "\"\n"
+            "set chosenFolder to (choose folder with prompt \"Select a folder:\" default location defaultLocation) as text\n"
+            "return chosenFolder";
+        tempDirStr = runAppleScriptAndGetOutput(appleScriptCommand);
+        tempDirStr = fixPath(tempDirStr);
+        if (canAccessFile("/" + (tempDirStr) + "discord-ipc-0"))
+        {
+            std::cout << "[INFO] Discord IPC found\n";
+        }
+    }
+    else
+    {
+        isDiscordFound = false;
+    }
+    std::cout << "[INFO] Base python command " << basePythonScript << "\n";
+    //UpdDiscordActivity("Test", "Playing", 0, 154835815, 154835815, "Test", "Test", "Test 1", "Test 2", "https://www.roblox.com/home", "https://www.roblox.com");
     if (!canRun)
     {
         std::cerr << "[ERROR] This program can only be run on macOS\n";
         return 1;
     }
+    
     InitTable();
     std::string defaultPath = "/Users/" + user + "/Library/Logs/Roblox";
     if (!CanAccessFolder(defaultPath))
@@ -552,7 +805,7 @@ int main(int argc, char* argv[]) {
             }
         }
     }
-    CreateNotification("Hello world!", "Test lol", wxNotificationMessage::Timeout_Auto);
+    //CreateNotification("Hello world!", "Test lol", wxNotificationMessage::Timeout_Auto);
     std::cout << "[INFO] Username: " << user << ", path to log file is: " << logfile << "\n";
     //std::cout << "[INFO] start time " << time(0) << ", add time " << time(0) + 5 * 60 << "\n";
     if (!isRobloxRunning())
@@ -634,6 +887,7 @@ int main(int argc, char* argv[]) {
             //Update(state);
         }
         logThread.~thread();
+        discordThread.~thread();
     }
     std::cout << "[INFO] Closing program\n";
     return 0;

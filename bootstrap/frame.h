@@ -258,8 +258,11 @@ void BootstrapperFrame::DoLogic()
 {
     if (FolderExists("/Applications/Roblox.app/Contents/"))
     {
-        std::string defaultPath = "/Applications/Roblox.app/Contents/MacOS";
-        RobloxApplicationPath = ShowOpenFileDialog("file://localhost"+defaultPath);
+        RobloxApplicationPath = "/Applications/Roblox.app/Contents/MacOS";
+        if (!CanAccessFolder(RobloxApplicationPath))
+        {
+            RobloxApplicationPath = ShowOpenFileDialog("file://localhost"+RobloxApplicationPath);
+        }
         if (!FolderExists("/Applications/Roblox.app/Contents/MacOS/ClientSettings"))
         {
             CreateFolder("/Applications/Roblox.app/Contents/MacOS/ClientSettings");
@@ -342,16 +345,6 @@ void BootstrapperFrame::DoLogic()
             downloadFile(URL.c_str(), DownloadPath.c_str());
         }
         bool isDone = false;
-        std::string text = ShowOpenFileDialog_WithCustomText("file://localhost/Applications", "Select A Folder (/Applications/)");
-        if (text != "/Applications")
-        {
-            std::cerr << "[ERROR] Thats not the right path!" << std::endl;
-            std::string path = "The location of Application Folder isn't correct. The location of is /Applications";
-            wxString toWxString(path.c_str(), wxConvUTF8);
-            wxMessageBox(toWxString, "Error", wxOK | wxICON_ERROR);
-            Close(true);
-            return;     
-        }
         std::string warn_todo = "Please extract RobloxPlayer.zip to the Application Folder and rename it to Roblox.app (if u cant see the .app just rename it to Roblox). The file path is ~/Downloads/RobloxPlayer.zip";
         wxString toWxString_warn(warn_todo.c_str(), wxConvUTF8);
         wxMessageBox(toWxString_warn, "Info", wxOK | wxICON_INFORMATION);
@@ -362,7 +355,7 @@ void BootstrapperFrame::DoLogic()
                 break;
             }
         } while (!isDone);
-        std::string defaultPath = "/Applications/RobloxPlayer.app/Contents/MacOS";
+        std::string defaultPath = "/Applications/Roblox.app/Contents/MacOS";
         RobloxApplicationPath = ShowOpenFileDialog("file://localhost"+defaultPath);
         if (RobloxApplicationPath != "/Applications/Roblox.app/Contents/MacOS")
         {
