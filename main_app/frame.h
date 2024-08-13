@@ -51,9 +51,11 @@ private:
     wxPanel* panel = nullptr;
     wxButton* button = nullptr;
     wxGridSizer* gridSizer = nullptr; 
+    wxButton* closeButton_EditBox = nullptr;
+    wxCheckListBox* EditBox = nullptr;
     std::map<std::string, wxButton*> buttons;
+    std::map<std::string, bool> modsEnabled;
     int lastX = 250;
-
     enum IDS {
         LaunchID = 2,
         BtnID_START = 3  // Start button IDs from a different base
@@ -92,7 +94,8 @@ void MainFrame::ReinitializePanels()
     // Initialize map with dummy data to create buttons
     buttons = {
         {"Config", nullptr},
-        {"Test", nullptr},
+        {"Mods", nullptr},
+        {"Test Button", nullptr},
     };
 
     gridSizer = new wxGridSizer(0, 1, 0,0);
@@ -123,11 +126,24 @@ void MainFrame::OpenPages(wxCommandEvent& event)
         std::cout << "[INFO] Button clicked with text: " << buttonName << std::endl;
         if (buttonName == "Config")
         {
+            delete EditBox;
+            EditBox = nullptr;
+            //delete closeButton_EditBox;
+            //closeButton_EditBox = nullptr;
             wxEditableListBox* editableListBox = new wxEditableListBox(panel, wxID_ANY);
             wxBoxSizer* mainSizer = new wxBoxSizer(wxHORIZONTAL);
             mainSizer->Add(editableListBox, 1, wxEXPAND | wxALL, 5);
             panel->SetSizer(mainSizer);  // Ensure that the sizer is set for the panel
             panel->Layout();
+        }
+        else if (buttonName == "Mods")
+        {
+            wxArrayString items;
+            items.Add("Mod 1");
+            items.Add("Mod 2");
+            items.Add("Mod 3");
+            EditBox = new wxCheckListBox(panel, wxID_ANY, wxPoint(170, 15), wxSize(425, 300), items);
+            //closeButton_EditBox = new wxButton(this, 1003, "Close", wxPoint(425, 322), wxSize(100, 40));
         }
     }
 }
