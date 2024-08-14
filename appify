@@ -77,8 +77,6 @@ cat <<EOF > $DIR/Info.plist
 	<string>NO</string>
 	<key>BreakpadSkipConfirm</key>
 	<string>YES</string>
-	<key>BreakpadVendor</key>
-	<string>Roblox</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
    <key>CFBundleExecutable</key>
@@ -86,7 +84,7 @@ cat <<EOF > $DIR/Info.plist
    <key>CFBundleGetInfoString</key>
    <string>$APPNAME</string>
    <key>CFBundleVersion</key>
-	<string>6360627</string>
+	<string>1</string>
    <key>CFBundleIconFile</key>
    <string>$APPNAME</string>
    <key>CFBundleName</key>
@@ -98,7 +96,7 @@ cat <<EOF > $DIR/Info.plist
    <key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
    <key>BreakpadVendor</key>
-	<string>Roblox</string>
+	<string>Macblox</string>
    <key>CFBundleName</key>
 	<string>MacBlox</string>
    <key>CFBundleSignature</key>

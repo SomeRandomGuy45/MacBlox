@@ -11,20 +11,25 @@ extern "C" {
 @implementation AppDelegate
 
 - (void)addToLoginItems {
-    NSString *appPath = [[NSBundle mainBundle] bundlePath];
-    NSURL *appURL = [NSURL fileURLWithPath:appPath];
-    CFURLRef appURLRef = (__bridge CFURLRef)appURL;
+    NSString *helperBundleIdentifier = @"com.someguy.macbackground";
+    BOOL success = SMLoginItemSetEnabled((__bridge CFStringRef)helperBundleIdentifier, YES);
     
-    LSSharedFileListRef loginItems = LSSharedFileListCreate(NULL, kLSSharedFileListSessionLoginItems, NULL);
-    if (loginItems) {
-        LSSharedFileListItemRef item = LSSharedFileListInsertItemURL(loginItems, kLSSharedFileListItemLast, NULL, NULL, appURLRef, NULL, NULL);
-        if (item) CFRelease(item);
-        CFRelease(loginItems);
+    if (!success) {
+        NSLog(@"Failed to add login item.");
+    } else {
+        NSLog(@"Login item added successfully.");
     }
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
     [self addToLoginItems];
+    
+    // Example: Run a shell command in the background
+    NSTask *task = [[NSTask alloc] init];
+    [task setLaunchPath:@"/bin/sh"];
+    [task setArguments:@[@"-c", @"echo 'Hello, Background!' >> ~/Desktop/background.txt"]];
+    [task launch];
+    
     // Run C++ Task
     runCppTask();
 }
