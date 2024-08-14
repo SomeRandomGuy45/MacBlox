@@ -1,6 +1,6 @@
 /*
 
-    This is the code that makes this app crash
+    This is the code that makes this app not crash
 
 */
 
