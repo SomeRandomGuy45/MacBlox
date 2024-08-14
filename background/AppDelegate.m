@@ -23,13 +23,6 @@ extern "C" {
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
     [self addToLoginItems];
-    
-    // Example: Run a shell command in the background
-    NSTask *task = [[NSTask alloc] init];
-    [task setLaunchPath:@"/bin/sh"];
-    [task setArguments:@[@"-c", @"echo 'Hello, Background!' >> ~/Desktop/background.txt"]];
-    [task launch];
-    
     // Run C++ Task
     runCppTask();
 }
