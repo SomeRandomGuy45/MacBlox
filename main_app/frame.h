@@ -45,6 +45,7 @@ public:
 
 private:
     void OnLaunchButtonClick(wxCommandEvent& event);
+    void OnModSelection(wxCommandEvent& event);
     void OpenPages(wxCommandEvent& event);
     void DestroyPanel();
     void ReinitializePanels();
@@ -54,7 +55,11 @@ private:
     wxButton* closeButton_EditBox = nullptr;
     wxCheckListBox* EditBox = nullptr;
     std::map<std::string, wxButton*> buttons;
-    std::map<std::string, bool> modsEnabled;
+    std::map<std::string, bool> modsEnabled = {
+        {"Mod Test 1", false},
+        {"Mod Test 2", false},
+        {"Mod Test 3", false},
+    };
     int lastX = 250;
     enum IDS {
         LaunchID = 2,
@@ -116,6 +121,26 @@ void MainFrame::ReinitializePanels()
     panel->Layout();
 }
 
+void MainFrame::OnModSelection(wxCommandEvent& event)
+{
+    int selectionIndex = event.GetInt();
+    wxString modNameWx = EditBox->GetString(selectionIndex);
+    std::string modName = modNameWx.ToStdString();
+
+    // Toggle the mod's enabled state
+    if (modsEnabled.find(modName) != modsEnabled.end())
+    {
+        modsEnabled[modName] = EditBox->IsChecked(selectionIndex);
+    }
+
+    // Loop through the modsEnabled map and print the status
+    std::cout << "[INFO] Current mod statuses:" << std::endl;
+    for (const auto& [mod, isEnabled] : modsEnabled)
+    {
+        std::cout << "[INFO] Mod: " << mod << " is " << (isEnabled ? "enabled" : "disabled") << std::endl;
+    }
+}
+
 void MainFrame::OpenPages(wxCommandEvent& event)
 {
     wxButton* clickedButton = dynamic_cast<wxButton*>(event.GetEventObject());
@@ -124,26 +149,39 @@ void MainFrame::OpenPages(wxCommandEvent& event)
         wxString buttonText = clickedButton->GetLabel();
         std::string buttonName = buttonText.ToStdString();
         std::cout << "[INFO] Button clicked with text: " << buttonName << std::endl;
+        
         if (buttonName == "Config")
         {
             delete EditBox;
             EditBox = nullptr;
-            //delete closeButton_EditBox;
-            //closeButton_EditBox = nullptr;
+
             wxEditableListBox* editableListBox = new wxEditableListBox(panel, wxID_ANY);
             wxBoxSizer* mainSizer = new wxBoxSizer(wxHORIZONTAL);
             mainSizer->Add(editableListBox, 1, wxEXPAND | wxALL, 5);
-            panel->SetSizer(mainSizer);  // Ensure that the sizer is set for the panel
+            panel->SetSizer(mainSizer);
             panel->Layout();
         }
         else if (buttonName == "Mods")
         {
             wxArrayString items;
-            items.Add("Mod 1");
-            items.Add("Mod 2");
-            items.Add("Mod 3");
+
+            for (const auto& [modName, isEnabled] : modsEnabled)
+            {
+                items.Add(modName);  // Add mod name to wxArrayString
+            }
+            
+            // Initialize the checklist box
             EditBox = new wxCheckListBox(panel, wxID_ANY, wxPoint(170, 15), wxSize(425, 300), items);
-            //closeButton_EditBox = new wxButton(this, 1003, "Close", wxPoint(425, 322), wxSize(100, 40));
+
+            int index = 0;
+            for (const auto& [modName, isEnabled] : modsEnabled)
+            {
+                EditBox->Check(index, isEnabled);
+                index++;
+            }
+
+            // Bind the checklist box event
+            EditBox->Bind(wxEVT_CHECKLISTBOX, &MainFrame::OnModSelection, this);
         }
     }
 }

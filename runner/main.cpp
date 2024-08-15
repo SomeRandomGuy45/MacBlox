@@ -87,7 +87,7 @@ bool ActivityIsTeleport = false;
 bool _teleportMarker = false;
 bool _reservedTeleportMarker = false;
 bool ActivityInGame;
-int64_t lastRPCTime = 0;
+std::time_t lastRPCTime = std::time(nullptr);
 std::unordered_set<std::string> processedLogs;
 std::thread discordThread; //CHANGE ME LATER WHEN DISCORD RPC C++ IS FIX LOL
 std::mutex mtx;
@@ -279,7 +279,7 @@ void executeScript(const std::string& script) {
                 do shell script "killall -QUIT Terminal"
             end if
             -- Wait a bit to ensure windows are closed
-            delay 2
+            delay 0.25
             -- Open a new Terminal window and run the script
             tell application "Terminal"
                 do script ")" + path + R"("
@@ -301,14 +301,16 @@ static void UpdDiscordActivity(
     const std::string& details, 
     const std::string& state, 
     int64_t startTimestamp, 
-    int AssetIDLarge, 
-    int AssetIDSmall, 
+    long AssetIDLarge, 
+    long AssetIDSmall, 
     const std::string& largeImgText, 
     const std::string& smallImageText, 
     const std::string& button1Text, 
     const std::string& button2Text, 
     const std::string& button1url, 
-    const std::string& button2url)
+    const std::string& button2url,
+    int64_t endTimestamp
+    )
 {
     if (!isDiscordFound) {
         return;
@@ -335,7 +337,7 @@ static void UpdDiscordActivity(
                          std::to_string(startTimestamp) + " " +
                          "\"" + key_large + "\" \"" + key_small + "\" \"" + largeImgText + "\" \"" + smallImageText + "\" " +
                          "\"" + button1Text + "\" \"" + button2Text + "\" \"" + button1url + "\" \"" + button2url + "\" " +
-                         "\"/" + tempDirStr + "/discord-ipc-0\"";
+                         "\"/" + tempDirStr + "/discord-ipc-0\"" + " " + std::to_string(endTimestamp);
 
     std::cout << "[INFO] Running script: " << new_script << "\n";
     std::cout << canAccessFile("/" + (tempDirStr) + "discord-ipc-0") << "\n";
@@ -356,6 +358,15 @@ static void UpdDiscordActivity(
         kill(pidToTerminate, SIGINT);
         currentScriptPID = -1; // Reset PID after waiting
     }
+
+    std::string ScriptNeededToRun = R"(
+            tell application "System Events"
+                set isTerminalRunning to (exists (processes whose name is "Terminal"))
+            end tell
+            if isTerminalRunning then
+                do shell script "killall -QUIT Terminal"
+            end if)";
+    runAppleScriptAndGetOutput(ScriptNeededToRun);
 
     // Run the custom function in a separate thread
     discordThread = std::thread([new_script]() {
@@ -395,8 +406,24 @@ std::string GetBasePath() {
     }
 }
 
-std::string getLatestLogFile() {
-    return getLogFile(logfile);
+std::string getLatestLogFile(bool need) {
+    std::vector<std::string> logFiles;
+
+    // Iterate through the directory to find log files with "Player" in their name
+    for (const auto& entry : fs::directory_iterator(logfile)) {
+        if (entry.path().extension() == ".log" && entry.path().filename().string().find("Player") != std::string::npos) {
+            logFiles.push_back(entry.path().string());
+        }
+    }
+
+    if (logFiles.empty()) return "";
+
+    // Find the latest log file by last modification time
+    auto latestLogFile = *std::max_element(logFiles.begin(), logFiles.end(), [](const std::string& a, const std::string& b) {
+        return fs::last_write_time(a) < fs::last_write_time(b);
+    });
+    
+    return latestLogFile;
 }
 
 bool isRobloxRunning()
@@ -426,12 +453,10 @@ std::string ReadFile(const std::string& filename) {
 }
 
 std::string GetGameURL(long customID) {
-    customID = customID == 0 ? placeId : customID;
     return "roblox://experiences/start?placeId="+ std::to_string(customID) +"&gameInstanceId=" + jobId;
 }
 
 json GetGameData(long customID) {
-    customID = customID == 0 ? placeId : customID;
     // Download the JSON file
     std::string url_getunid = "https://apis.roblox.com/universes/v1/places/" + std::to_string(customID) + "/universe";
     std::string downloadedFilePath = GetDataFromURL(url_getunid);
@@ -449,7 +474,7 @@ json GetGameData(long customID) {
         // Check if 'universeId' is a number and convert it to string if needed
         if (data.contains("universeId")) {
             if (data["universeId"].is_number()) {
-                universeID = std::to_string(data["universeId"].get<int>());
+                universeID = std::to_string(data["universeId"].get<long>());
             } else if (data["universeId"].is_string()) {
                 universeID = data["universeId"].get<std::string>();
             } else {
@@ -461,9 +486,11 @@ json GetGameData(long customID) {
     } catch (const json::type_error& e) {
         std::cerr << "[ERROR] JSON type error: " << e.what() << std::endl;
     }
-    if (!universeID.empty() && universeID[0] == '-') {
-        universeID.erase(0, 1);
+    std::cout << "[INFO] universeId: " << universeID << std::endl;
+    if (!universeID.empty() && std::stol(universeID) <= 0) {
+        universeID = std::to_string(std::stol(universeID) * -1);
     }
+    std::cout << "[INFO] new universeId: " << universeID << std::endl;
     std::string URL = "https://games.roblox.com/v1/games?universeIds=" + universeID;
     std::cout << "[INFO] Downloading URL: " << URL << "\n";
     std::string downloadData = GetDataFromURL(URL);
@@ -477,7 +504,6 @@ json GetGameData(long customID) {
 }
 
 std::string GetGameThumb(long customID) {
-    customID = customID == 0 ? placeId : customID;
     // Download the JSON file
     std::string url_getunid = "https://apis.roblox.com/universes/v1/places/" + std::to_string(customID) + "/universe";
     std::string downloadedFilePath = GetDataFromURL(url_getunid);
@@ -496,7 +522,7 @@ std::string GetGameThumb(long customID) {
         // Check if 'universeId' is a number and convert it to string if needed
         if (data.contains("universeId")) {
             if (data["universeId"].is_number()) {
-                universeID = std::to_string(data["universeId"].get<int>());
+                universeID = std::to_string(data["universeId"].get<long>());
             } else if (data["universeId"].is_string()) {
                 universeID = data["universeId"].get<std::string>();
             } else {
@@ -511,10 +537,11 @@ std::string GetGameThumb(long customID) {
         std::cerr << "[ERROR] JSON type error: " << e.what() << std::endl;
         return "";
     }
-
-    if (!universeID.empty() && universeID[0] == '-') {
-        universeID.erase(0, 1);
+    std::cout << "[INFO] universeId: " << universeID << std::endl;
+    if (!universeID.empty() && std::stol(universeID) <= 0) {
+        universeID = std::to_string(std::stol(universeID) * -1);
     }
+    std::cout << "[INFO] new universeId: " << universeID << std::endl;
 
     // Download the game thumbnail JSON file
     std::string gameThumbURL = "https://thumbnails.roblox.com/v1/games/icons?universeIds=" + universeID + "&returnPolicy=PlaceHolder&size=512x512&format=Png&isCircular=false";
@@ -567,7 +594,7 @@ void doFunc(const std::string& logtxt) {
         return; // Skip processing if the log entry has already been handled
     }
     processedLogs.insert(logtxt);
-    if (logtxt.find("[FLog::GameJoinUtil] GameJoinUtil::initiateTeleportToReservedServer]") != std::string::npos) 
+    if (logtxt.find("[FLog::SingleSurfaceApp] initiateTeleport") != std::string::npos) 
     {
         _teleportMarker = true;
         std::cout << "[INFO] Attempting to teleport into new server\n";
@@ -582,7 +609,7 @@ void doFunc(const std::string& logtxt) {
         Current = Private;
         std::cout << "[INFO] Attempting to join private server\n";
     } 
-    else if (logtxt.find("[FLog::Output] ! Joining game") != std::string::npos && !ActivityInGame && placeId == 0 && Current == Home) 
+    else if (logtxt.find("[FLog::Output] ! Joining game") != std::string::npos && !ActivityInGame && placeId == 0 && (Current == Home)) 
     {
         std::regex pattern(R"(! Joining game '([0-9a-f\-]{36})' place ([0-9]+) at ([0-9\.]+))");
         std::smatch match;
@@ -613,6 +640,35 @@ void doFunc(const std::string& logtxt) {
             }
 
             std::cout << "[INFO] Joining Game (" << placeId << "/" << jobId << "/" << ActivityMachineAddress << ")" << std::endl;
+        }
+    }
+    else if (logtxt.find("[FLog::Network] serverId:") != std::string::npos && !ActivityInGame && placeId != 0 && Current != Home) 
+    {
+        std::regex pattern(R"(serverId: ([0-9\.]+)\|[0-9]+)");
+        std::smatch match;
+
+        if (std::regex_search(logtxt, match, pattern) && match.size() == 2 && match[1].str() == ActivityMachineAddress) {
+            std::cout << "[INFO] Joined Game (" << placeId << "/" << jobId << "/" << ActivityMachineAddress << ")" << std::endl;
+            ActivityInGame = true;
+            std::future<std::string> test_ig = GetServerLocation(ActivityMachineAddress, ActivityInGame);
+            std::string serverLocationStr = test_ig.get();
+            std::cout << "[INFO] Server location: " << serverLocationStr << std::endl;
+            wxString Title_Text = "";
+            wxString ServerLocationText(serverLocationStr.c_str(), wxConvUTF8);
+            wxString Msg_Text = "Located at " + ServerLocationText;
+            if (Current != CurrentTypes::Home) {
+                if (Current == CurrentTypes::Private) {
+                    Title_Text = "Conntected to private server";
+                }
+                else if (Current == CurrentTypes::Reserved) {
+                    Title_Text = "Conntected to reserved server";
+                }
+                else
+                {
+                    Title_Text = "Connected to public server";
+                }
+            }
+            CreateNotification(Title_Text, Msg_Text, wxNotificationMessage::Timeout_Auto);
             //https://github.com/pizzaboxer/bloxstrap/blob/7e95fb4d8fc4d132ee4633ba38b68a384ff897da/Bloxstrap/Integrations/DiscordRichPresence.cs
             GameIMG = GetGameThumb(placeId);
             std::vector<std::pair<std::string, std::string>> buttonPairs;
@@ -662,7 +718,7 @@ void doFunc(const std::string& logtxt) {
                 });
             if (it != buttonPairs.end())
             {
-                UpdDiscordActivity("Playing " + gameName, status, TimeStartedUniverse, 0, -1, gameName, "Roblox", it->first, it2->first, it->second, it2->second);
+                UpdDiscordActivity("Playing " + gameName, status, TimeStartedUniverse, 0, -1, gameName, "Roblox", it->first, it2->first, it->second, it2->second, 0);
             }
             else
             {
@@ -670,37 +726,8 @@ void doFunc(const std::string& logtxt) {
                     [](const std::pair<std::string, std::string>& pair) {
                         return pair.first == "Roblox";
                     });
-                UpdDiscordActivity("Playing " + gameName, status, TimeStartedUniverse, 0, -1, gameName, "Roblox", it->first, it2->first, it->second, it2->second);
+                UpdDiscordActivity("Playing " + gameName, status, TimeStartedUniverse, 0, -1, gameName, "Roblox", it->first, it2->first, it->second, it2->second, 0);
             }
-        }
-    }
-    else if (logtxt.find("[FLog::Network] serverId:") != std::string::npos && !ActivityInGame && placeId != 0 && Current != Home) 
-    {
-        std::regex pattern(R"(serverId: ([0-9\.]+)\|[0-9]+)");
-        std::smatch match;
-
-        if (std::regex_search(logtxt, match, pattern) && match.size() == 2 && match[1].str() == ActivityMachineAddress) {
-            std::cout << "[INFO] Joined Game (" << placeId << "/" << jobId << "/" << ActivityMachineAddress << ")" << std::endl;
-            ActivityInGame = true;
-            std::future<std::string> test_ig = GetServerLocation(ActivityMachineAddress, ActivityInGame);
-            std::string serverLocationStr = test_ig.get();
-            std::cout << "[INFO] Server location: " << serverLocationStr << std::endl;
-            wxString Title_Text = "";
-            wxString ServerLocationText(serverLocationStr.c_str(), wxConvUTF8);
-            wxString Msg_Text = "Located at " + ServerLocationText;
-            if (Current != CurrentTypes::Home) {
-                if (Current == CurrentTypes::Private) {
-                    Title_Text = "Conntected to private server";
-                }
-                else if (Current == CurrentTypes::Reserved) {
-                    Title_Text = "Conntected to reserved server";
-                }
-                else
-                {
-                    Title_Text = "Connected to public server";
-                }
-            }
-            CreateNotification(Title_Text, Msg_Text, wxNotificationMessage::Timeout_Auto);
         }
     } 
     else if (logtxt.find("[FLog::Network] Time to disconnect replication data:") != std::string::npos || logtxt.find("[FLog::SingleSurfaceApp] leaveUGCGameInternal") != std::string::npos && !ActivityInGame && placeId != 0 && Current != Home) 
@@ -728,7 +755,6 @@ void doFunc(const std::string& logtxt) {
     {
         std::regex pattern(R"(UDMUX Address = ([0-9\.]+), Port = [0-9]+ \| RCC Server Address = ([0-9\.]+), Port = [0-9]+)");
         std::smatch match;
-        std::regex_search(logtxt, match, pattern);
         if (isDebug)
         {
             std::cout << "[INFO] match data: " << match.str() << "\n";
@@ -745,18 +771,126 @@ void doFunc(const std::string& logtxt) {
     }
     else if (logtxt.find("[FLog::Output] [BloxstrapRPC]") != std::string::npos && Current != Home)
     {
-        if (time(0) - lastRPCTime <= 1)
+        std::cout << "[INFO] Last time since last RPC " << std::to_string(std::time(nullptr) - lastRPCTime) << "\n";
+        if (std::time(nullptr) - lastRPCTime <= 1)
         {
+            std::cout << "[WARN] Dropping message (rate limit exceeded)\n";
             return;
         }
         std::regex pattern("\\[BloxstrapRPC\\] (.*)");
         std::smatch match;
-        std::regex_search(logtxt, match, pattern);
-        std::string data = match[1].str();
-        std::cout << "[INFO] BloxstrapRPC: " << data << "\n";
-        json _data = json::parse(data);
-        lastRPCTime = time(0);
-        GameIMG = GetGameThumb(placeId);
+        if (std::regex_search(logtxt, match, pattern) && match.size() == 2)
+        {
+            std::string data = match[1].str();
+            std::cout << "[INFO] BloxstrapRPC: " << data << "\n";
+            json _data = json::parse(data);
+            lastRPCTime = std::time(nullptr);
+            std::cout << "[INFO] BloxstrapRPC dumped: " << _data.dump(4) << "\n";
+
+            if (_data["command"] == "SetRichPresence")
+            {
+                GameIMG = GetGameThumb(placeId);
+                std::vector<std::pair<std::string, std::string>> buttonPairs;
+
+                if (Current != CurrentTypes::Reserved && Current != CurrentTypes::Private)
+                {
+                    std::string URL = GetGameURL(placeId);
+                    buttonPairs.emplace_back("Join Server", URL);
+                }
+                else
+                {
+                    std::string URL = "https://www.roblox.com/home";
+                    buttonPairs.emplace_back("Roblox", URL);
+                }
+
+                std::string page = "https://www.roblox.com/games/" + std::to_string(placeId);
+                buttonPairs.emplace_back("See game page", page);
+
+                json GameDetails = GetGameData(placeId);
+                std::string status = "";
+
+                if (Current == CurrentTypes::Private)
+                {
+                    status = "In a private server";
+                }
+                else if (Current == CurrentTypes::Reserved)
+                {
+                    status = "In a reserved server";
+                }
+                else
+                {
+                    status = "by " + to_string(GameDetails["data"][0]["creator"]["name"]);
+                    status.erase(std::remove(status.begin(), status.end(), '"'), status.end());
+                    if (GameDetails["data"][0]["creator"]["hasVerifiedBadge"])
+                    {
+                        status += " ☑️";
+                    }
+                }
+
+                TimeStartedUniverse = getCurrentTimeMillis();
+
+                std::string gameName = to_string(GameDetails["data"][0]["name"]);
+                if (!gameName.empty() && gameName.front() == '"' && gameName.back() == '"')
+                {
+                    gameName = gameName.substr(1, gameName.size() - 2);
+                }
+
+                auto it = std::find_if(buttonPairs.begin(), buttonPairs.end(),
+                    [](const std::pair<std::string, std::string>& pair) {
+                        return pair.first == "Join Server";
+                    });
+
+                auto it2 = std::find_if(buttonPairs.begin(), buttonPairs.end(),
+                    [](const std::pair<std::string, std::string>& pair) {
+                        return pair.first == "See game page";
+                    });
+
+                // Check for null values before attempting to get string values
+                if (!_data["data"]["state"].is_null())
+                    status = !_data["data"]["state"].get<std::string>().empty() ? _data["data"]["state"].get<std::string>() : status;
+
+                std::string details = (!_data["data"]["details"].is_null() && !_data["data"]["details"].get<std::string>().empty()) 
+                    ? _data["data"]["details"].get<std::string>() 
+                    : "Playing " + gameName;
+
+                std::string largeImageHover = (!_data["data"]["largeImage"]["hoverText"].is_null() && !_data["data"]["largeImage"]["hoverText"].get<std::string>().empty()) 
+                    ? _data["data"]["largeImage"]["hoverText"].get<std::string>() 
+                    : gameName;
+
+                std::string smallImageHover = (!_data["data"]["smallImage"]["hoverText"].is_null() && !_data["data"]["smallImage"]["hoverText"].get<std::string>().empty()) 
+                    ? _data["data"]["smallImage"]["hoverText"].get<std::string>() 
+                    : "Roblox";
+
+                long id_long = (!_data["data"]["largeImage"]["assetId"].is_null() && _data["data"]["largeImage"]["assetId"].get<long>() != 0) 
+                    ? _data["data"]["largeImage"]["assetId"].get<long>() 
+                    : 0;
+
+                long id_small = (!_data["data"]["smallImage"]["assetId"].is_null() && _data["data"]["smallImage"]["assetId"].get<long>() != 0) 
+                    ? _data["data"]["smallImage"]["assetId"].get<long>() 
+                    : -1;
+
+                int64_t timeEnd = (!_data["data"]["timeEnd"].is_null() && _data["data"]["timeEnd"].get<int64_t>() != 0) 
+                    ? _data["data"]["timeEnd"].get<int64_t>() 
+                    : 0;
+
+                int64_t timeStart = (!_data["data"]["timeStart"].is_null() && _data["data"]["timeStart"].get<int64_t>() != 0) 
+                    ? _data["data"]["timeStart"].get<int64_t>() 
+                    : 0;
+
+                if (it != buttonPairs.end())
+                {
+                    UpdDiscordActivity(details, status, timeStart, id_long, id_small, largeImageHover, smallImageHover, it->first, it2->first, it->second, it2->second, timeEnd);
+                }
+                else
+                {
+                    it = std::find_if(buttonPairs.begin(), buttonPairs.end(),
+                        [](const std::pair<std::string, std::string>& pair) {
+                            return pair.first == "Roblox";
+                        });
+                    UpdDiscordActivity(details, status, timeStart, id_long, id_small, largeImageHover, smallImageHover, it->first, it2->first, it->second, it2->second, timeEnd);
+                }
+            }
+        }
     }
 }
 
@@ -872,9 +1006,10 @@ int main(int argc, char* argv[]) {
     }
     do {} while (!isRobloxRunning());
     isRblxRunning = isRobloxRunning();
+    std::this_thread::sleep_for(std::chrono::seconds(5));
     std::cout << "[INFO] Roblox player is running\n";
-    std::string latestLogFile = getLatestLogFile();
-    do {latestLogFile = getLatestLogFile();} while (latestLogFile.empty());
+    std::string latestLogFile = getLatestLogFile(false);
+    do {latestLogFile = getLatestLogFile(false);} while (latestLogFile.empty());
     std::cout << "[INFO] Reading log file now!\n";
     if (latestLogFile.empty()) {
         throw std::runtime_error("[ERROR] Roblox log file not found!");
@@ -905,6 +1040,12 @@ int main(int argc, char* argv[]) {
 
             std::cout << "[INFO] Could not find recent enough log file, waiting... (newest is " << fs::path(logFilePath).filename().string() << ")\n";
             std::this_thread::sleep_for(std::chrono::seconds(1));
+        }
+        std::cout << "[INFO] Path is " << logFilePath << "\n";
+        std::cout << "[INFO] Log updated: " << getLatestLogFile(true) << "\n";
+        if (fs::path(getLatestLogFile(true)).filename().string() != fs::path(logFilePath).filename().string())
+        {
+            logFilePath = getLatestLogFile(true);
         }
         std::condition_variable logUpdatedEvent;
         std::mutex mtx;

@@ -1,9 +1,14 @@
+# Paths and configuration
 BUILDPATH = $(CURDIR)/build
 WX_CONFIG = $(shell wx-config --cxxflags --libs)
 CC = clang++
 CXXFLAGS = -x objective-c++ $(WX_CONFIG) $(LIBRARY_PATH)
-LDFLAGS = $(WX_CONFIG) $(CPATH) -lcurl -lcurlpp -lz -lminizip -framework CoreFoundation -framework DiskArbitration -framework Foundation -framework Cocoa -framework UserNotifications -lssl -lcrypto --std=c++20
+LDFLAGS = $(WX_CONFIG) $(CPATH) -ldiscord-rpc -lcurl -lcurlpp -lz -lminizip -framework CoreFoundation -framework DiskArbitration -framework Foundation -framework Cocoa -framework UserNotifications -framework ServiceManagement -lssl -lcrypto --std=c++20
 
+# Default target
+all: create_main_app create_background_app
+
+# Create the main app
 create_main_app:
 	@if [ -d $(BUILDPATH) ]; then \
 		rm -d -r $(BUILDPATH); \
@@ -32,3 +37,19 @@ create_main_app:
 	@codesign --sign - --entitlements Macblox.plist --deep Macblox.app --force
 	@mv -f Macblox.app $(BUILDPATH)/Macblox/Macblox.app
 	@rm -f $(BUILDPATH)/main
+
+# Create the background app
+create_background_app:
+	@mkdir -p $(BUILDPATH)
+	$(CC) $(CXXFLAGS) $(LDFLAGS) -o $(BUILDPATH)/BackgroundApp $(CURDIR)/background/AppDelegate.mm $(CURDIR)/background/BackgroundTask.mm $(CURDIR)/background/main.m $(CURDIR)/background/StartAtLoginController.m
+	@./appify_background -s $(BUILDPATH)/BackgroundApp -n BackgroundApp -i test
+	@codesign --sign - --entitlements Macblox_background.plist --deep BackgroundApp.app --force
+	@mv -f BackgroundApp.app $(BUILDPATH)/Macblox/BackgroundApp.app
+	@rm -f $(BUILDPATH)/BackgroundApp
+
+# Clean the build directory
+clean:
+	rm -rf $(BUILDPATH)
+
+# Phony targets
+.PHONY: all create_main_app create_background_app clean

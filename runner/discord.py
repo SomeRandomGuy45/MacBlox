@@ -9,13 +9,14 @@ from pypresence import Presence
 import time
 args = sys.argv
 print(args)
-if (len(args) < 12):
-    print("Usage: python discord_rpc.py <details> <state> <startTimestamp> <AssetIDLarge> <AssetIDSmall> <largeImgText> <smallImageText> <button1label> <button2label> <button1url> <button2url> <pipe_location>")
+if (len(args) < 13):
+    print("Usage: python discord_rpc.py <details> <state> <startTimestamp> <AssetIDLarge> <AssetIDSmall> <largeImgText> <smallImageText> <button1label> <button2label> <button1url> <button2url> <pipe_location> <timeend>")
     sys.exit(1)
 
 state = args[2]
 details = args[1]
 ts_start=int(args[3])
+ts_end=int(args[13])
 if ts_start <= 0:
     ts_start = time.time()
 large_image=args[4]
@@ -33,19 +34,35 @@ RPC.connect(
 )
 
 
-RPC.update(
-    details=details,
-    state=state,
-    start=ts_start,
-    large_image=large_image,
-    large_text=large_text,
-    small_image=small_image,
-    small_text=small_text,
-    buttons=[
-        {"label": label1, "url" : url1},
-        {"label": label2, "url" : url2},
-    ]
-)
+if ts_end != 0:
+    RPC.update(
+        details=details,
+        state=state,
+        start=ts_start,
+        end=ts_end,
+        large_image=large_image,
+        large_text=large_text,
+        small_image=small_image,
+        small_text=small_text,
+        buttons=[
+            {"label": label1, "url" : url1},
+            {"label": label2, "url" : url2},
+        ]
+    )
+else:
+    RPC.update(
+        details=details,
+        state=state,
+        start=ts_start,
+        large_image=large_image,
+        large_text=large_text,
+        small_image=small_image,
+        small_text=small_text,
+        buttons=[
+            {"label": label1, "url" : url1},
+            {"label": label2, "url" : url2},
+        ]
+    )
 
 while True:
     time.sleep(0)
