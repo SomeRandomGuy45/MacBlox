@@ -1,109 +1,85 @@
-//Some of this c++ code is from https://github.com/pizzaboxer/bloxstrap/blob/main/Bloxstrap/Integrations/ActivityWatcher.cs
-//it is in c# but i was able to translate it to c++
+#include "main_helper.h"
+#include <objc/objc.h>
+#include <objc/runtime.h>
+#include <Foundation/Foundation.h>
 
-/*
-
-    TODO:
-        Refactor and optimize the code into header files and other stuff could be like a v2
-
-*/
-
-#include <iostream>
-#include <vector>
-#include <libproc.h>
-#include <limits.h>
-#include <mach-o/dyld.h>
-#include <cstring>
-#include <sys/types.h>
-#include <sys/sysctl.h>
-#include <string>
-#include <fstream>
-#include <filesystem>
-#include <regex>
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <map>
-#include <cstdlib>
-#include <functional>
-#include <sys/stat.h>   
-//#include "discord-game-sdk/discord.h"
-#include <curl/curl.h> //for downloading files
-#include "curlpp/cURLpp.hpp" //requests with out creating files
-#include "curlpp/Options.hpp"
-#include <libgen.h>
-#include <signal.h>  // For kill function
-#include <errno.h>   // For errno
-#include <thread>
-#include <chrono>
-#include <condition_variable>
-#include <mutex>
-#include <chrono>
-#include <algorithm>
-#include <CoreFoundation/CoreFoundation.h>
-#include <DiskArbitration/DiskArbitration.h>
-#include <sstream>
-#include <condition_variable>
-#include <mutex>
-#include <stdexcept>
-#include <future>
-#include <ctime> 
-#include <spawn.h>
-#include <sys/wait.h>
-#include <wx/notifmsg.h>
-#include <wx/msgdlg.h> 
-#include <unordered_set>
-#include <utility>
-#include "json.hpp"
-#include "helper.h"
-
-/*
-struct DiscordState {
-	std::unique_ptr<discord::Core> core;
-};
-
-namespace {
-	volatile bool interrupted{ false };
-}
-*/
-
-#ifdef __APPLE__
-    bool canRun = true;
-#else
-    bool canRun = false;
-#endif
+// bool
 bool isDebug = false;
-
-std::string tempDirStr = getTemp();
-std::string user = getenv("USER"); //gets the current user name
-std::string logfile = "~/Library/Logs/Roblox/"; //gets the log directory path
 bool isRblxRunning = false;
-long placeId = 0;
-std::string jobId = "";
-std::string GameIMG = "";
-std::string ActivityMachineAddress = "";
 bool ActivityMachineUDMUX = false;
 bool ActivityIsTeleport = false;
 bool _teleportMarker = false;
 bool _reservedTeleportMarker = false;
 bool ActivityInGame;
-std::time_t lastRPCTime = std::time(nullptr);
-std::unordered_set<std::string> processedLogs;
-std::thread discordThread; //CHANGE ME LATER WHEN DISCORD RPC C++ IS FIX LOL
-std::mutex mtx;
-std::condition_variable cv;
 bool scriptFinished = true;
-pid_t currentScriptPID = -1;
-extern char **environ;
-std::string basePythonScript = "python3 " + GetResourcesFolderPath() + "/discord.py";
+bool shouldKill = false;
 bool isDiscordFound = true;
+
+// std::string
+std::string tempDirStr = getTemp();
+std::string localuser = getenv("USER"); //gets the current user name
+std::string logfile = "~/Library/Logs/Roblox/"; //gets the log directory path
+std::string jobId = "";
+std::string GameIMG = "";
+std::string ActivityMachineAddress = "";
+std::string basePythonScript = "python3 " + GetResourcesFolderPath() + "/discord.py";
+std::string path_script = GetResourcesFolderPath() + "/helper.sh";
 std::string temp_dir;
+std::string script = R"(
+        tell application "System Events"
+            set appList to name of every process
+        end tell
+
+        if "RobloxPlayer" is in appList then
+            return "true"
+        else
+            return "false"
+        end if
+    )";
+std::string ScriptNeededToRun = R"(
+            tell application "System Events"
+                set isTerminalRunning to (exists (processes whose name is "Terminal"))
+            end tell
+            if isTerminalRunning then
+                do shell script "killall -QUIT Terminal"
+            end if)";
+
+// long
+long placeId = 0;
+
+// std::time_t
+std::time_t lastRPCTime = std::time(nullptr);
+
+// std::unordered_set
+std::unordered_set<std::string> processedLogs;
+
+// std::thread
+std::thread discordThread; //CHANGE ME LATER WHEN DISCORD RPC C++ IS FIX LOL
+
+// std::mutex
+std::mutex mtx;
 std::mutex temp_dir_mutex;
+
+// std::condition_variable
+std::condition_variable cv;
+
+// pid_t
+pid_t currentScriptPID = -1;
+
+// int64_t
 int64_t TimeStartedUniverse = 0;
 
-namespace fs = std::filesystem;
-using json = nlohmann::json;
+// extern char**
+extern char **environ;
 
+// namespace
+namespace fs = std::filesystem;
+
+// using
+using json = nlohmann::json;
+using ArgHandler = std::function<void(const std::string&)>;
+
+// enum
 enum CurrentTypes {
     Home,
     Public,
@@ -113,9 +89,97 @@ enum CurrentTypes {
 
 CurrentTypes Current = Home;
 
-using ArgHandler = std::function<void(const std::string&)>;
+// std::map
 std::map<std::string, ArgHandler> argTable;
+
+// std::unordered_map
 std::unordered_map<std::string, std::string> GeolocationCache;
+
+std::string currentDateTime() {
+    time_t now = time(0);
+    struct tm tstruct;
+    char buf[80];
+    if (localtime_r(&now, &tstruct) == nullptr) {
+        return "[ERROR] Failed to get local time";
+    }
+    if (strftime(buf, sizeof(buf), "%Y-%m-%d-%H-%M-%S", &tstruct) == 0) {
+        return "[ERROR] Failed to format time";
+    }
+    return buf;
+}
+
+std::string getLogPath() {
+    std::string currentDate = currentDateTime();
+    std::string path = "/Users/" + localuser + "/Library/Logs/Macblox";
+    if (std::filesystem::exists(path)) {
+        NSLog(@"[INFO] Folder already exists.");
+    } else {
+        if (std::filesystem::create_directory(path)) {
+            NSLog(@"[INFO] Folder created successfully.");
+        } else {
+            NSLog(@"[ERROR] Failed to create folder.");
+            return "";
+        }
+    }
+    return path + "/" + currentDate + "_runner_log.log";
+}
+
+std::string filePath = getLogPath();
+
+void CustomNSLog(NSString *format, ...) {
+    // Open the file in append mode
+    FILE *logFile = fopen(filePath.c_str(), "a");
+
+    if (logFile != nullptr) {
+        va_list args;
+        va_start(args, format);
+
+        // Create an NSString with the formatted message
+        NSString *formattedMessage = [[NSString alloc] initWithFormat:format arguments:args];
+
+        // Print to the console
+        fprintf(stdout, "%s\n", [formattedMessage UTF8String]);
+
+        // Print to the file
+        fprintf(logFile, "%s\n", [formattedMessage UTF8String]);
+
+        va_end(args);
+
+        // Close the file
+        fclose(logFile);
+    } else {
+        NSLog(@"Failed to open file for logging: %s", filePath.c_str());
+    }
+}
+
+#define NSLog(format, ...) CustomNSLog(format, ##__VA_ARGS__)
+
+NSString* toNSString(const std::string& value) {
+    return [NSString stringWithUTF8String:value.c_str()];
+}
+
+NSString* toNSString(long value) {
+    return [NSString stringWithFormat:@"%ld", value];
+}
+
+NSString* toNSString(const char* value) {
+    return [NSString stringWithUTF8String:value];
+}
+
+// Specialization for int
+NSString* toNSString(const int& value) {
+    return [NSString stringWithFormat:@"%d", value];
+}
+
+// Specialization for double
+NSString* toNSString(const double& value) {
+    return [NSString stringWithFormat:@"%f", value];
+}
+
+// Specialization for bool
+NSString* toNSString(const bool& value) {
+    return [NSString stringWithFormat:@"%s", value ? "true" : "false"];
+}
 
 size_t write_data(void *ptr, size_t size, size_t nmemb, FILE *stream) {
     size_t written = fwrite(ptr, size, nmemb, stream);
@@ -131,12 +195,12 @@ std::string GetDataFromURL(std::string URL)
     } 
     catch (curlpp::LogicError &e)
     {
-        std::cerr << "[ERROR] curlpp::LogicError: " << e.what() << std::endl;
+        NSLog(@"[ERROR] curlpp::LogicError: " );
         return e.what();
     }
     catch (curlpp::RuntimeError &e)
     {
-        std::cerr << "[ERROR] curlpp::RuntimeError: " << e.what() << std::endl;
+        NSLog(@"[ERROR] curlpp::RuntimeError: " );
         return e.what();
     }
 }
@@ -178,11 +242,11 @@ void CreateNotification(const wxString &title, const wxString &message, int Time
     wxNotificationMessage notification(title, message);
     if (!notification.Show(Timeout))
     {
-        std::cerr << "[ERROR] Failed to show notification" << std::endl;
+        NSLog(@"[ERROR] Failed to show notification");
     }
     else
     {
-        std::cout << "[INFO] Notification shown successfully" << std::endl;
+        NSLog(@"[INFO] Notification shown successfully");
     }
 }
 
@@ -201,10 +265,6 @@ std::future<std::string> GetServerLocation(const std::string& ActivityMachineAdd
             // Fetch JSON data from URL
             std::string getData = GetDataFromURL("https://ipinfo.io/" + ActivityMachineAddress + "/json");
             json ipInfo = json::parse(getData);
-            if (isDebug)
-            {
-                std::cout << "[INFO] Location: " << ipInfo << std::endl;
-            }
             if (ipInfo.is_null()) {
                 return std::string("? (Lookup Failed)");
             }
@@ -231,7 +291,6 @@ std::future<std::string> GetServerLocation(const std::string& ActivityMachineAdd
             return location;
         }
         catch (const std::exception& ex) {
-            std::cerr << "[ERROR] Failed to get server location for " << ActivityMachineAddress << ": " << ex.what() << "\n";
             return std::string("? (Lookup Failed)");
         }
     });
@@ -265,8 +324,7 @@ std::string fixPath(const std::string& path) {
 }
 
 void executeScript(const std::string& script) {
-    std::string path = GetResourcesFolderPath() + "/helper.sh";
-    std::string chmodCommand = "chmod +x " + path;
+    std::string chmodCommand = "chmod +x " + path_script;
     system(chmodCommand.c_str());
     scriptFinished = false;
 
@@ -282,16 +340,17 @@ void executeScript(const std::string& script) {
             delay 0.25
             -- Open a new Terminal window and run the script
             tell application "Terminal"
-                do script ")" + path + R"("
+                do script ")" + path_script + R"("
             end tell')";
-
-    std::cout << "[INFO] Running AppleScript command: " << appleScript << "\n";
+    NSString* appleScriptStr = toNSString(appleScript);
+    NSString* msg = [NSString stringWithFormat:@"[INFO] Running AppleScript command: %@", appleScriptStr];
+    NSLog(@"%@", msg);
 
     // Run the AppleScript command
     int result = system(appleScript.c_str());
 
     if (result != 0) {
-        std::cerr << "[ERROR] Failed to execute the AppleScript." << std::endl;
+        NSLog(@"[ERROR] Failed to execute the AppleScript." );
         return;
     }
 }
@@ -339,9 +398,10 @@ static void UpdDiscordActivity(
                          "\"" + button1Text + "\" \"" + button2Text + "\" \"" + button1url + "\" \"" + button2url + "\" " +
                          "\"/" + tempDirStr + "/discord-ipc-0\"" + " " + std::to_string(endTimestamp);
 
-    std::cout << "[INFO] Running script: " << new_script << "\n";
-    std::cout << canAccessFile("/" + (tempDirStr) + "discord-ipc-0") << "\n";
-    std::ofstream scriptFile(GetResourcesFolderPath() + "/helper.sh");
+    NSString* scriptFix = toNSString(new_script);
+    NSString* msg = [NSString stringWithFormat:@"[INFO] Running script: %@", scriptFix];
+    NSLog(@"%@",msg);
+    std::ofstream scriptFile(path_script);
     if (!scriptFile.is_open()) {
         return;
     }
@@ -350,22 +410,13 @@ static void UpdDiscordActivity(
     pid_t pidToTerminate = -1;
     {
         pidToTerminate = currentScriptPID;
-        std::cout << "[INFO] PID is " << pidToTerminate << "\n";
     }
     
     if (pidToTerminate != -1) {
-        std::cout << "[INFO] Terminating previous script with PID: " << pidToTerminate << "\n";
         kill(pidToTerminate, SIGINT);
         currentScriptPID = -1; // Reset PID after waiting
     }
 
-    std::string ScriptNeededToRun = R"(
-            tell application "System Events"
-                set isTerminalRunning to (exists (processes whose name is "Terminal"))
-            end tell
-            if isTerminalRunning then
-                do shell script "killall -QUIT Terminal"
-            end if)";
     runAppleScriptAndGetOutput(ScriptNeededToRun);
 
     // Run the custom function in a separate thread
@@ -375,12 +426,12 @@ static void UpdDiscordActivity(
 
     discordThread.detach();
 
-    std::cout << "[INFO] Updated activity" << "\n";
+    NSLog(@"[INFO] Updated activity" );
 }
 
 
 std::string getApplicationSupportPath() {
-    const char* homeDir = std::getenv("HOME");  // Get the user's home directory
+    const char* homeDir = std::getenv("HOME");  // Get the localuser's home directory
     if (!homeDir) {
         throw std::runtime_error("Failed to get home directory");
     }
@@ -392,16 +443,16 @@ std::string GetBasePath() {
         
         // Create the directory and any necessary parent directories
         if (fs::create_directories(appSupportPath)) {
-            //std::cout << "[INFO] Directory created successfully: " << appSupportPath << std::endl;
+            //NSLog(@"[INFO] Directory created successfully: " + appSupportPath );
         } else {
-            //std::cout << "[INFO] Directory already exists or failed to create: " << appSupportPath << std::endl;
+            //NSLog(@"[INFO] Directory already exists or failed to create: " + appSupportPath );
         }
         return appSupportPath;
     } catch (const fs::filesystem_error& e) {
-        std::cerr << "[ERORR] Filesystem error: " << e.what() << std::endl;
+        NSLog(@"[ERORR] Filesystem error: "  );
         return "";
     } catch (const std::exception& e) {
-        std::cerr << "[ERROR] " << e.what() << std::endl;
+        NSLog(@"[ERROR] "  );
         return "";
     }
 }
@@ -428,17 +479,6 @@ std::string getLatestLogFile(bool need) {
 
 bool isRobloxRunning()
 {
-    std::string script = R"(
-        tell application "System Events"
-            set appList to name of every process
-        end tell
-
-        if "RobloxPlayer" is in appList then
-            return "true"
-        else
-            return "false"
-        end if
-    )";
     std::string output = runAppleScriptAndGetOutput(script);
     return output == "true" ? true : false;
 }
@@ -446,7 +486,7 @@ bool isRobloxRunning()
 std::string ReadFile(const std::string& filename) {
     std::ifstream file(filename);
     if (!file.is_open()) {
-        std::cerr << "[ERROR] Failed to open file: " << filename << std::endl;
+        NSLog(@"[ERROR] Unable to open file");
         return "";
     }
     return std::string((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
@@ -460,12 +500,12 @@ json GetGameData(long customID) {
     // Download the JSON file
     std::string url_getunid = "https://apis.roblox.com/universes/v1/places/" + std::to_string(customID) + "/universe";
     std::string downloadedFilePath = GetDataFromURL(url_getunid);
-    //std::cout << "[INFO] Got data " << downloadedFilePath << std::endl;
+    //NSLog(@"[INFO] Got data " + downloadedFilePath );
     json data;
     try {
         data = json::parse(downloadedFilePath);
     } catch (const json::parse_error& e) {
-        std::cerr << "[ERROR] JSON parse error: " << e.what() << std::endl;
+        NSLog(@"[ERROR] JSON parse error");
     }
 
     // Extract the universe ID
@@ -478,27 +518,27 @@ json GetGameData(long customID) {
             } else if (data["universeId"].is_string()) {
                 universeID = data["universeId"].get<std::string>();
             } else {
-                std::cerr << "[ERROR] Unexpected type for 'universeId'" << std::endl;
+                NSLog(@"[ERROR] Unexpected type for 'universeId'");
             }
         } else {
-            std::cerr << "[ERROR] 'universeId' not found in JSON" << std::endl;
+            NSLog(@"[ERROR] 'universeId' not found in JSON" );
         }
     } catch (const json::type_error& e) {
-        std::cerr << "[ERROR] JSON type error: " << e.what() << std::endl;
+        NSLog(@"[ERROR] JSON type error");
     }
-    std::cout << "[INFO] universeId: " << universeID << std::endl;
     if (!universeID.empty() && std::stol(universeID) <= 0) {
         universeID = std::to_string(std::stol(universeID) * -1);
     }
-    std::cout << "[INFO] new universeId: " << universeID << std::endl;
+    NSString *universeFixed = toNSString(universeID);
+    NSString* msg = [NSString stringWithFormat:@"[INFO] new universeId: %@", universeFixed];
+    NSLog(@"%@", msg);
     std::string URL = "https://games.roblox.com/v1/games?universeIds=" + universeID;
-    std::cout << "[INFO] Downloading URL: " << URL << "\n";
     std::string downloadData = GetDataFromURL(URL);
     json data_game_data;
     try {
         data_game_data = json::parse(downloadData);
     } catch (const json::parse_error& e) {
-        std::cerr << "[ERROR] JSON parse error: " << e.what() << std::endl;
+        NSLog(@"[ERROR] JSON parse error: "  );
     }
     return data_game_data;
 }
@@ -507,12 +547,12 @@ std::string GetGameThumb(long customID) {
     // Download the JSON file
     std::string url_getunid = "https://apis.roblox.com/universes/v1/places/" + std::to_string(customID) + "/universe";
     std::string downloadedFilePath = GetDataFromURL(url_getunid);
-    //std::cout << "[INFO] Got data " << downloadedFilePath << std::endl;
+    //NSLog(@"[INFO] Got data " + downloadedFilePath );
     json data;
     try {
         data = json::parse(downloadedFilePath);
     } catch (const json::parse_error& e) {
-        std::cerr << "[ERROR] JSON parse error: " << e.what() << std::endl;
+        NSLog(@"[ERROR] JSON parse error: "  );
         return "";
     }
 
@@ -526,22 +566,23 @@ std::string GetGameThumb(long customID) {
             } else if (data["universeId"].is_string()) {
                 universeID = data["universeId"].get<std::string>();
             } else {
-                std::cerr << "[ERROR] Unexpected type for 'universeId'" << std::endl;
+                NSLog(@"[ERROR] Unexpected type for 'universeId'" );
                 return "";
             }
         } else {
-            std::cerr << "[ERROR] 'universeId' not found in JSON" << std::endl;
+            NSLog(@"[ERROR] 'universeId' not found in JSON" );
             return "";
         }
     } catch (const json::type_error& e) {
-        std::cerr << "[ERROR] JSON type error: " << e.what() << std::endl;
+        NSLog(@"[ERROR] JSON type error: "  );
         return "";
     }
-    std::cout << "[INFO] universeId: " << universeID << std::endl;
     if (!universeID.empty() && std::stol(universeID) <= 0) {
         universeID = std::to_string(std::stol(universeID) * -1);
     }
-    std::cout << "[INFO] new universeId: " << universeID << std::endl;
+    NSString *universeFixed = toNSString(universeID);
+    NSString* msg = [NSString stringWithFormat:@"[INFO] new universeId: %@", universeFixed];
+    NSLog(@"%@", msg);
 
     // Download the game thumbnail JSON file
     std::string gameThumbURL = "https://thumbnails.roblox.com/v1/games/icons?universeIds=" + universeID + "&returnPolicy=PlaceHolder&size=512x512&format=Png&isCircular=false";
@@ -552,18 +593,14 @@ std::string GetGameThumb(long customID) {
     try {
         thumbnailData = json::parse(thumbnailFileContent);
     } catch (const json::parse_error& e) {
-        std::cerr << "[ERROR] JSON parse error: " << e.what() << std::endl;
+        NSLog(@"[ERROR] JSON parse error: "  );
         return "";
     }
-    std::cout << thumbnailData["data"] << std::endl;
     std::string thumbnailUrl = "";
     for (const auto& item : thumbnailData["data"])
     {
         thumbnailUrl = item["imageUrl"].get<std::string>();
     }
-
-    // Output the thumbnail URL
-    std::cout << "[INFO] Game Thumbnail: " << thumbnailUrl << std::endl;
 
     return thumbnailUrl;
 }
@@ -571,7 +608,7 @@ std::string GetGameThumb(long customID) {
 template <typename T>
 std::string to_string(const T& value) {
     std::ostringstream oss;
-    oss << value;
+    oss + value;
     return oss.str();
 }
 
@@ -589,7 +626,7 @@ int64_t getCurrentTimeMillis() {
 
 
 void doFunc(const std::string& logtxt) {
-    //std::cout << logtxt << std::endl;
+    //NSLog(@logtxt );
     if (processedLogs.find(logtxt) != processedLogs.end()) {
         return; // Skip processing if the log entry has already been handled
     }
@@ -597,27 +634,25 @@ void doFunc(const std::string& logtxt) {
     if (logtxt.find("[FLog::SingleSurfaceApp] initiateTeleport") != std::string::npos) 
     {
         _teleportMarker = true;
-        std::cout << "[INFO] Attempting to teleport into new server\n";
+        NSLog(@"[INFO] Attempting to teleport into new server");
     }
     else if (_teleportMarker && logtxt.find("[FLog::GameJoinUtil] GameJoinUtil::initiateTeleportToReservedServer") != std::string::npos) 
     {
         _reservedTeleportMarker = true;
-        std::cout << "[INFO] Attempting to join reserved server\n";
+        NSLog(@"[INFO] Attempting to join reserved server");
     } 
     else if (logtxt.find("[FLog::GameJoinUtil] GameJoinUtil::joinGamePostPrivateServer") != std::string::npos) 
     {
         Current = Private;
-        std::cout << "[INFO] Attempting to join private server\n";
+        NSLog(@"[INFO] Attempting to join private server");
     } 
     else if (logtxt.find("[FLog::Output] ! Joining game") != std::string::npos && !ActivityInGame && placeId == 0 && (Current == Home)) 
     {
         std::regex pattern(R"(! Joining game '([0-9a-f\-]{36})' place ([0-9]+) at ([0-9\.]+))");
         std::smatch match;
-        std::cout << logtxt << std::endl;
         if (std::regex_search(logtxt, match, pattern) && match.size() == 4) {
             ActivityInGame = false;
             placeId = std::stol(match[2].str());
-            std::cout << "[INFO] Place id: " << placeId << std::endl;
             if (placeId <= 0)
             {
                 placeId = placeId * -1; //this fixes a bug making the placeid negative
@@ -639,7 +674,6 @@ void doFunc(const std::string& logtxt) {
                 Current = Public;
             }
 
-            std::cout << "[INFO] Joining Game (" << placeId << "/" << jobId << "/" << ActivityMachineAddress << ")" << std::endl;
         }
     }
     else if (logtxt.find("[FLog::Network] serverId:") != std::string::npos && !ActivityInGame && placeId != 0 && Current != Home) 
@@ -648,20 +682,18 @@ void doFunc(const std::string& logtxt) {
         std::smatch match;
 
         if (std::regex_search(logtxt, match, pattern) && match.size() == 2 && match[1].str() == ActivityMachineAddress) {
-            std::cout << "[INFO] Joined Game (" << placeId << "/" << jobId << "/" << ActivityMachineAddress << ")" << std::endl;
             ActivityInGame = true;
             std::future<std::string> test_ig = GetServerLocation(ActivityMachineAddress, ActivityInGame);
             std::string serverLocationStr = test_ig.get();
-            std::cout << "[INFO] Server location: " << serverLocationStr << std::endl;
             wxString Title_Text = "";
             wxString ServerLocationText(serverLocationStr.c_str(), wxConvUTF8);
             wxString Msg_Text = "Located at " + ServerLocationText;
             if (Current != CurrentTypes::Home) {
                 if (Current == CurrentTypes::Private) {
-                    Title_Text = "Conntected to private server";
+                    Title_Text = "Connected to private server";
                 }
                 else if (Current == CurrentTypes::Reserved) {
-                    Title_Text = "Conntected to reserved server";
+                    Title_Text = "Connected to reserved server";
                 }
                 else
                 {
@@ -669,6 +701,11 @@ void doFunc(const std::string& logtxt) {
                 }
             }
             CreateNotification(Title_Text, Msg_Text, wxNotificationMessage::Timeout_Auto);
+            NSString* placeIdStr = toNSString(placeId);
+            NSString* jobIdStr = toNSString(jobId);
+            NSString* activityMachineAddressStr = toNSString(ActivityMachineAddress);
+            NSString* message = [NSString stringWithFormat:@"[INFO] Joining Game (%@/%@/%@)", placeIdStr, jobIdStr, activityMachineAddressStr];
+            NSLog(@"%@", message);
             //https://github.com/pizzaboxer/bloxstrap/blob/7e95fb4d8fc4d132ee4633ba38b68a384ff897da/Bloxstrap/Integrations/DiscordRichPresence.cs
             GameIMG = GetGameThumb(placeId);
             std::vector<std::pair<std::string, std::string>> buttonPairs;
@@ -732,7 +769,7 @@ void doFunc(const std::string& logtxt) {
     } 
     else if (logtxt.find("[FLog::Network] Time to disconnect replication data:") != std::string::npos || logtxt.find("[FLog::SingleSurfaceApp] leaveUGCGameInternal") != std::string::npos && !ActivityInGame && placeId != 0 && Current != Home) 
     {
-        std::cout << "[INFO] User disconnected\n";
+        NSLog(@"[INFO] player disconnected");
         jobId = "";
         placeId = 0;
         ActivityInGame = false;
@@ -742,39 +779,26 @@ void doFunc(const std::string& logtxt) {
         Current = Home;
         GameIMG = "";
         TimeStartedUniverse = 0;
-        std::string ScriptNeededToRun = R"(
-            tell application "System Events"
-                set isTerminalRunning to (exists (processes whose name is "Terminal"))
-            end tell
-            if isTerminalRunning then
-                do shell script "killall -QUIT Terminal"
-            end if)";
         runAppleScriptAndGetOutput(ScriptNeededToRun);
     }
     else if (logtxt.find("[FLog::Network] UDMUX Address = ") != std::string::npos && !ActivityInGame && placeId != 0 && Current != Home) 
     {
         std::regex pattern(R"(UDMUX Address = ([0-9\.]+), Port = [0-9]+ \| RCC Server Address = ([0-9\.]+), Port = [0-9]+)");
         std::smatch match;
-        if (isDebug)
-        {
-            std::cout << "[INFO] match data: " << match.str() << "\n";
-        }
         if (std::regex_search(logtxt, match, pattern) && match.size() == 3 && match[2].str() == ActivityMachineAddress) {
             ActivityMachineAddress = match[1].str();
             ActivityMachineUDMUX = true;
-            std::cout << "[INFO] Server is UDMUX protected (" << placeId << "/" << jobId << "/" << ActivityMachineAddress << ")" << std::endl;
         }
         else
         {
-            std::cerr << "[ERROR] Something happened data" << logtxt << "\n";
+            NSLog(@"[ERROR] Something happened" );
         }
     }
     else if (logtxt.find("[FLog::Output] [BloxstrapRPC]") != std::string::npos && Current != Home)
     {
-        std::cout << "[INFO] Last time since last RPC " << std::to_string(std::time(nullptr) - lastRPCTime) << "\n";
         if (std::time(nullptr) - lastRPCTime <= 1)
         {
-            std::cout << "[WARN] Dropping message (rate limit exceeded)\n";
+            NSLog(@"[WARN] Dropping message (rate limit exceeded)");
             return;
         }
         std::regex pattern("\\[BloxstrapRPC\\] (.*)");
@@ -782,10 +806,8 @@ void doFunc(const std::string& logtxt) {
         if (std::regex_search(logtxt, match, pattern) && match.size() == 2)
         {
             std::string data = match[1].str();
-            std::cout << "[INFO] BloxstrapRPC: " << data << "\n";
             json _data = json::parse(data);
             lastRPCTime = std::time(nullptr);
-            std::cout << "[INFO] BloxstrapRPC dumped: " << _data.dump(4) << "\n";
 
             if (_data["command"] == "SetRichPresence")
             {
@@ -938,38 +960,33 @@ std::string GetBashPath() {
     return std::string(dir);
 }
 
-int main(int argc, char* argv[]) {
-    //discord::Core* core = nullptr;
-    //DiscordState state;
+
+int main_loop() {
     if (doesAppExist("/Applications/Discord.app"))
     {
-        std::cout << "[INFO] Temp Directory: " << tempDirStr << std::endl;
         if (canAccessFile("/" + (tempDirStr) + "discord-ipc-0"))
         {
-            std::cout << "[INFO] Discord IPC found\n";
+            NSLog(@"[INFO] Discord IPC found");
         }
     }
     else
     {
         isDiscordFound = false;
     }
-    std::cout << "[INFO] Base python command " << basePythonScript << "\n";
+    NSString* basePythonScriptStr = toNSString(basePythonScript);
+    NSString* message = [NSString stringWithFormat:@"[INFO] Joining Game (%@)", basePythonScriptStr];
+    NSLog(@"%@", message);
     //UpdDiscordActivity("Test", "Playing", 0, 154835815, 154835815, "Test", "Test", "Test 1", "Test 2", "https://www.roblox.com/home", "https://www.roblox.com");
-    if (!canRun)
-    {
-        std::cerr << "[ERROR] This program can only be run on macOS\n";
-        return 1;
-    }
     
     InitTable();
-    std::string defaultPath = "/Users/" + user + "/Library/Logs/Roblox";
+    std::string defaultPath = "/Users/" + localuser + "/Library/Logs/Roblox";
     if (!CanAccessFolder(defaultPath))
     {
         std::cout << "[INFO] Defualt log directory url is: " << "file://localhost"+defaultPath << "\n";
         logfile = ShowOpenFileDialog("file://localhost"+defaultPath);
-        if (logfile != "/Users/" + user + "/Library/Logs/Roblox")
+        if (logfile != "/Users/" + localuser + "/Library/Logs/Roblox")
         {
-            std::string path = "The location of the Roblox log file isn't correct. The location of is /Users/" + user + "/Library/Logs/Roblox";
+            std::string path = "The location of the Roblox log file isn't correct. The location of is /Users/" + localuser + "/Library/Logs/Roblox";
             wxString toWxString(path.c_str(), wxConvUTF8);
             int answer = wxMessageBox(toWxString, "Error", wxOK | wxICON_ERROR);
             return -1;
@@ -977,24 +994,16 @@ int main(int argc, char* argv[]) {
     }
     else
     {
-        std::cout << "[INFO] We have access\n";
+        NSLog(@"[INFO] We have access");
         logfile = defaultPath;
     }
     //GetGameThumb(18419624945);
-    if (argc >= 2)
-    {
-        for (int i = 1; i < argc; ++i) 
-        {
-            std::string arg = argv[i];
-            if (argTable.find(arg) != argTable.end()) {
-                // Handle argument without additional value
-                argTable[arg]("");
-            }
-        }
-    }
     //CreateNotification("Hello world!", "Test lol", wxNotificationMessage::Timeout_Auto);
-    std::cout << "[INFO] Username: " << user << ", path to log file is: " << logfile << "\n";
-    //std::cout << "[INFO] start time " << time(0) << ", add time " << time(0) + 5 * 60 << "\n";
+    NSString* localusernameStr = toNSString(localuser);
+    NSString* logfileStr = toNSString(logfile);
+    message = [NSString stringWithFormat:@"[INFO] username: %@, path to log file is: %@", localusernameStr, logfileStr];
+    NSLog(@"%@", message);
+    //NSLog(@"[INFO] start time " + time(0) + ", add time " + time(0) + 5 * 60 );
     if (!isRobloxRunning())
     {
         runApp("/Applications/Roblox.app", false);
@@ -1007,10 +1016,10 @@ int main(int argc, char* argv[]) {
     do {} while (!isRobloxRunning());
     isRblxRunning = isRobloxRunning();
     std::this_thread::sleep_for(std::chrono::seconds(5));
-    std::cout << "[INFO] Roblox player is running\n";
+    NSLog(@"[INFO] Roblox player is running");
     std::string latestLogFile = getLatestLogFile(false);
     do {latestLogFile = getLatestLogFile(false);} while (latestLogFile.empty());
-    std::cout << "[INFO] Reading log file now!\n";
+    NSLog(@"[INFO] Reading log file now!");
     if (latestLogFile.empty()) {
         throw std::runtime_error("[ERROR] Roblox log file not found!");
     } else {
@@ -1037,12 +1046,9 @@ int main(int argc, char* argv[]) {
                     break;
                 }
             }
-
-            std::cout << "[INFO] Could not find recent enough log file, waiting... (newest is " << fs::path(logFilePath).filename().string() << ")\n";
             std::this_thread::sleep_for(std::chrono::seconds(1));
         }
-        std::cout << "[INFO] Path is " << logFilePath << "\n";
-        std::cout << "[INFO] Log updated: " << getLatestLogFile(true) << "\n";
+
         if (fs::path(getLatestLogFile(true)).filename().string() != fs::path(logFilePath).filename().string())
         {
             logFilePath = getLatestLogFile(true);
@@ -1064,33 +1070,40 @@ int main(int argc, char* argv[]) {
                         std::lock_guard<std::mutex> lock(mtx);
                         logUpdated = true;
                         logUpdatedEvent.notify_one();
-                        if (isDebug) {
-                            std::cout << "[INFO] new line: " << line << "\n";
-                        }
                         doFunc(line);
                     }
                 } else {
-                    std::cerr << "[ERROR] Failed to open log file: " << logFilePath << std::endl;
+                    NSString* str = toNSString(logFilePath);
+                    message = [NSString stringWithFormat:@"[INFO] Unable to open file at %@. Stopping all services", str];
+                    NSLog(@"%@", message);
+                    break;
                 }
             }
         });
         logThread.detach();
-        std::cout << "[INFO] Started main thread\n";
+        NSLog(@"[INFO] Started main thread");
         while (isRobloxRunning()) {
             std::this_thread::sleep_for(std::chrono::milliseconds(16));
             //Update(state);
         }
-        logThread.~thread();
-        discordThread.~thread();
+        logThread = std::thread([&]() {
+            NSLog(@"[INFO] Stopping main thread");
+        });
+        if (logThread.joinable()) 
+        {
+            logThread.join();
+            logThread.~thread();
+        }
+        discordThread = std::thread([&]() {
+            NSLog(@"[INFO] Stopping discord thread");
+        });
+        if (!discordThread.joinable())
+        {
+            discordThread.join();
+            discordThread.~thread();
+        }
     }
-    std::string ScriptNeededToRun = R"(
-            tell application "System Events"
-                set isTerminalRunning to (exists (processes whose name is "Terminal"))
-            end tell
-            if isTerminalRunning then
-                do shell script "killall -QUIT Terminal"
-            end if)";
     runAppleScriptAndGetOutput(ScriptNeededToRun);
-    std::cout << "[INFO] Closing program\n";
+    NSLog(@"[INFO] Closing program");
     return 0;
 }

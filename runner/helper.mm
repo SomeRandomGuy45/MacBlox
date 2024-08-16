@@ -306,6 +306,36 @@ bool CanAccessFolder(const std::string& path) {
     return isAccessible;
 }
 
+void createStatusBarIcon(const std::string &imagePath)
+{
+    NSStatusBar *statusBar = [NSStatusBar systemStatusBar];
+    NSStatusItem *statusItem = [statusBar statusItemWithLength:NSVariableStatusItemLength];
+
+    // Convert std::string to NSString
+    NSString *path = [NSString stringWithUTF8String:imagePath.c_str()];
+
+    // Create an NSImage from the file path
+    NSImage *statusImage = [[NSImage alloc] initWithContentsOfFile:path];
+    if (statusImage == nil) {
+        NSLog(@"[ERROR] Failed to load image from path: %@", path);
+        return;
+    }
+
+    [statusItem setImage:statusImage];
+    
+    // Access the button associated with the NSStatusItem
+    NSButton *statusButton = [statusItem button];
+    if (statusButton) {
+        [statusButton setToolTip:@"Your tooltip text"];
+    }
+
+    // Create and set up a menu for the status item
+    NSMenu *menu = [[NSMenu alloc] init];
+    NSMenuItem *quitMenuItem = [[NSMenuItem alloc] initWithTitle:@"Quit" action:@selector(terminate:) keyEquivalent:@""];
+    [menu addItem:quitMenuItem];
+    [statusItem setMenu:menu];
+}
+
 std::string getLogFile(const std::string& logDir) {
     NSString *nsLogDir = [NSString stringWithUTF8String:logDir.c_str()];
     NSFileManager *fileManager = [NSFileManager defaultManager];
