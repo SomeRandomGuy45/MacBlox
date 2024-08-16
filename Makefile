@@ -42,7 +42,7 @@ create_main_app:
 # Create the background app
 create_background_app:
 	@mkdir -p $(BUILDPATH)
-	$(CC) $(CXXFLAGS) $(LDFLAGS) -o $(BUILDPATH)/BackgroundApp $(CURDIR)/background/AppDelegate.mm $(CURDIR)/background/BackgroundTask.mm $(CURDIR)/background/main.m $(CURDIR)/background/StartAtLoginController.m
+	$(CC) $(CXXFLAGS) $(LDFLAGS) -o $(BUILDPATH)/BackgroundApp $(CURDIR)/background/AppDelegate.mm $(CURDIR)/background/helper.mm $(CURDIR)/background/BackgroundTask.mm $(CURDIR)/background/main.m $(CURDIR)/background/StartAtLoginController.m
 	@./appify_background -s $(BUILDPATH)/BackgroundApp -n BackgroundApp -i test
 	@codesign --sign - --entitlements Macblox_background.plist --deep BackgroundApp.app --force
 	@mv -f BackgroundApp.app $(BUILDPATH)/Macblox/BackgroundApp.app

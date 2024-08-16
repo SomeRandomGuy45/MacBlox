@@ -3,6 +3,9 @@
 #define BACKGROUNDTASK_H
 
 #include <iostream>
+#include <string>
+#include <thread>
+#include "helper.h"
 
 void runCppTask();
 

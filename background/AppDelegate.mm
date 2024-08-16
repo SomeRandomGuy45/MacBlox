@@ -66,13 +66,66 @@ void runAppleScript(const std::string& appName, const std::string& appPath) {
     std::remove(tempScriptPath);
 }
 
+std::string current_user = getenv("USER")
+
+std::string getLogPath() {
+    std::string currentDate = currentDateTime();
+    std::string path = "/Users/" + current_user + "/Library/Logs/Macblox";
+    if (std::filesystem::exists(path)) {
+        NSLog(@"[INFO] Folder already exists.");
+    } else {
+        if (std::filesystem::create_directory(path)) {
+            NSLog(@"[INFO] Folder created successfully.");
+        } else {
+            NSLog(@"[ERROR] Failed to create folder.");
+            return "";
+        }
+    }
+    return path + "/" + currentDate + "_background_log.log";
+}
+
+std::string filePath = getLogPath();
+
+void CustomNSLog(NSString *format, ...) {
+    // Open the file in append mode
+    FILE *logFile = fopen(filePath.c_str(), "a");
+
+    if (logFile != nullptr) {
+        va_list args;
+        va_start(args, format);
+
+        // Create an NSString with the formatted message
+        NSString *formattedMessage = [[NSString alloc] initWithFormat:format arguments:args];
+
+        // Print to the console
+        fprintf(stdout, "%s\n", [formattedMessage UTF8String]);
+
+        // Print to the file
+        fprintf(logFile, "%s\n", [formattedMessage UTF8String]);
+
+        va_end(args);
+
+        // Close the file
+        fclose(logFile);
+    } else {
+        NSLog(@"Failed to open file for logging: %s", filePath.c_str());
+    }
+}
+
+#define NSLog(format, ...) CustomNSLog(format, ##__VA_ARGS__)
+
 
 @implementation AppDelegate
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
     [self addToLoginItems];
     // Run C++ Task
-    runCppTask();
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NSLog(@"[INFO] Running C++ Task.");
+        });
+        runCppTask();
+    });
 }
 
 - (void)applicationWillTerminate:(NSNotification *)notification {

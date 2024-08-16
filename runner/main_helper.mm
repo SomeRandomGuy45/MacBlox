@@ -2,6 +2,7 @@
 #include <objc/objc.h>
 #include <objc/runtime.h>
 #include <Foundation/Foundation.h>
+#include <dispatch/dispatch.h>
 
 // bool
 bool isDebug = false;
@@ -14,6 +15,7 @@ bool ActivityInGame;
 bool scriptFinished = true;
 bool shouldKill = false;
 bool isDiscordFound = true;
+bool errorOccurred = false;
 
 // std::string
 std::string tempDirStr = getTemp();
@@ -960,150 +962,203 @@ std::string GetBashPath() {
     return std::string(dir);
 }
 
+void CallBacks()
+{
+    /*
+        TODO
+    */
+}
+
+std::future<void> monitorRoblox() {
+    return std::async(std::launch::async, [] {
+        long CallBackCount = 0;
+        long BackupCallBackCount = 0;
+
+        while (isRobloxRunning()) {
+            CallBacks();
+            CallBackCount++;
+            if (CallBackCount >= 1000) {
+                BackupCallBackCount += CallBackCount;
+                CallBackCount = 0;
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    NSLog(@"[INFO] CallBacks called %lu times", BackupCallBackCount);
+                });
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Sleep for 100ms
+        }
+    });
+}
 
 int main_loop() {
-    if (doesAppExist("/Applications/Discord.app"))
-    {
-        if (canAccessFile("/" + (tempDirStr) + "discord-ipc-0"))
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        if (doesAppExist("/Applications/Discord.app"))
         {
-            NSLog(@"[INFO] Discord IPC found");
-        }
-    }
-    else
-    {
-        isDiscordFound = false;
-    }
-    NSString* basePythonScriptStr = toNSString(basePythonScript);
-    NSString* message = [NSString stringWithFormat:@"[INFO] Joining Game (%@)", basePythonScriptStr];
-    NSLog(@"%@", message);
-    //UpdDiscordActivity("Test", "Playing", 0, 154835815, 154835815, "Test", "Test", "Test 1", "Test 2", "https://www.roblox.com/home", "https://www.roblox.com");
-    
-    InitTable();
-    std::string defaultPath = "/Users/" + localuser + "/Library/Logs/Roblox";
-    if (!CanAccessFolder(defaultPath))
-    {
-        std::cout << "[INFO] Defualt log directory url is: " << "file://localhost"+defaultPath << "\n";
-        logfile = ShowOpenFileDialog("file://localhost"+defaultPath);
-        if (logfile != "/Users/" + localuser + "/Library/Logs/Roblox")
-        {
-            std::string path = "The location of the Roblox log file isn't correct. The location of is /Users/" + localuser + "/Library/Logs/Roblox";
-            wxString toWxString(path.c_str(), wxConvUTF8);
-            int answer = wxMessageBox(toWxString, "Error", wxOK | wxICON_ERROR);
-            return -1;
-        }
-    }
-    else
-    {
-        NSLog(@"[INFO] We have access");
-        logfile = defaultPath;
-    }
-    //GetGameThumb(18419624945);
-    //CreateNotification("Hello world!", "Test lol", wxNotificationMessage::Timeout_Auto);
-    NSString* localusernameStr = toNSString(localuser);
-    NSString* logfileStr = toNSString(logfile);
-    message = [NSString stringWithFormat:@"[INFO] username: %@, path to log file is: %@", localusernameStr, logfileStr];
-    NSLog(@"%@", message);
-    //NSLog(@"[INFO] start time " + time(0) + ", add time " + time(0) + 5 * 60 );
-    if (!isRobloxRunning())
-    {
-        runApp("/Applications/Roblox.app", false);
-    }
-    else
-    {
-        terminateApplicationByName("Roblox");
-        runApp("/Applications/Roblox.app", false);
-    }
-    do {} while (!isRobloxRunning());
-    isRblxRunning = isRobloxRunning();
-    std::this_thread::sleep_for(std::chrono::seconds(5));
-    NSLog(@"[INFO] Roblox player is running");
-    std::string latestLogFile = getLatestLogFile(false);
-    do {latestLogFile = getLatestLogFile(false);} while (latestLogFile.empty());
-    NSLog(@"[INFO] Reading log file now!");
-    if (latestLogFile.empty()) {
-        throw std::runtime_error("[ERROR] Roblox log file not found!");
-    } else {
-        std::filesystem::directory_entry logFileInfo;
-        bool logUpdated = false;
-        std::string logFilePath;
-        while (true) {
-            logFilePath = GetCoolFile(logfile);
-
-            if (!logFilePath.empty()) {
-                auto fileTime = fs::last_write_time(logFilePath);
-
-                // vscode giving weird errors
-                auto fileTimePoint = std::chrono::system_clock::time_point(
-                    std::chrono::duration_cast<std::chrono::system_clock::duration>(
-                        fileTime.time_since_epoch() - std::chrono::file_clock::now().time_since_epoch()
-                    ) + std::chrono::system_clock::now().time_since_epoch()
-                );
-
-                auto now = std::chrono::system_clock::now();
-                auto fifteenSecondsAgo = now - std::chrono::seconds(15);
-
-                if (fileTimePoint > fifteenSecondsAgo) {
-                    break;
-                }
+            if (canAccessFile("/" + (tempDirStr) + "discord-ipc-0"))
+            {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    NSLog(@"[INFO] Discord IPC found");
+                });
             }
-            std::this_thread::sleep_for(std::chrono::seconds(1));
+        }
+        else
+        {
+            isDiscordFound = false;
         }
 
-        if (fs::path(getLatestLogFile(true)).filename().string() != fs::path(logFilePath).filename().string())
+        NSString* basePythonScriptStr = toNSString(basePythonScript);
+        NSString* message = [NSString stringWithFormat:@"[INFO] Joining Game (%@)", basePythonScriptStr];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NSLog(@"%@", message);
+        });
+
+        InitTable();
+
+        std::string defaultPath = "/Users/" + localuser + "/Library/Logs/Roblox";
+        if (!CanAccessFolder(defaultPath))
         {
-            logFilePath = getLatestLogFile(true);
+            dispatch_async(dispatch_get_main_queue(), ^{
+            std::cout << "[INFO] Default log directory URL is: " << "file://localhost" + defaultPath << "\n";
+            logfile = ShowOpenFileDialog("file://localhost" + defaultPath);
+
+            if (logfile != "/Users/" + localuser + "/Library/Logs/Roblox")
+            {
+                std::string path = "The location of the Roblox log file isn't correct. The location is /Users/" + localuser + "/Library/Logs/Roblox";
+                wxString toWxString(path.c_str(), wxConvUTF8);
+                wxMessageBox(toWxString, "Error", wxOK | wxICON_ERROR);
+
+                // Handle the error outside the block if necessary.
+                dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+                    errorOccurred = true;
+                });
+
+                return; // Ensure the block returns void
+            }
+        });
+
         }
-        std::condition_variable logUpdatedEvent;
-        std::mutex mtx;
-        std::ifstream logFile(logFilePath);
-        std::thread logThread([&]() {
+        else
+        {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                NSLog(@"[INFO] We have access");
+            });
+            logfile = defaultPath;
+        }
+
+        if (!isRobloxRunning())
+        {
+            runApp("/Applications/Roblox.app", false);
+        }
+        else
+        {
+            terminateApplicationByName("Roblox");
+            runApp("/Applications/Roblox.app", false);
+        }
+
+        do {} while (!isRobloxRunning());
+        isRblxRunning = isRobloxRunning();
+        std::this_thread::sleep_for(std::chrono::seconds(5));
+
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NSLog(@"[INFO] Roblox player is running");
+        });
+
+        std::string latestLogFile = getLatestLogFile(false);
+        do {latestLogFile = getLatestLogFile(false);} while (latestLogFile.empty());
+
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NSLog(@"[INFO] Reading log file now!");
+        });
+
+        if (latestLogFile.empty()) {
+            throw std::runtime_error("[ERROR] Roblox log file not found!");
+        } else {
+            std::filesystem::directory_entry logFileInfo;
+            bool logUpdated = false;
+            std::string logFilePath;
             while (true) {
-                if (!isRobloxRunning()) {
-                    // Just in case
-                    break;
-                }
-                std::this_thread::sleep_for(std::chrono::milliseconds(250));
-                std::ifstream logFileStream(logFilePath);
-                if (logFileStream) {
-                    std::string line;
-                    while (std::getline(logFileStream, line)) {
-                        std::lock_guard<std::mutex> lock(mtx);
-                        logUpdated = true;
-                        logUpdatedEvent.notify_one();
-                        doFunc(line);
+                logFilePath = GetCoolFile(logfile);
+
+                if (!logFilePath.empty()) {
+                    auto fileTime = fs::last_write_time(logFilePath);
+
+                    auto fileTimePoint = std::chrono::system_clock::time_point(
+                        std::chrono::duration_cast<std::chrono::system_clock::duration>(
+                            fileTime.time_since_epoch() - std::chrono::file_clock::now().time_since_epoch()
+                        ) + std::chrono::system_clock::now().time_since_epoch()
+                    );
+
+                    auto now = std::chrono::system_clock::now();
+                    auto fifteenSecondsAgo = now - std::chrono::seconds(15);
+
+                    if (fileTimePoint > fifteenSecondsAgo) {
+                        break;
                     }
-                } else {
-                    NSString* str = toNSString(logFilePath);
-                    message = [NSString stringWithFormat:@"[INFO] Unable to open file at %@. Stopping all services", str];
-                    NSLog(@"%@", message);
-                    break;
                 }
+                std::this_thread::sleep_for(std::chrono::seconds(1));
             }
-        });
-        logThread.detach();
-        NSLog(@"[INFO] Started main thread");
-        while (isRobloxRunning()) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(16));
-            //Update(state);
+
+            if (fs::path(getLatestLogFile(true)).filename().string() != fs::path(logFilePath).filename().string())
+            {
+                logFilePath = getLatestLogFile(true);
+            }
+            std::condition_variable logUpdatedEvent;
+            std::mutex mtx;
+            std::ifstream logFile(logFilePath);
+            std::thread logThread([&]() {
+                while (true) {
+                    if (!isRobloxRunning()) {
+                        break;
+                    }
+                    std::this_thread::sleep_for(std::chrono::milliseconds(250));
+                    std::ifstream logFileStream(logFilePath);
+                    if (logFileStream) {
+                        std::string line;
+                        while (std::getline(logFileStream, line)) {
+                            std::lock_guard<std::mutex> lock(mtx);
+                            logUpdated = true;
+                            logUpdatedEvent.notify_one();
+                            doFunc(line);
+                        }
+                    } else {
+                        dispatch_async(dispatch_get_main_queue(), ^{
+                            NSString* str = toNSString(logFilePath);
+                            message = [NSString stringWithFormat:@"[INFO] Unable to open file at %@. Stopping all services", str];
+                            NSLog(@"%@", message);
+                        });
+                        break;
+                    }
+                }
+            });
+            logThread.detach();
+            dispatch_async(dispatch_get_main_queue(), ^{
+                NSLog(@"[INFO] Started main thread");
+            });
+            monitorRoblox();
+            logThread = std::thread([&]() {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    NSLog(@"[INFO] Stopping main thread");
+                });
+            });
+            if (logThread.joinable()) 
+            {
+                logThread.join();
+                logThread.~thread();
+            }
+            discordThread = std::thread([&]() {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    NSLog(@"[INFO] Stopping discord thread");
+                });
+            });
+            if (!discordThread.joinable())
+            {
+                discordThread.join();
+                discordThread.~thread();
+            }
         }
-        logThread = std::thread([&]() {
-            NSLog(@"[INFO] Stopping main thread");
+        runAppleScriptAndGetOutput(ScriptNeededToRun);
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NSLog(@"[INFO] Closing program");
         });
-        if (logThread.joinable()) 
-        {
-            logThread.join();
-            logThread.~thread();
-        }
-        discordThread = std::thread([&]() {
-            NSLog(@"[INFO] Stopping discord thread");
-        });
-        if (!discordThread.joinable())
-        {
-            discordThread.join();
-            discordThread.~thread();
-        }
-    }
-    runAppleScriptAndGetOutput(ScriptNeededToRun);
-    NSLog(@"[INFO] Closing program");
+    });
     return 0;
 }
