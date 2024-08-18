@@ -2,6 +2,11 @@
 #include "helper.h"
 #include <thread>
 #include <Foundation/Foundation.h>
+#include <string>
+#include <dispatch/dispatch.h>
+#include <filesystem>
+
+namespace fs = std::filesystem;
 
 std::string script = R"(
         tell application "System Events"
@@ -40,19 +45,34 @@ bool isRunnerRunning()
     return output == "true" ? true : false;
 }
 
+// Function to get the parent folder name
 std::string getParentFolderOfApp() {
-    // Get the bundle path
     NSString *bundlePath = [[NSBundle mainBundle] bundlePath];
-    
-    // Get the parent directory of the bundle
     NSString *parentPath = [bundlePath stringByDeletingLastPathComponent];
-    
-    // Convert NSString to std::string
     return std::string([parentPath UTF8String]);
 }
 
+std::string checkParentDirectory(const std::string& pathStr) {
+    fs::path currentPath(pathStr);
+
+    // Traverse up the directory tree
+    while (currentPath.has_parent_path()) {
+        fs::path parentPath = currentPath.parent_path();
+
+        // Check if the current directory (not the parent) is named "Macblox"
+        if (parentPath.filename() == "Macblox") {
+            return parentPath.string();
+        }
+
+        // Move to the parent directory
+        currentPath = parentPath;
+    }
+
+    return "No parent directory named 'Macblox' was found.";
+}
+
 void runCppTask() {
-    std::string folder_parent_path = getParentFolderOfApp();
+    std::string folder_parent_path = checkParentDirectory(getParentFolderOfApp());
     std::cout << "[INFO] Path to parent folder is: " << folder_parent_path << "\n";
 
     while (true) {
@@ -65,5 +85,6 @@ void runCppTask() {
 
         std::cout << "[INFO] Roblox is running! Starting background task..." << std::endl;
         runApp(folder_parent_path + "/Play.app", true);
+        std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 }

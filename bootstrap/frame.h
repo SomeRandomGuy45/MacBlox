@@ -339,6 +339,7 @@ void BootstrapperFrame::DoLogic()
         if (FolderExists(GetBasePath + "/Resources"))
         {
             deleteFolder(GetBasePath + "/Resources");
+            deleteFolder(GetBasePath + "/__MACOSX");
         }
         std::string mainPath = GetPath() + "/";
         std::string zipPath = mainPath + "Resources.zip";
@@ -357,6 +358,7 @@ void BootstrapperFrame::DoLogic()
                std::cout << "[INFO] unzipped file" << std::endl;
             });
         }
+        UpdateProgress(0.1);
         std::cout << "[INFO] Path: " << RobloxApplicationPath << "\n";
         std::string bootstrapDataFileData = FileChecker(GetBasePath + "/bootstrap_data.json");
         if (!bootstrapDataFileData.empty())
@@ -380,7 +382,7 @@ void BootstrapperFrame::DoLogic()
             Close(true);
             return;
         }
-        UpdateProgress(0.1);
+        UpdateProgress(0.35);
         SetStatusText("Checking for Updates");
         std::this_thread::sleep_for(std::chrono::seconds(1));
         std::string fileContent = FileChecker(GetBasePath + "/roblox_version_data_install.json");
@@ -566,7 +568,9 @@ void BootstrapperFrame::DoLogic()
         RenameFile(ArrowCursor.c_str(), paths["ArrowCursor"].c_str());
         RenameFile(ArrowFarCursor.c_str(), paths["ArrowFarCursor"].c_str());
         copyFile(GetBasePath + "/data.json", "/Applications/Roblox.app/Contents/MacOS/ClientSettings/ClientAppSettings.json");
-        UpdateProgress(0.35);
+        UpdateProgress(1);
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+        exit(0);
     });
 }
 

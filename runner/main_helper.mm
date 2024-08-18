@@ -6,6 +6,7 @@
 #include <ctime>
 #include <sys/time.h>
 #include <pthread.h>
+#include <Cocoa/Cocoa.h>
 
 // bool
 bool isDebug = false;
@@ -36,6 +37,28 @@ std::string script = R"(
         end tell
 
         if "RobloxPlayer" is in appList then
+            return "true"
+        else
+            return "false"
+        end if
+    )";
+std::string script_background = R"(
+        tell application "System Events"
+            set appList to name of every process
+        end tell
+
+        if "BackgroundApp" is in appList then
+            return "true"
+        else
+            return "false"
+        end if
+    )";
+std::string script_bootstrap = R"(
+        tell application "System Events"
+            set appList to name of every process
+        end tell
+
+        if "bootstrap" is in appList then
             return "true"
         else
             return "false"
@@ -511,6 +534,18 @@ std::string getLatestLogFile(bool need) {
 bool isRobloxRunning()
 {
     std::string output = runAppleScriptAndGetOutput(script);
+    return output == "true" ? true : false;
+}
+
+bool isBackgroundAppRunning()
+{
+    std::string output = runAppleScriptAndGetOutput(script_background);
+    return output == "true" ? true : false;
+}
+
+bool isBootstrapRunning()
+{
+    std::string output = runAppleScriptAndGetOutput(script_bootstrap);
     return output == "true" ? true : false;
 }
 
@@ -1018,9 +1053,79 @@ std::future<void> monitorRoblox() {
     });
 }
 
+bool OpenAppWithPath(const std::string &appPath) {
+    // Escape the appPath for use in the AppleScript
+    std::string escapedPath = appPath;
+    // Replace double quotes with escaped double quotes
+    size_t pos = 0;
+    while ((pos = escapedPath.find('"', pos)) != std::string::npos) {
+        escapedPath.insert(pos, "\\");
+        pos += 2;  // Skip past the newly added escape character
+    }
+
+    // Construct the AppleScript command
+    std::string appleScript = "osascript -e 'tell application \"";
+    appleScript += escapedPath;
+    appleScript += "\" to activate'";
+
+    // Execute the AppleScript command
+    FILE *pipe = popen(appleScript.c_str(), "r");
+    if (!pipe) {
+        std::cerr << "[ERROR] Failed to open application with path: " << appPath << std::endl;
+        return false;
+    }
+
+    // Read and discard the output of the command
+    char buffer[128];
+    while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+        // Do nothing with the output
+    }
+
+    int status = pclose(pipe);
+    if (status != 0) {
+        std::cerr << "[ERROR] Failed to open application with path: " << appPath << std::endl;
+        return false;
+    }
+
+    std::cout << "Successfully opened application at path: " << appPath << std::endl;
+    return true;
+}
+
+std::string getParentFolderOfApp() {
+    // Get the bundle path
+    NSString *bundlePath = [[NSBundle mainBundle] bundlePath];
+    
+    // Get the parent directory of the bundle
+    NSString *parentPath = [bundlePath stringByDeletingLastPathComponent];
+    
+    // Convert NSString to std::string
+    return std::string([parentPath UTF8String]);
+}
+
+std::string GetExPath() {
+    char buffer[PATH_MAX];
+    uint32_t size = sizeof(buffer);
+    
+    if (_NSGetExecutablePath(buffer, &size) != 0) {
+        return ""; // Return empty string on failure
+    }
+    
+    // Ensure buffer is null-terminated
+    buffer[PATH_MAX - 1] = '\0';
+    
+    // Get the directory of the executable
+    char* dir = dirname(buffer);
+    
+    return std::string(dir);
+}
+
 int main_loop() {
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        if (doesAppExist("/Applications/Discord.app") && canAccessFile("/" + (tempDirStr) + "discord-ipc-0") && isAppRunning("/Applications/Discord.app"))
+        if (!isBackgroundAppRunning())
+        {
+            OpenAppWithPath(GetExPath() + "/BackgroundApp.app");
+        }
+        if (doesAppExist("/Applications/Discord.app"))
         {
             dispatch_async(dispatch_get_main_queue(), ^{
                 NSLog(@"[INFO] Discord IPC found");
@@ -1032,7 +1137,7 @@ int main_loop() {
         }
 
         NSString* basePythonScriptStr = toNSString(basePythonScript);
-        NSString* message = [NSString stringWithFormat:@"[INFO] Joining Game (%@)", basePythonScriptStr];
+        NSString* message = [NSString stringWithFormat:@"[INFO] Python script is %@", basePythonScriptStr];
         dispatch_async(dispatch_get_main_queue(), ^{
             NSLog(@"%@", message);
         });
@@ -1072,6 +1177,8 @@ int main_loop() {
 
         if (!isRobloxRunning())
         {
+            OpenAppWithPath(GetExPath() + "/Bootstrap.app");
+            do {} while (isBootstrapRunning());
             runApp("/Applications/Roblox.app", false);
         }
 
