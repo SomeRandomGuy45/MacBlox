@@ -49,6 +49,10 @@ create_main_app:
 	@mv -f Macblox.app $(BUILDPATH)/Macblox/Macblox.app
 	@rm -f $(BUILDPATH)/main
 
+create_installer_app:
+	@./appify -s Install.sh -n Install -i test  
+	@codesign --sign - --entitlements Macblox.plist --deep Install.app --force
+
 # Clean the build directory
 clean:
 	rm -rf $(BUILDPATH)
