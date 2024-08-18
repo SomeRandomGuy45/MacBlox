@@ -13,7 +13,7 @@ Oh yeah theres a discord server here is the join link. [Join Server](https://dis
 - [x] Checking for roblox updates
 - [x] Adding ClientAppSettings
 - [ ] Find a different way to close the terminal
-- [ ] Make a background thing that checks if roblox is being open
+- [x] Make a background thing that checks if roblox is being open
 - [ ] Installer (im working on it)
 
 # Building
