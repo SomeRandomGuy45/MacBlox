@@ -92,8 +92,15 @@ std::string GetBasePath() {
 wxEditableListBox::wxEditableListBox(wxWindow* parent, wxWindowID id)
     : wxPanel(parent, id), lastSelectedItemIndex(-1)
 {
+    // Set the background color of the panel to black
+    SetBackgroundColour(*wxBLACK);
+
     listCtrl = new wxListCtrl(this, ID_LISTCTRL, wxDefaultPosition, wxSize(400, 200),
                               wxLC_REPORT | wxLC_SINGLE_SEL);
+
+    // Set the background color of the list control to black
+    listCtrl->SetBackgroundColour(*wxBLACK);
+
     listCtrl->InsertColumn(0, "Items", wxLIST_FORMAT_LEFT, 400);
 
     nameTextCtrl = new wxTextCtrl(this, ID_NAME_TEXTCTRL, "", wxDefaultPosition, wxSize(200, 25), wxTE_PROCESS_ENTER, wxDefaultValidator, "Name");
@@ -114,7 +121,7 @@ wxEditableListBox::wxEditableListBox(wxWindow* parent, wxWindowID id)
     valueTextCtrl->SetMinSize(wxSize(200, 25));
 
     // Load existing data if available
-    std::string path = GetBasePath()+"/data.json";
+    std::string path = GetBasePath() + "/data.json";
     wxString toWxString(path.c_str(), wxConvUTF8);
     LoadFromFile(toWxString);
 }

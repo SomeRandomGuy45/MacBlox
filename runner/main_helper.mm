@@ -3,6 +3,9 @@
 #include <objc/runtime.h>
 #include <Foundation/Foundation.h>
 #include <dispatch/dispatch.h>
+#include <ctime>
+#include <sys/time.h>
+#include <pthread.h>
 
 // bool
 bool isDebug = false;
@@ -139,18 +142,44 @@ void CustomNSLog(NSString *format, ...) {
         // Create an NSString with the formatted message
         NSString *formattedMessage = [[NSString alloc] initWithFormat:format arguments:args];
 
+        // Get the current time with microseconds
+        struct timeval tv;
+        gettimeofday(&tv, NULL);
+
+        // Format the time
+        struct tm *timeinfo;
+        char timeBuffer[80];
+        timeinfo = localtime(&tv.tv_sec);
+        strftime(timeBuffer, sizeof(timeBuffer), "%Y-%m-%d %H:%M:%S", timeinfo);
+
+        // Calculate milliseconds
+        int milliseconds = tv.tv_usec / 1000;
+
+        // Get the current process ID and process name
+        pid_t pid = [[NSProcessInfo processInfo] processIdentifier];
+        NSString *processName = [[NSProcessInfo processInfo] processName];
+
+        // Format the log message to match the NSLog style
+        NSString *logEntry = [NSString stringWithFormat:@"%s.%03d %s[%d:%x] %s\n",
+                              timeBuffer,
+                              milliseconds,
+                              [processName UTF8String],
+                              pid,
+                              (unsigned int)pthread_mach_thread_np(pthread_self()),
+                              [formattedMessage UTF8String]];
+
         // Print to the console
-        fprintf(stdout, "%s\n", [formattedMessage UTF8String]);
+        fprintf(stdout, "%s", [logEntry UTF8String]);
 
         // Print to the file
-        fprintf(logFile, "%s\n", [formattedMessage UTF8String]);
+        fprintf(logFile, "%s", [logEntry UTF8String]);
 
         va_end(args);
 
         // Close the file
         fclose(logFile);
     } else {
-        NSLog(@"Failed to open file for logging: %s", filePath.c_str());
+        NSLog(@"[ERROR] Failed to open file for logging: %s", filePath.c_str());
     }
 }
 
@@ -991,14 +1020,11 @@ std::future<void> monitorRoblox() {
 
 int main_loop() {
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        if (doesAppExist("/Applications/Discord.app"))
+        if (doesAppExist("/Applications/Discord.app") && canAccessFile("/" + (tempDirStr) + "discord-ipc-0") && isAppRunning("/Applications/Discord.app"))
         {
-            if (canAccessFile("/" + (tempDirStr) + "discord-ipc-0"))
-            {
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    NSLog(@"[INFO] Discord IPC found");
-                });
-            }
+            dispatch_async(dispatch_get_main_queue(), ^{
+                NSLog(@"[INFO] Discord IPC found");
+            });
         }
         else
         {
@@ -1046,11 +1072,6 @@ int main_loop() {
 
         if (!isRobloxRunning())
         {
-            runApp("/Applications/Roblox.app", false);
-        }
-        else
-        {
-            terminateApplicationByName("Roblox");
             runApp("/Applications/Roblox.app", false);
         }
 

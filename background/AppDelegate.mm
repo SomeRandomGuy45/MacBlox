@@ -66,7 +66,20 @@ void runAppleScript(const std::string& appName, const std::string& appPath) {
     std::remove(tempScriptPath);
 }
 
-std::string current_user = getenv("USER")
+std::string current_user = getenv("USER");
+
+std::string currentDateTime() {
+    time_t now = time(0);
+    struct tm tstruct;
+    char buf[80];
+    if (localtime_r(&now, &tstruct) == nullptr) {
+        return "[ERROR] Failed to get local time";
+    }
+    if (strftime(buf, sizeof(buf), "%Y-%m-%d-%H-%M-%S", &tstruct) == 0) {
+        return "[ERROR] Failed to format time";
+    }
+    return buf;
+}
 
 std::string getLogPath() {
     std::string currentDate = currentDateTime();
@@ -113,7 +126,6 @@ void CustomNSLog(NSString *format, ...) {
 }
 
 #define NSLog(format, ...) CustomNSLog(format, ##__VA_ARGS__)
-
 
 @implementation AppDelegate
 

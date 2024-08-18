@@ -102,7 +102,7 @@ cat <<EOF > $DIR/Info.plist
    <key>LSUIElement</key>
    <true/>
    <key>LSBackgroundOnly</key>
-   <true/>
+   <string>1</string>
    <key>LSApplicationCategoryType</key>
    <string>public.app-category.utilities</string>
    <key>LSMinimumSystemVersion</key>

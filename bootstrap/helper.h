@@ -10,6 +10,7 @@
 #include <fstream>
 
 bool isAppRunning(const std::string &appName);
+bool deleteFolder(const std::string& folderPath);
 std::string getLogFile(const std::string& logDir);
 std::string ShowOpenFileDialog(const std::string& defaultDirectory);
 std::string ShowOpenFileDialog_WithCustomText(const std::string& defaultDirectory, const std::string& customText);

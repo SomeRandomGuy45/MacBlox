@@ -6,10 +6,10 @@ CXXFLAGS = -x objective-c++ $(WX_CONFIG) $(LIBRARY_PATH)
 LDFLAGS = $(WX_CONFIG) $(CPATH) -ldiscord-rpc -lcurl -lcurlpp -lz -lminizip -framework CoreFoundation -framework DiskArbitration -framework Foundation -framework Cocoa -framework UserNotifications -framework ServiceManagement -lssl -lcrypto --std=c++20
 
 # Default target
-all: create_main_app create_background_app
+all: create_runner_app create_bootstrap_app create_main_app create_background_app
 
 # Create the main app
-create_main_app:
+create_runner_app:
 	@if [ -d $(BUILDPATH) ]; then \
 		rm -d -r $(BUILDPATH); \
 	fi
@@ -23,7 +23,9 @@ create_main_app:
 	@cp -R $(CURDIR)/runner/discord.py $(BUILDPATH)/Macblox/"Play.app"/Contents/Resources/
 	@cp -R $(CURDIR)/runner/test_icon.png $(BUILDPATH)/Macblox/"Play.app"/Contents/Resources/
 	@rm -f $(BUILDPATH)/runner
-	$(CC) $(CXXFLAGS) $(LDFLAGS) -o $(BUILDPATH)/bootstrap $(CURDIR)/bootstrap/app.cpp $(CURDIR)/bootstrap/helper.mm
+
+create_bootstrap_app:
+	$(CC) $(CXXFLAGS) $(LDFLAGS) -o $(BUILDPATH)/bootstrap $(CURDIR)/bootstrap/app.mm $(CURDIR)/bootstrap/helper.mm
 	@./appify -s build/bootstrap -n bootstrap -i test
 	@codesign --sign - --entitlements Macblox.plist --deep bootstrap.app --force
 	@mv -f bootstrap.app $(BUILDPATH)/bootstrap.app
@@ -33,6 +35,8 @@ create_main_app:
 	@cp -R $(CURDIR)/bootstrap/helper.sh $(BUILDPATH)/Macblox/"Bootstrap.app"/Contents/Resources/
 	@chmod +x $(BUILDPATH)/Macblox/"Bootstrap.app"/Contents/Resources/helper.sh
 	@rm -f $(BUILDPATH)/bootstrap
+
+create_main_app:
 	$(CC) $(CXXFLAGS) $(LDFLAGS) -o $(BUILDPATH)/main $(CURDIR)/main_app/main.cpp $(CURDIR)/main_app/Downloader.mm
 	@./appify -s build/main -n Macblox -i test
 	@codesign --sign - --entitlements Macblox.plist --deep Macblox.app --force
@@ -46,6 +50,7 @@ create_background_app:
 	@./appify_background -s $(BUILDPATH)/BackgroundApp -n BackgroundApp -i test
 	@codesign --sign - --entitlements Macblox_background.plist --deep BackgroundApp.app --force
 	@mv -f BackgroundApp.app $(BUILDPATH)/Macblox/BackgroundApp.app
+	@cp -R $(CURDIR)/background/test_icon.png $(BUILDPATH)/Macblox/"BackgroundApp.app"/Contents/Resources/
 	@rm -f $(BUILDPATH)/BackgroundApp
 
 # Clean the build directory

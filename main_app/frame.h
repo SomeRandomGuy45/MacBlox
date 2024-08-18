@@ -49,6 +49,8 @@ private:
     void OpenPages(wxCommandEvent& event);
     void DestroyPanel();
     void ReinitializePanels();
+    void LoadModsJson(const std::string& filepath);
+    void SaveModsJson(const std::string& filepath);
     wxPanel* panel = nullptr;
     wxButton* button = nullptr;
     wxGridSizer* gridSizer = nullptr; 
@@ -56,9 +58,11 @@ private:
     wxCheckListBox* EditBox = nullptr;
     std::map<std::string, wxButton*> buttons;
     std::map<std::string, bool> modsEnabled = {
-        {"Mod Test 1", false},
-        {"Mod Test 2", false},
-        {"Mod Test 3", false},
+        {"2006 Cursor", false},
+        {"2013 Cursor", false},
+        {"Old Death sound", false},
+        {"Old Sounds", false},
+        {"Old Avatar Background", false},
     };
     int lastX = 250;
     enum IDS {
@@ -66,6 +70,74 @@ private:
         BtnID_START = 3  // Start button IDs from a different base
     };
 };
+
+void MainFrame::SaveModsJson(const std::string& filepath)
+{
+    std::cout << "[INFO] Saving to file " << filepath << std::endl;
+
+    json jsonData;
+
+    for (const auto& item : modsEnabled)
+    {
+        jsonData[item.first] = item.second == true ? "true" : "false";
+    }
+
+    std::cout << "[INFO] Saving with json data " << jsonData.dump(4) << std::endl;
+    std::ofstream file(filepath);
+    if (file.is_open())
+    {
+        if (jsonData.dump(4) == "null")
+        {
+            std::cout << "[WARN] json data is null" << std::endl;
+            file << "{}";
+        }
+        else
+        {
+            file << jsonData.dump(4);
+        }
+        file.close();
+    }
+}
+
+void MainFrame::LoadModsJson(const std::string& filepath)
+{
+    std::ifstream file(filepath);
+    if (!file.is_open()) {
+        std::cerr << "[ERROR] Could not open file " << filepath << std::endl;
+        return;
+    }
+    try 
+    {
+        nlohmann::json jsonData;
+        file >> jsonData;
+        file.close();
+        for (const auto& el : jsonData.items()) {
+            std::string name = el.key();
+            std::string value = "";
+            if (el.value().is_boolean())
+            {
+                bool val = el.value().get<bool>();
+                value = val == true ? "true" : "false";
+            }
+            else if (el.value().is_string()) 
+            {
+                value = el.value().get<std::string>();
+            }
+            else 
+            {
+                value = el.value().dump();
+            }
+            if (modsEnabled.find(name) != modsEnabled.end())
+            {
+                modsEnabled[name] = value == "true" ? true : false;
+            }
+        }
+    } catch (const nlohmann::json::parse_error& e) {
+        std::cerr << "[ERROR] JSON parse error: " << e.what() << std::endl;
+    } catch (const std::exception& e) {
+        std::cerr << "[ERROR] Exception: " << e.what() << std::endl;
+    }
+}
 
 MainFrame::MainFrame(const wxString& title, long style, const wxSize& size)
     : wxFrame(nullptr, wxID_ANY, title, wxDefaultPosition, size, style)
@@ -130,14 +202,32 @@ void MainFrame::OnModSelection(wxCommandEvent& event)
     // Toggle the mod's enabled state
     if (modsEnabled.find(modName) != modsEnabled.end())
     {
+        if (modName == "2006 Cursor" || modName == "2013 Cursor")
+        {
+            std::string Check = modName == "2006 Cursor" ? "2013 Cursor" : "2006 Cursor";
+            if (modsEnabled.find(Check) != modsEnabled.end() && modsEnabled[Check] == true)
+            {
+                modsEnabled[Check] =!modsEnabled[Check];
+                std::cout << "[INFO] " << Check << " has been toggled" << std::endl;
+            }
+        }
         modsEnabled[modName] = EditBox->IsChecked(selectionIndex);
     }
-
+    EditBox->Clear();
     // Loop through the modsEnabled map and print the status
     std::cout << "[INFO] Current mod statuses:" << std::endl;
     for (const auto& [mod, isEnabled] : modsEnabled)
     {
         std::cout << "[INFO] Mod: " << mod << " is " << (isEnabled ? "enabled" : "disabled") << std::endl;
+    }
+    SaveModsJson(GetBasePath() + "/config_data.json");
+    for (const auto& [modName, isEnabled] : modsEnabled)
+    {
+        int index = EditBox->Append(modName);
+        if (isEnabled == true)
+        {
+            EditBox->Check(index, true);
+        }
     }
 }
 
@@ -149,12 +239,13 @@ void MainFrame::OpenPages(wxCommandEvent& event)
         wxString buttonText = clickedButton->GetLabel();
         std::string buttonName = buttonText.ToStdString();
         std::cout << "[INFO] Button clicked with text: " << buttonName << std::endl;
-        
+        if (EditBox != nullptr)
+        {
+            EditBox->Destroy();
+            EditBox = nullptr;
+        }
         if (buttonName == "Config")
         {
-            delete EditBox;
-            EditBox = nullptr;
-
             wxEditableListBox* editableListBox = new wxEditableListBox(panel, wxID_ANY);
             wxBoxSizer* mainSizer = new wxBoxSizer(wxHORIZONTAL);
             mainSizer->Add(editableListBox, 1, wxEXPAND | wxALL, 5);
@@ -163,6 +254,7 @@ void MainFrame::OpenPages(wxCommandEvent& event)
         }
         else if (buttonName == "Mods")
         {
+            LoadModsJson(GetBasePath() + "/config_data.json");
             wxArrayString items;
 
             for (const auto& [modName, isEnabled] : modsEnabled)

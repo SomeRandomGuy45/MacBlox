@@ -18,6 +18,7 @@
 #include <thread>
 #include <chrono>
 #include <filesystem>
+#include <dispatch/dispatch.h>
 #include "helper.h"
 #include "json.hpp"
 
@@ -219,6 +220,65 @@ void BootstrapperFrame::UpdateProgress(double progress)
     }
 }
 
+json GetModData()
+{
+    json Data;
+    std::ifstream file(GetPath() + "/config_data.json");
+    if (!file.is_open()) {
+        std::cerr << "[ERROR] Could not open file " << GetPath() + "/config_data.json" << std::endl;
+        return Data;
+    }
+    try
+    {
+        file >> Data;
+        file.close();
+    } catch (const nlohmann::json::parse_error& e) {
+        std::cerr << "[ERROR] JSON parse error: " << e.what() << std::endl;
+    } catch (const std::exception& e) {
+        std::cerr << "[ERROR] Exception: " << e.what() << std::endl;
+    }
+    return Data;
+}
+
+void copyFolderContents(const std::string& sourcePath, const std::string& destinationPath, bool shouldRemove) {
+    try {
+        // Ensure the source path exists and is a directory
+        if (!fs::exists(sourcePath) || !fs::is_directory(sourcePath)) {
+            std::cerr << "[ERROR] Source path is invalid or not a directory: " << sourcePath << std::endl;
+            return;
+        }
+
+        // Create the destination directory if it doesn't exist
+        if (!fs::exists(destinationPath)) {
+            fs::create_directories(destinationPath);
+        }
+
+        // Iterate over the contents of the source directory
+        for (const auto& entry : fs::directory_iterator(sourcePath)) {
+            const auto& path = entry.path();
+            auto destination = fs::path(destinationPath) / path.filename();
+            if (entry.path().filename() == "ouch.ogg" && !shouldRemove)
+            {
+                std::cout << "[INFO] keeping old ouch.ogg file\n";
+            }
+            try {
+                if (fs::is_directory(path)) {
+                    // Recursively copy subdirectories
+                    copyFolderContents(path.string(), destination.string(), shouldRemove);
+                } else if (fs::is_regular_file(path)) {
+                    // Copy files
+                    fs::copy_file(path, destination, fs::copy_options::overwrite_existing);
+                    std::cout << "[INFO] Copied file: " << path << " to " << destination << std::endl;
+                }
+            } catch (fs::filesystem_error& e) {
+                std::cerr << "[ERROR] cant copying " << path << ": " << e.what() << std::endl;
+            }
+        }
+    } catch (fs::filesystem_error& e) {
+        std::cerr << "[ERROR] accessing directory: " << e.what() << std::endl;
+    }
+}
+
 bool removeQuarantineAttribute(const std::string& filePath) {
     const char* attributeName = "com.apple.quarantine";
 
@@ -256,158 +316,258 @@ bool removeQuarantineAttribute(const std::string& filePath) {
 
 void BootstrapperFrame::DoLogic()
 {
-    if (FolderExists("/Applications/Roblox.app/Contents/"))
-    {
-        RobloxApplicationPath = "/Applications/Roblox.app/Contents/MacOS";
-        if (!CanAccessFolder(RobloxApplicationPath))
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        if (FolderExists("/Applications/Roblox.app/Contents/"))
         {
-            RobloxApplicationPath = ShowOpenFileDialog("file://localhost"+RobloxApplicationPath);
-        }
-        if (!FolderExists("/Applications/Roblox.app/Contents/MacOS/ClientSettings"))
-        {
-            CreateFolder("/Applications/Roblox.app/Contents/MacOS/ClientSettings");
-        }
-    }
-    else
-    {
-        RobloxApplicationPath = "/Applications/Roblox.app/Contents/MacOS";
-        NeedToReinstall = true;
-    }
-    std::cout << "[INFO] Path: " << RobloxApplicationPath << "\n";
-    std::string bootstrapDataFileData = FileChecker(GetBasePath + "/bootstrap_data.json");
-    if (!bootstrapDataFileData.empty())
-    {
-        bootstrapData = json::parse(bootstrapDataFileData);
-        CustomChannel = bootstrapData["channel"].get<std::string>();
-        std::string ShouldReinstall = bootstrapData["force_reinstall"].get<std::string>();
-        if (ShouldReinstall == "true")
-        {
-            NeedToReinstall = true;
-        }
-    }
-    if (RobloxApplicationPath != "/Applications/Roblox.app/Contents/MacOS")
-    {
-        std::cerr << "[ERROR] Thats not the right path!" << std::endl;
-        std::string path = "The location of the Roblox MacOS folder isn't correct. The location of is /Applications/Roblox.app/Contents/MacOS";
-        wxString toWxString(path.c_str(), wxConvUTF8);
-        wxMessageBox(toWxString, "Error", wxOK | wxICON_ERROR);
-        Close(true);
-        return;
-    }
-    UpdateProgress(0.1);
-    SetStatusText("Checking for Updates");
-    std::this_thread::sleep_for(std::chrono::seconds(1));
-    std::string fileContent = FileChecker(GetBasePath + "/roblox_version_data_install.json");
-    std::string current_version_from_file = "";
-    std::string current_version = "";
-    if (!fileContent.empty())
-    {
-        json data = json::parse(fileContent);
-        current_version_from_file = data["clientVersionUpload"].get<std::string>();
-    }
-    else
-    {
-        std::cout << "[WARN] Couldn't find roblox_version.json, assuming the client is not up to date." << std::endl;
-    }
-    std::string downloadPath = GetBasePath + "/roblox_version_data_install.json";
-    downloadFile("https://clientsettings.roblox.com/v2/client-version/MacPlayer", downloadPath.c_str());
-    std::string v2fileContent = FileChecker(GetBasePath + "/roblox_version_data_install.json");
-    if (!v2fileContent.empty())
-    {
-        json data = json::parse(v2fileContent);
-        current_version = data["clientVersionUpload"].get<std::string>();
-    }
-    else
-    {
-       std::cout << "[WARN] Couldn't find roblox_version.json after downloading, assuming the client is not up to date." << std::endl;
-    }
-        
-    if (current_version_from_file != current_version)
-    {
-        NeedToReinstall = true;
-    }
-    else
-    {
-        NeedToReinstall = false;
-    }
-    if (NeedToReinstall)
-    {
-        std::string DownloadPath = Download +"/RobloxPlayer.zip";
-        std::cout << "[INFO] Reinstalling Roblox" << std::endl;
-        if (!CustomChannel.empty())
-        {
-            std::string URL = "https://roblox-setup.cachefly.net/channel/" + CustomChannel + "/mac/" + current_version + "-RobloxPlayer.zip";
-            downloadFile(URL.c_str(), DownloadPath.c_str());
+            RobloxApplicationPath = "/Applications/Roblox.app/Contents/MacOS";
+            if (!CanAccessFolder(RobloxApplicationPath))
+            {
+                RobloxApplicationPath = ShowOpenFileDialog("file://localhost"+RobloxApplicationPath);
+            }
+            if (!FolderExists("/Applications/Roblox.app/Contents/MacOS/ClientSettings"))
+            {
+                CreateFolder("/Applications/Roblox.app/Contents/MacOS/ClientSettings");
+            }
         }
         else
         {
-            std::string URL = "https://roblox-setup.cachefly.net/mac/" + current_version + "-RobloxPlayer.zip";
-            downloadFile(URL.c_str(), DownloadPath.c_str());
+            RobloxApplicationPath = "/Applications/Roblox.app/Contents/MacOS";
+            NeedToReinstall = true;
         }
-        bool isDone = false;
-        /*
-        std::string warn_todo = "Please extract RobloxPlayer.zip to the Application Folder and rename it to Roblox.app (if u cant see the .app just rename it to Roblox). The file path is ~/Downloads/RobloxPlayer.zip";
-        wxString toWxString_warn(warn_todo.c_str(), wxConvUTF8);
-        wxMessageBox(toWxString_warn, "Info", wxOK | wxICON_INFORMATION);
-        do {
-            if (doesAppExist("/Applications/Roblox.app"))
+        json Mod_Data = GetModData();
+        std::cout << "[INFO] Mod data is: " << Mod_Data.dump(4) << "\n";
+        if (FolderExists(GetBasePath + "/Resources"))
+        {
+            deleteFolder(GetBasePath + "/Resources");
+        }
+        std::string mainPath = GetPath() + "/";
+        std::string zipPath = mainPath + "Resources.zip";
+        std::string url = "https://github.com/SomeRandomGuy45/resources/releases/download/t/Resources.zip";
+        downloadFile(url.c_str(), zipPath.c_str());
+        std::string unzipCommand = "unzip \"" + zipPath + "\" -d \"" + mainPath + "\"";
+        if (!system(unzipCommand.c_str()))
+        {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                std::cerr << "[ERROR] Couldn't unzip file" << std::endl;
+            });
+        }
+        else
+        {
+            dispatch_async(dispatch_get_main_queue(), ^{
+               std::cout << "[INFO] unzipped file" << std::endl;
+            });
+        }
+        std::cout << "[INFO] Path: " << RobloxApplicationPath << "\n";
+        std::string bootstrapDataFileData = FileChecker(GetBasePath + "/bootstrap_data.json");
+        if (!bootstrapDataFileData.empty())
+        {
+            bootstrapData = json::parse(bootstrapDataFileData);
+            CustomChannel = bootstrapData["channel"].get<std::string>();
+            std::string ShouldReinstall = bootstrapData["force_reinstall"].get<std::string>();
+            if (ShouldReinstall == "true")
             {
-                isDone = true;
-                break;
+                NeedToReinstall = true;
             }
-        } while (!isDone);
-        std::string defaultPath = "/Applications/Roblox.app/Contents/MacOS";
-        RobloxApplicationPath = ShowOpenFileDialog("file://localhost"+defaultPath);
+        }
         if (RobloxApplicationPath != "/Applications/Roblox.app/Contents/MacOS")
         {
-            std::cerr << "[ERROR] Thats not the right path!" << std::endl;
+            dispatch_async(dispatch_get_main_queue(), ^{
+                std::cerr << "[ERROR] Thats not the right path!" << std::endl;
+            });
             std::string path = "The location of the Roblox MacOS folder isn't correct. The location of is /Applications/Roblox.app/Contents/MacOS";
             wxString toWxString(path.c_str(), wxConvUTF8);
             wxMessageBox(toWxString, "Error", wxOK | wxICON_ERROR);
             Close(true);
             return;
         }
-        */
-        if (!unzipFile(DownloadPath.c_str(), Download.c_str()))
-        {
-            std::cerr << "[ERROR] Failed to extract Roblox.zip" << std::endl;
-            Close(true);
-            return;
-        }
-        fixInstall(Download + "/RobloxPlayer.app");
-        removeQuarantineAttribute(Download + "/RobloxPlayer.app");
-        std::string pa_th  = Download + "/RobloxPlayer.app";
-        RenameFile(pa_th.c_str(), "/Applications/Roblox.app");
+        UpdateProgress(0.1);
+        SetStatusText("Checking for Updates");
         std::this_thread::sleep_for(std::chrono::seconds(1));
-        std::string command1 = "chmod +x /Applications/Roblox.app/Contents/MacOS/RobloxPlayer";
-        std::string command2 = "chmod +x /Applications/Roblox.app/Contents/MacOS/RobloxCrashHandler";
-        std::string command3 = "chmod +x /Applications/Roblox.app/Contents/MacOS/Roblox.app/Contents/MacOS/Roblox";
-        std::string command4 = "chmod +x /Applications/Roblox.app/Contents/MacOS/RobloxPlayerInstaller.app/Contents/MacOS/RobloxPlayerInstaller";
-        std::string fixCommand = ResourcePath + "/helper.sh";
-        int result = system(command1.c_str());
-        Check(result);
-        result = system(command2.c_str());
-        Check(result);
-        result = system(command3.c_str());
-        Check(result);
-        result = system(command4.c_str());
-        Check(result);
-        std::string spam = "/Applications/Roblox.app";
-        fixInstall(spam);
-        removeQuarantineAttribute(spam);
-        if (!FolderExists("/Applications/Roblox.app/Contents/MacOS/ClientSettings"))
+        std::string fileContent = FileChecker(GetBasePath + "/roblox_version_data_install.json");
+        std::string current_version_from_file = "";
+        std::string current_version = "";
+        if (!fileContent.empty())
         {
-            CreateFolder("/Applications/Roblox.app/Contents/MacOS/ClientSettings");
+            json data = json::parse(fileContent);
+            current_version_from_file = data["clientVersionUpload"].get<std::string>();
         }
-    }
-    else
-    {
-        std::cout << "[INFO] Roblox is up to date" << std::endl;
-    }
-    std::this_thread::sleep_for(std::chrono::seconds(1));
-    SetStatusText("Adding Modifications");
-    copyFile(GetBasePath + "/data.json", "/Applications/Roblox.app/Contents/MacOS/ClientSettings/ClientAppSettings.json");
-    UpdateProgress(0.35);
+        else
+        {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                std::cout << "[WARN] Couldn't find roblox_version.json, assuming the client is not up to date." << std::endl;
+            });
+        }
+        std::string downloadPath = GetBasePath + "/roblox_version_data_install.json";
+        downloadFile("https://clientsettings.roblox.com/v2/client-version/MacPlayer", downloadPath.c_str());
+        std::string v2fileContent = FileChecker(GetBasePath + "/roblox_version_data_install.json");
+        if (!v2fileContent.empty())
+        {
+            json data = json::parse(v2fileContent);
+            current_version = data["clientVersionUpload"].get<std::string>();
+        }
+        else
+        {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                std::cout << "[WARN] Couldn't find roblox_version.json after downloading, assuming the client is not up to date." << std::endl;
+            });
+        }
+            
+        if (current_version_from_file != current_version)
+        {
+            NeedToReinstall = true;
+        }
+        else
+        {
+            NeedToReinstall = false;
+        }
+        if (NeedToReinstall)
+        {
+            std::string DownloadPath = Download +"/RobloxPlayer.zip";
+            dispatch_async(dispatch_get_main_queue(), ^{
+                std::cout << "[INFO] Reinstalling Roblox" << std::endl;
+            });
+            if (!CustomChannel.empty())
+            {
+                std::string URL = "https://roblox-setup.cachefly.net/channel/" + CustomChannel + "/mac/" + current_version + "-RobloxPlayer.zip";
+                downloadFile(URL.c_str(), DownloadPath.c_str());
+            }
+            else
+            {
+                std::string URL = "https://roblox-setup.cachefly.net/mac/" + current_version + "-RobloxPlayer.zip";
+                downloadFile(URL.c_str(), DownloadPath.c_str());
+            }
+            bool isDone = false;
+            /*
+            std::string warn_todo = "Please extract RobloxPlayer.zip to the Application Folder and rename it to Roblox.app (if u cant see the .app just rename it to Roblox). The file path is ~/Downloads/RobloxPlayer.zip";
+            wxString toWxString_warn(warn_todo.c_str(), wxConvUTF8);
+            wxMessageBox(toWxString_warn, "Info", wxOK | wxICON_INFORMATION);
+            do {
+                if (doesAppExist("/Applications/Roblox.app"))
+                {
+                    isDone = true;
+                    break;
+                }
+            } while (!isDone);
+            std::string defaultPath = "/Applications/Roblox.app/Contents/MacOS";
+            RobloxApplicationPath = ShowOpenFileDialog("file://localhost"+defaultPath);
+            if (RobloxApplicationPath != "/Applications/Roblox.app/Contents/MacOS")
+            {
+                std::cerr << "[ERROR] Thats not the right path!" << std::endl;
+                std::string path = "The location of the Roblox MacOS folder isn't correct. The location of is /Applications/Roblox.app/Contents/MacOS";
+                wxString toWxString(path.c_str(), wxConvUTF8);
+                wxMessageBox(toWxString, "Error", wxOK | wxICON_ERROR);
+                Close(true);
+                return;
+            }
+            */
+            if (!unzipFile(DownloadPath.c_str(), Download.c_str()))
+            {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    std::cerr << "[ERROR] Failed to extract Roblox.zip" << std::endl;
+                });
+                Close(true);
+                return;
+            }
+            fixInstall(Download + "/RobloxPlayer.app");
+            removeQuarantineAttribute(Download + "/RobloxPlayer.app");
+            std::string pa_th  = Download + "/RobloxPlayer.app";
+            RenameFile(pa_th.c_str(), "/Applications/Roblox.app");
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+            std::string command1 = "chmod +x /Applications/Roblox.app/Contents/MacOS/RobloxPlayer";
+            std::string command2 = "chmod +x /Applications/Roblox.app/Contents/MacOS/RobloxCrashHandler";
+            std::string command3 = "chmod +x /Applications/Roblox.app/Contents/MacOS/Roblox.app/Contents/MacOS/Roblox";
+            std::string command4 = "chmod +x /Applications/Roblox.app/Contents/MacOS/RobloxPlayerInstaller.app/Contents/MacOS/RobloxPlayerInstaller";
+            std::string fixCommand = ResourcePath + "/helper.sh";
+            int result = system(command1.c_str());
+            Check(result);
+            result = system(command2.c_str());
+            Check(result);
+            result = system(command3.c_str());
+            Check(result);
+            result = system(command4.c_str());
+            Check(result);
+            std::string spam = "/Applications/Roblox.app";
+            fixInstall(spam);
+            removeQuarantineAttribute(spam);
+            if (!FolderExists("/Applications/Roblox.app/Contents/MacOS/ClientSettings"))
+            {
+                CreateFolder("/Applications/Roblox.app/Contents/MacOS/ClientSettings");
+            }
+        }
+        else
+        {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                std::cout << "[INFO] Roblox is up to date" << std::endl;
+            });
+        }
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+        SetStatusText("Adding Modifications");
+        std::string ResourcePath = GetBasePath + "/Resources";
+        std::string cursorVersion = "Current";  // Default version
+        std::map<std::string, std::string> paths = {
+            {"ArrowCursor", "/Applications/Roblox.app/Contents/Resources/content/textures/Cursors/KeyboardMouse/ArrowCursor.png"},
+            {"ArrowFarCursor", "/Applications/Roblox.app/Contents/Resources/content/textures/Cursors/KeyboardMouse/ArrowFarCursor.png"},
+            {"OldWalk", "/Applications/Roblox.app/Contents/Resources/content/sounds/action_footsteps_plastic.mp3"},
+            {"OldJump", "/Applications/Roblox.app/Contents/Resources/content/sounds/action_jump.mp3"},
+            {"OldUp", "/Applications/Roblox.app/Contents/Resources/content/sounds/action_get_up.mp3"},
+            {"OldFall", "/Applications/Roblox.app/Contents/Resources/content/sounds/action_falling.mp3"},
+            {"OldLand", "/Applications/Roblox.app/Contents/Resources/content/sounds/action_jump_land.mp3"},
+            {"OldSwim", "/Applications/Roblox.app/Contents/Resources/content/sounds/action_swim.mp3"},
+            {"OldImpact","/Applications/Roblox.app/Contents/Resources/content/sounds/impact_water.mp3"},
+            {"OOF_Path", "/Applications/Roblox.app/Contents/Resources/content/sounds/ouch.ogg"},
+            {"Mobile_Path", "/Applications/Roblox.app/Contents/Resources/ExtraContent/places/Mobile.rbxl"}
+        };
+        if (Mod_Data["2006 Cursor"] == "true") {
+            cursorVersion = "From2006";
+        } else if (Mod_Data["2013 Cursor"] == "true") {
+            cursorVersion = "From2013";
+        }
+        if (Mod_Data["Old Death sound"] == "true")
+        {
+            std::string BaseCopyPath = ResourcePath + "/Mods/Sounds/OldDeath.ogg";
+            copyFile(BaseCopyPath.c_str(), paths["OOF_Path"].c_str());
+        }
+        if (Mod_Data["Old Sounds"] == "true") {
+            std::string BaseCopyPath = ResourcePath + "/Mods/Sounds";
+            std::string CurrentCopy = BaseCopyPath + "/OldWalk.mp3";
+            RenameFile(CurrentCopy.c_str(), paths["OldWalk"].c_str());
+            CurrentCopy = BaseCopyPath + "/OldJump.mp3";
+            RenameFile(CurrentCopy.c_str(), paths["OldJump"].c_str());
+            CurrentCopy = BaseCopyPath + "/OldGetUp.mp3";
+            RenameFile(CurrentCopy.c_str(), paths["OldUp"].c_str());
+            CurrentCopy = BaseCopyPath + "/Empty.mp3";
+            copyFile(CurrentCopy.c_str(), paths["OldFall"].c_str());
+            copyFile(CurrentCopy.c_str(), paths["OldLand"].c_str());
+            copyFile(CurrentCopy.c_str(), paths["OldSwim"].c_str());
+            copyFile(CurrentCopy.c_str(), paths["OldImpact"].c_str());
+        }
+        else
+        {
+            std::string BaseCopyPath = ResourcePath + "/Mods/CurrentSounds";
+            bool shouldDelete = Mod_Data["Old Death sound"] == "true" ? false : true;
+            copyFolderContents(BaseCopyPath, "/Applications/Roblox.app/Contents/Resources/content/sounds/", shouldDelete);
+        }
+
+        if (Mod_Data["Old Avatar Background"] == "true")
+        {
+            std::string BaseCopyPath = ResourcePath + "/Mods/OldAvatarBackground.rbxl";
+            copyFile(BaseCopyPath.c_str(), paths["Mobile_Path"].c_str());
+        }
+        else
+        {
+            std::string BaseCopyPath = ResourcePath + "/Mods/CurrentAvatarBackground.rbxl";
+            copyFile(BaseCopyPath.c_str(), paths["Mobile_Path"].c_str());
+        }
+
+        std::string ArrowCursor = ResourcePath + "/Mods/Cursor/" + cursorVersion + "/ArrowCursor.png";
+        std::string ArrowFarCursor = ResourcePath + "/Mods/Cursor/" + cursorVersion + "/ArrowFarCursor.png";
+        std::cout << "[INFO] Arrow Paths: " << ArrowCursor << " " << ArrowFarCursor << std::endl;
+        // Copy both the ArrowCursor and ArrowFarCursor files
+        RenameFile(ArrowCursor.c_str(), paths["ArrowCursor"].c_str());
+        RenameFile(ArrowFarCursor.c_str(), paths["ArrowFarCursor"].c_str());
+        copyFile(GetBasePath + "/data.json", "/Applications/Roblox.app/Contents/MacOS/ClientSettings/ClientAppSettings.json");
+        UpdateProgress(0.35);
+    });
 }
 
 void BootstrapperFrame::SetStatusText(const wxString& text)

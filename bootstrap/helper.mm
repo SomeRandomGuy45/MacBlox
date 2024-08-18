@@ -348,6 +348,31 @@ bool FolderExists(const std::string& path) {
     return [fileManager fileExistsAtPath:nsPath];
 }
 
+bool deleteFolder(const std::string& folderPath) {
+    @autoreleasepool {
+        // Convert std::string to NSString
+        NSString* path = [NSString stringWithUTF8String:folderPath.c_str()];
+        
+        // Get a reference to the shared file manager
+        NSFileManager* fileManager = [NSFileManager defaultManager];
+        
+        // Check if the folder exists
+        if ([fileManager fileExistsAtPath:path]) {
+            NSError* error = nil;
+            // Attempt to remove the folder
+            if ([fileManager removeItemAtPath:path error:&error]) {
+                NSLog(@"Folder deleted successfully at path: %@", path);
+                return true;
+            } else {
+                NSLog(@"Failed to delete folder at path: %@, error: %@", path, error);
+            }
+        } else {
+            NSLog(@"Folder does not exist at path: %@", path);
+        }
+    }
+    return false;
+}
+
 void copyFile(const std::string& oldPath, const std::string& newPath) {
     @autoreleasepool {
         // Convert std::string to NSString
