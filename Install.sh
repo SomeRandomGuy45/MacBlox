@@ -69,7 +69,7 @@ pip3 install https://github.com/SomeRandomGuy45/pypresence/archive/master.zip
 #echo "$PASSWORD" | sudo -S mv ~/discord_rpc/include/discord_rpc.h /usr/local/include/discord-rpc
 rm -rf MacBlox
 echo "[INFO] Building MacBlox"
-git clone https://github.com/SomeRandomGuy45/MacBlox.git
+git clone -b release https://github.com/SomeRandomGuy45/MacBlox.git
 cd MacBlox
 make
 echo "[INFO] Finshed building MacBlox"
