@@ -2,6 +2,7 @@
 > This project is in the alpha stage which means you should execpt alot of bugs.
 
 # Macblox
+![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/SomeRandomGuy45/MacBlox/c-cpp.yml?branch=main&label=builds)](https://github.com/SomeRandomGuy45/MacBlox/actions)
 Macblox is a funny project i wanted to do because there wasn't bloxstrap for macos (there is but its in py and its a api)!
 Oh yeah theres a discord server here is the join link. [Join Server](https://discord.gg/veT7GWJQ6Q)
 
