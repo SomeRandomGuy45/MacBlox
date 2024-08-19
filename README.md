@@ -5,6 +5,7 @@
 [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/SomeRandomGuy45/MacBlox/c-cpp.yml?branch=main&label=builds)](https://github.com/SomeRandomGuy45/MacBlox/actions)
 [![Discord Server](https://img.shields.io/discord/1273371922226483342?logo=discord&logoColor=white&color=4d3dff)](https://discord.gg/veT7GWJQ6Q)
 [![cool image!](https://img.shields.io/badge/macblox%20is%20cool-yes-8A2BE2)](https://tenor.com/view/pizza-pizza-rolls-pizza-roll-gif-26147512)
+
 Macblox is a funny project i wanted to do because there wasn't bloxstrap for macos (there is but its in py and its a api)!
 (insp for top is bloxstrap!!!!)
 
