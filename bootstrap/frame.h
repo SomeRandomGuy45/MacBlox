@@ -82,14 +82,16 @@ public:
 private:
 
     void BootstrapData1(json BootStrapData);
-
+    std::string GetModFolder();
     bool isDone = false;
     bool NeedToReinstall = false;
     std::string CustomChannel = "";
+    std::string ModFolder = "";
     std::string RobloxApplicationPath;
     std::string GetBasePath = GetPath();
     std::string ResourcePath = GetResourcesFolderPath();
     std::string Download = GetDownloadsFolderPath();
+    std::string findFileInDirectory(const std::string& directoryPath, const std::string& fileName);
     json bootstrapData;
     wxPanel* panel = nullptr;
     wxStaticText* statusText = nullptr;
@@ -110,8 +112,80 @@ private:
     int imageSizeY = 128;
 };
 
+std::string BootstrapperFrame::findFileInDirectory(const std::string& directoryPath, const std::string& fileName)
+{
+    for (const auto& entry : fs::recursive_directory_iterator(directoryPath)) {
+        if (entry.is_regular_file() && entry.path().filename() == fileName) {
+            std::cout << "[INFO] Found file " << entry.path().string() << std::endl;
+            return entry.path().string();
+        }
+    }
+    return "File not found in the directory or its subdirectories.";
+}
+
+// Function to loop through the folder and process files
+std::map<std::string, std::string> findFilesInFolder(const fs::path& folderPath, bool returnFullPath = false) {
+    std::map<std::string, std::string> filePaths;
+    int itemIndex = 1;
+    std::string parentFolderPath;
+
+    for (const auto& entry : fs::recursive_directory_iterator(folderPath)) {
+        if (!entry.is_directory() && entry.path().extension() != ".DS_Store") {
+            // Get the parent path of the file
+            std::string parentPath = entry.path().string();
+            std::string fileName = entry.path().filename().string();
+            if (fileName == ".DS_Store")
+            {
+                continue;
+            }
+
+            // Store the processed path in the map with an index key
+            filePaths["item_" + std::to_string(itemIndex)] = parentPath;
+            itemIndex++;
+            
+            /*
+            // Store the parent path for the first file found
+            if (parentFolderPath.empty()) {
+                parentFolderPath = entry.path().parent_path().string();
+                // Add an entry for the parent path in the map
+                filePaths["parent_path"] = parentFolderPath;
+            }
+            */
+        }
+    }
+
+    return filePaths;
+}
+
+std::string BootstrapperFrame::GetModFolder() 
+{
+    std::string path = GetBasePath + "/ModFolder";
+    if (fs::exists(path))
+    {
+        std::cout << "[INFO] Folder already exists.\n";
+    }
+    else 
+    {
+		// Create the folder
+		if (fs::create_directory(path)) {
+			std::cout << "[INFO] Folder created successfully. at \n";
+		}
+		else {
+			std::cerr << "[ERROR] Failed to create folder.\n";
+			return "";
+		}
+	}
+    return path;
+}
+
 void BootstrapperFrame::BootstrapData1(json BootStrapData)
 {
+    /*
+    
+        TODO:
+            Refactor this so its better and more readable.
+
+    */
     if (BootStrapData.contains("progressGauge") && BootStrapData["progressGauge"].contains("position"))
     {
         if (BootStrapData["progressGauge"]["position"].contains("x"))
@@ -178,12 +252,6 @@ void BootstrapperFrame::BootstrapData1(json BootStrapData)
 
 void BootstrapperFrame::LoadBootstrapData(json BootStrapData)
 {
-    /*
-    
-            TODO:
-                Refactor this so its better and more readable.
-
-    */
     if (BootStrapData.contains("BootstrapVersion"))
     {
         bootStrapVersion = std::stoi(BootStrapData["BootstrapVersion"].get<std::string>());
@@ -260,6 +328,7 @@ void copyFolderContents(const std::string& sourcePath, const std::string& destin
             if (entry.path().filename() == "ouch.ogg" && !shouldRemove)
             {
                 std::cout << "[INFO] keeping old ouch.ogg file\n";
+                continue;
             }
             try {
                 if (fs::is_directory(path)) {
@@ -314,9 +383,157 @@ bool removeQuarantineAttribute(const std::string& filePath) {
     return true;
 }
 
+std::string modifyPath(const std::string& path) {
+    // Find the position of "ModFolder"
+    size_t pos = path.find("ModFolder");
+    if (pos == std::string::npos) {
+        return path;  // If "ModFolder" is not found, return the original path
+    }
+
+    // Remove everything before and including "ModFolder"
+    std::string newPath = path.substr(pos + std::string("ModFolder").length());
+
+    // Map with specific values to check in the path
+    std::map<std::string, std::string> cool_stuff = {
+        {"value1", "PlatformContent"},
+        {"value2", "ExtraContent"},
+        {"value3", "Content"},
+    };
+
+    // Split the path into segments by '/'
+    std::istringstream stream(newPath);
+    std::string segment;
+    std::vector<std::string> segments;
+    
+    while (std::getline(stream, segment, '/')) {
+        segments.push_back(segment);
+    }
+
+    if (segments.size() < 2) {
+        return newPath;  // If there are fewer than two segments, return the original newPath
+    }
+
+    // Check if the second segment matches any value in cool_stuff
+    bool shouldContinue = false;
+    std::string secondSegment = segments[1];
+    for (const auto& [key, value] : cool_stuff) {
+        if (secondSegment == value) {
+            shouldContinue = true;
+            break;
+        }
+    }
+
+    std::cout << "[INFO] Checking: " << (shouldContinue ? "yes" : "no") << std::endl;
+
+    if (!shouldContinue) {
+        // Remove two segments from the path
+        segments.erase(segments.begin(), segments.begin() + 2);
+
+        // Reassemble the path from remaining segments
+        std::ostringstream newPathStream;
+        for (size_t i = 0; i < segments.size(); ++i) {
+            if (i > 0) {
+                newPathStream << '/';
+            }
+            newPathStream << segments[i];
+        }
+
+        std::cout << "[INFO] Path is: " << newPathStream.str() << std::endl;
+        return newPathStream.str();
+    } else {
+        std::cout << "[INFO] Path is: " << newPath << std::endl;
+        return newPath;
+    }
+}
+
+
+void searchFolders(const std::string& rootPath, bool returnFullPath) {
+    std::map<std::string, std::string> filePaths = findFilesInFolder(rootPath);
+    for (const auto& [key, value] : filePaths) {
+        std::string valueCopy = "/Applications/Roblox.app/Contents/Resources/" + modifyPath(value);
+        //std::cout << "[INFO] Key info: " << key << ": " << value << " value copy: " << valueCopy << std::endl;
+        copyFile(value, valueCopy);
+    }
+}
+
+
+int loadFolderCount(const std::string& jsonFilePath) {
+    std::ifstream inFile(jsonFilePath);
+    if (!inFile.is_open()) {
+        std::cerr << "[ERROR] Failed to open the JSON file." << std::endl;
+        return -1;
+    }
+
+    json inputJson;
+    inFile >> inputJson;
+
+    inFile.close();
+
+    if (inputJson.contains("folder_count")) {
+        return inputJson["folder_count"].get<int>();
+    } else {
+        std::cerr << "[ERROR] JSON file does not contain 'folder_count'." << std::endl;
+        return -1;
+    }
+}
+
+void GetCurrentCountOfModFolder(std::string& directoryPath, std::string& folder)
+{
+    int folderCount = 0;
+
+    try {
+        for (const auto& entry : fs::directory_iterator(directoryPath)) {
+            if (entry.is_directory()) {
+                folderCount++;
+            }
+        }
+    } catch (const fs::filesystem_error& e) {
+        std::cerr << "[ERROR] Filesystem error: " << e.what() << std::endl;
+        return;
+    }
+
+    // Create the JSON object
+    json outputJson;
+    outputJson["folder_count"] = folderCount;
+
+    // Write the JSON object to a file
+    std::ofstream outFile(folder+"/mod_count_data.json");
+    if (outFile.is_open()) {
+        outFile << outputJson.dump(4); // Pretty-print with an indentation of 4 spaces
+        outFile.close();
+        std::cout << "[INFO] JSON file created successfully!" << std::endl;
+    } else {
+        std::cerr << "[ERROR] Failed to create the JSON file." << std::endl;
+        return;
+    }
+}
+
+int countCurrentMods(std::string& directoryPath)
+{
+    int folderCount = 0;
+
+    try {
+        for (const auto& entry : fs::directory_iterator(directoryPath)) {
+            if (entry.is_directory()) {
+                folderCount++;
+            }
+        }
+    } catch (const fs::filesystem_error& e) {
+        std::cerr << "[ERROR] Filesystem error: " << e.what() << std::endl;
+        return -1;
+    }
+    return folderCount;
+}
+
 void BootstrapperFrame::DoLogic()
 {
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        int JsonCount = loadFolderCount(GetBasePath + "/mod_count_data.json");
+        int currentCount = countCurrentMods(ModFolder);
+        if (JsonCount != currentCount)
+        {
+            NeedToReinstall = true;
+        }
         if (FolderExists("/Applications/Roblox.app/Contents/"))
         {
             RobloxApplicationPath = "/Applications/Roblox.app/Contents/MacOS";
@@ -398,6 +615,7 @@ void BootstrapperFrame::DoLogic()
             dispatch_async(dispatch_get_main_queue(), ^{
                 std::cout << "[WARN] Couldn't find roblox_version.json, assuming the client is not up to date." << std::endl;
             });
+            NeedToReinstall = true;
         }
         std::string downloadPath = GetBasePath + "/roblox_version_data_install.json";
         downloadFile("https://clientsettings.roblox.com/v2/client-version/MacPlayer", downloadPath.c_str());
@@ -412,16 +630,14 @@ void BootstrapperFrame::DoLogic()
             dispatch_async(dispatch_get_main_queue(), ^{
                 std::cout << "[WARN] Couldn't find roblox_version.json after downloading, assuming the client is not up to date." << std::endl;
             });
+            NeedToReinstall = true;
         }
             
         if (current_version_from_file != current_version)
         {
             NeedToReinstall = true;
         }
-        else
-        {
-            NeedToReinstall = false;
-        }
+
         if (NeedToReinstall)
         {
             std::string DownloadPath = Download +"/RobloxPlayer.zip";
@@ -568,6 +784,8 @@ void BootstrapperFrame::DoLogic()
         RenameFile(ArrowCursor.c_str(), paths["ArrowCursor"].c_str());
         RenameFile(ArrowFarCursor.c_str(), paths["ArrowFarCursor"].c_str());
         copyFile(GetBasePath + "/data.json", "/Applications/Roblox.app/Contents/MacOS/ClientSettings/ClientAppSettings.json");
+        searchFolders(ModFolder, false);
+        GetCurrentCountOfModFolder(ModFolder, GetBasePath);
         UpdateProgress(1);
         std::this_thread::sleep_for(std::chrono::seconds(1));
         exit(0);
@@ -584,6 +802,8 @@ BootstrapperFrame::BootstrapperFrame(const wxString& title, long style, const wx
     : wxFrame(nullptr, wxID_ANY, title, wxDefaultPosition, size, style)
 {
     TestCommand();
+    ModFolder = GetModFolder();
+    std::cout << "[INFO] Mod folder is: " << ModFolder << std::endl;
     // Initialize image handlers
     wxInitAllImageHandlers();
 

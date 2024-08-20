@@ -51,6 +51,7 @@ private:
     void ReinitializePanels();
     void LoadModsJson(const std::string& filepath);
     void SaveModsJson(const std::string& filepath);
+    void CreateModsFolder();
     wxPanel* panel = nullptr;
     wxButton* button = nullptr;
     wxGridSizer* gridSizer = nullptr; 
@@ -70,6 +71,26 @@ private:
         BtnID_START = 3  // Start button IDs from a different base
     };
 };
+
+void MainFrame::CreateModsFolder()
+{
+    if (fs::exists(GetBasePath() + "/ModFolder"))
+    {
+
+        std::cout << "[INFO] Folder already exists.\n";
+    }
+    else 
+    {
+		// Create the folder
+		if (fs::create_directory(GetBasePath() + "/ModFolder")) {
+			std::cout << "[INFO] Folder created successfully. at \n";
+		}
+		else {
+			std::cerr << "[ERROR] Failed to create folder.\n";
+			return;
+		}
+	}
+}
 
 void MainFrame::SaveModsJson(const std::string& filepath)
 {
@@ -142,6 +163,7 @@ void MainFrame::LoadModsJson(const std::string& filepath)
 MainFrame::MainFrame(const wxString& title, long style, const wxSize& size)
     : wxFrame(nullptr, wxID_ANY, title, wxDefaultPosition, size, style)
 {
+    CreateModsFolder();
     ReinitializePanels();
 }
 
@@ -286,26 +308,11 @@ void MainFrame::OnLaunchButtonClick(wxCommandEvent& event)
     std::string robloxZip = basePath + "/Roblox.zip";
     if (!fs::exists("/Applications/Roblox.app")) 
     {
-        std::cout << "[INFO] Didn't find Roblox.app\n";
-        const char* Version_URL = "https://clientsettings.roblox.com/v2/client-version/MacPlayer";
-        std::string Version_Data = downloadFile_WITHOUT_DESTINATION(Version_URL);
-        json Version_JSON = json::parse(Version_Data);
-        std::string Latest_Version = Version_JSON["clientVersionUpload"].get<std::string>();
-        std::cout << "[INFO] Latest Roblox version: " << Latest_Version << std::endl;
-        std::string DownloadURL = "https://setup.rbxcdn.com/mac/" + Latest_Version + "-Roblox.zip";
-        std::cout << "[INFO] Download URL: " << DownloadURL << std::endl;
-        downloadFile(DownloadURL.c_str(), robloxZip.c_str());
-        if (unzipFile(robloxZip.c_str(), basePath.c_str()))
-        {
-            std::cout << "[INFO] Unzipped Roblox.zip at path: " << robloxInstallAppPath << std::endl;
-        }
-        else
-        {
-
-            std::cerr << "[ERROR] Failed to unzip file\n";
-            return;
-        }
-        runApp(robloxInstallAppPath, true);
+        /*
+        
+            TODO
+        
+        */
     }
     wxMessageBox("Added config to Roblox app","Info", wxOK | wxICON_INFORMATION);
     runApp("/Applications/Roblox.app", false);
