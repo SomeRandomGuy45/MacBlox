@@ -59,12 +59,10 @@ std::string checkParentDirectory(const std::string& pathStr) {
     while (currentPath.has_parent_path()) {
         fs::path parentPath = currentPath.parent_path();
 
-        // Check if the current directory (not the parent) is named "Macblox"
         if (parentPath.filename() == "Macblox") {
             return parentPath.string();
         }
 
-        // Move to the parent directory
         currentPath = parentPath;
     }
 
