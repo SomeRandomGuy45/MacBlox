@@ -19,6 +19,7 @@
 #include <chrono>
 #include <filesystem>
 #include <dispatch/dispatch.h>
+#include <sstream>
 #include "helper.h"
 #include "json.hpp"
 
