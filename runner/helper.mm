@@ -276,7 +276,6 @@ bool canAccessFile(const std::string& path) {
     BOOL isDirectory;
     BOOL fileExists = [fileManager fileExistsAtPath:nsPath isDirectory:&isDirectory];
     
-    // You can also check if it's a file or a directory, but this example only checks existence
     return fileExists;
 }
 
