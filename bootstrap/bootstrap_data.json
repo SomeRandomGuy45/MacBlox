@@ -23,10 +23,13 @@
         }
     },
     "statusText" : {
-        "_comment6" : "MacOS doesnt support size",
         "position" : {
-            "x" : "235",
+            "x" : "227",
             "y" : "270"
+        },
+        "size" : {
+            "x" : "200",
+            "y" : "30"
         }
     },
     "image" : {
@@ -35,7 +38,7 @@
             "y" : "128"
         },
         "position" : {
-            "x" : "235",
+            "x" : "225",
             "y" : "300"
         }
     }

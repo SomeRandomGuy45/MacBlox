@@ -20,6 +20,8 @@
 #include <filesystem>
 #include <dispatch/dispatch.h>
 #include <sstream>
+#include <thread>
+#include <exception>
 #include "helper.h"
 #include "json.hpp"
 
@@ -99,15 +101,15 @@ private:
     wxGauge* progressGauge = nullptr;
     //Fix all of this
     int bootStrapVersion = 0;
-    int statusText_X = 235;
+    int statusText_X = 227;
     int statusText_Y = 270;
-    int statusText_Size_X = 0;
-    int statusText_Size_Y = 0;
+    int statusText_Size_X = 200;
+    int statusText_Size_Y = 30;
     int progressGauge_X = 41;
     int progressGauge_Y = 300;
     int progressGauge_Size_X = 515;
     int progressGauge_Size_Y = -1;
-    int imageX = 235;
+    int imageX = 225;
     int imageY = 100;
     int imageSizeX = 128;
     int imageSizeY = 128;
@@ -187,67 +189,72 @@ void BootstrapperFrame::BootstrapData1(json BootStrapData)
             Refactor this so its better and more readable.
 
     */
-    if (BootStrapData.contains("progressGauge") && BootStrapData["progressGauge"].contains("position"))
-    {
-        if (BootStrapData["progressGauge"]["position"].contains("x"))
-        {
-            progressGauge_X = std::stoi(BootStrapData["progressGauge"]["position"]["x"].get<std::string>());
+    auto getPosition = [](const nlohmann::json& jsonObj, const std::string& key, int& x, int& y) {
+        try {
+            if (jsonObj.contains(key)) {
+                if (jsonObj[key].contains("x")) {
+                    std::string xStr = jsonObj[key]["x"].get<std::string>();
+                    x = std::stoi(xStr);  // Convert std::string to int
+                }
+                if (jsonObj[key].contains("y")) {
+                    std::string yStr = jsonObj[key]["y"].get<std::string>();
+                    y = std::stoi(yStr);  // Convert std::string to int
+                }
+            }
+        } catch (const std::exception& e) {
+            std::cerr << "[ERROR] Exception in getPosition: " << e.what() << std::endl;
+        }
+    };
+
+    auto getSize = [](const nlohmann::json& jsonObj, const std::string& key, int& width, int& height) {
+        try {
+            if (jsonObj.contains(key)) {
+                if (jsonObj[key].contains("x")) {
+                    std::string widthStr = jsonObj[key]["x"].get<std::string>();
+                    width = std::stoi(widthStr);  // Convert std::string to int
+                }
+                if (jsonObj[key].contains("y")) {
+                    std::string heightStr = jsonObj[key]["y"].get<std::string>();
+                    height = std::stoi(heightStr);  // Convert std::string to int
+                }
+            }
+        } catch (const std::invalid_argument& ia) {
+            std::cerr << "[ERROR] Invalid argument: " << ia.what() << std::endl;
+        } catch (const std::exception& e) {
+            std::cerr << "[ERROR] Exception in getSize: " << e.what() << std::endl;
+        }
+    };
+
+    try {
+        // Extract position and size for progressGauge
+        if (BootStrapData.contains("progressGauge")) {
+            getPosition(BootStrapData["progressGauge"], "position", progressGauge_X, progressGauge_Y);
+            getSize(BootStrapData["progressGauge"], "size", progressGauge_Size_X, progressGauge_Size_Y);
+            std::cout << "[INFO] progressGauge position: " << progressGauge_X << "x" << progressGauge_Y << std::endl;
+            std::cout << "[INFO] progressGauge size: " << progressGauge_Size_X << "x" << progressGauge_Size_Y << std::endl;
         }
 
-        if (BootStrapData["progressGauge"]["position"].contains("y"))
-        {
-            progressGauge_Y = std::stoi(BootStrapData["progressGauge"]["position"]["y"].get<std::string>());
-        }
-    }
-    if (BootStrapData.contains("progressGauge") && BootStrapData["progressGauge"].contains("size"))
-    {
-        if (BootStrapData["progressGauge"]["size"].contains("x"))
-        {
-            progressGauge_Size_X = std::stoi(BootStrapData["progressGauge"]["size"]["x"].get<std::string>());
+        // Extract position and size for image
+        if (BootStrapData.contains("image")) {
+            getPosition(BootStrapData["image"], "position", imageX, imageY);
+            getSize(BootStrapData["image"], "size", imageSizeX, imageSizeY);
+            std::cout << "[INFO] Image position: " << imageX << "x" << imageY << std::endl;
+            std::cout << "[INFO] Image size: " << imageSizeX << "x" << imageSizeY << std::endl;
         }
 
-        if (BootStrapData["progressGauge"]["size"].contains("y"))
-        {
-           progressGauge_Size_Y = std::stoi(BootStrapData["progressGauge"]["size"]["y"].get<std::string>());
-        }
-    }
-    if (BootStrapData.contains("image") && BootStrapData["image"].contains("position"))
-    {
-        if (BootStrapData["image"]["position"].contains("x"))
-        {
-            imageX = std::stoi(BootStrapData["image"]["position"]["x"].get<std::string>());
+        // Extract position for statusText
+        if (BootStrapData.contains("statusText")) {
+            getPosition(BootStrapData["statusText"], "position", statusText_X, statusText_Y);
+            getSize(BootStrapData["statusText"], "size", statusText_Size_X, statusText_Size_Y);
+            std::cout << "[INFO] statusText position: " << statusText_X << "x" << statusText_Y << std::endl;
+            std::cout << "[INFO] statusText size: " << statusText_Size_X << "x" << statusText_Size_Y << std::endl;
         }
 
-        if (BootStrapData["image"]["position"].contains("y"))
-        {
-            imageY = std::stoi(BootStrapData["image"]["position"]["y"].get<std::string>());
-        }
-        std::cout << "[INFO] Image position: " << imageX << "x" << imageY << std::endl;
+        std::cout << "[INFO] Bootstrap data loaded successfully" << std::endl;
+    } catch (const std::exception& e) {
+        std::cerr << "[ERROR] Exception in loadBootstrapData: " << e.what() << std::endl;
     }
-    if (BootStrapData.contains("image") && BootStrapData["image"].contains("size"))
-    {
-        if (BootStrapData["image"]["size"].contains("x"))
-        {
-            imageSizeX = std::stoi(BootStrapData["image"]["size"]["x"].get<std::string>());
-        }
 
-        if (BootStrapData["image"]["size"].contains("y"))
-        {
-            imageSizeY = std::stoi(BootStrapData["image"]["size"]["y"].get<std::string>());
-        }
-    }
-    if (BootStrapData.contains("statusText") && BootStrapData["statusText"].contains("position"))
-    {
-        if (BootStrapData["statusText"]["position"].contains("x"))
-        {
-            statusText_X = std::stoi(BootStrapData["statusText"]["position"]["x"].get<std::string>());
-        }
-
-        if (BootStrapData["statusText"]["position"].contains("y"))
-        {
-            statusText_Y = std::stoi(BootStrapData["statusText"]["position"]["y"].get<std::string>());
-        }
-    }
     std::cout << "[INFO] Bootstrap data loaded successfully" << std::endl;
 }
 
@@ -278,13 +285,20 @@ void BootstrapperFrame::UpdateProgress(double progress)
 {
     int targetProgress = static_cast<int>(progress * 100);
     std::cout << "[INFO] Progress updated: " << targetProgress << "%" << std::endl;
+
     int currentProgress = progressGauge->GetValue();
     int step = (targetProgress > currentProgress) ? 1 : -1;
+
     while (std::abs(targetProgress - currentProgress) > 0)
     {
         currentProgress += step;
         std::cout << "[INFO] Current progress: " << currentProgress << "%" << std::endl;
-        progressGauge->SetValue(currentProgress);
+
+        // Update the gauge value using wxCallAfter to ensure it's done on the main thread
+        wxTheApp->CallAfter([this, currentProgress]() {
+            progressGauge->SetValue(currentProgress);
+        });
+
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
 }
@@ -719,7 +733,7 @@ void BootstrapperFrame::DoLogic()
                 std::cout << "[INFO] Roblox is up to date" << std::endl;
             });
         }
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        std::this_thread::sleep_for(std::chrono::seconds(2));
         SetStatusText("Adding Modifications");
         std::string ResourcePath = GetBasePath + "/Resources";
         std::string cursorVersion = "Current";  // Default version
@@ -787,16 +801,19 @@ void BootstrapperFrame::DoLogic()
         copyFile(GetBasePath + "/data.json", "/Applications/Roblox.app/Contents/MacOS/ClientSettings/ClientAppSettings.json");
         searchFolders(ModFolder, false);
         GetCurrentCountOfModFolder(ModFolder, GetBasePath);
+        std::this_thread::sleep_for(std::chrono::seconds(2));
         UpdateProgress(1);
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        std::this_thread::sleep_for(std::chrono::seconds(2));
         exit(0);
     });
 }
 
 void BootstrapperFrame::SetStatusText(const wxString& text)
 {
+    statusText->SetLabel("");
+    std::this_thread::sleep_for(std::chrono::microseconds(25));
     statusText->SetLabel(text);
-    Layout();
+    //Layout();
 }
 
 BootstrapperFrame::BootstrapperFrame(const wxString& title, long style, const wxSize& size)
@@ -822,18 +839,14 @@ BootstrapperFrame::BootstrapperFrame(const wxString& title, long style, const wx
     // Convert wxImage to wxBitmap
     wxBitmap bitmap(image);
 
-    // Create the status text
-    if (statusText_Size_Y != 0 && statusText_Size_X != 0)
-    {
-        statusText = new wxStaticText(panel, wxID_ANY, "Getting files ready", wxPoint(statusText_X, statusText_Y), wxSize(statusText_Size_X, statusText_Size_Y));
-    }
-    else
-    {
-        statusText = new wxStaticText(panel, wxID_ANY, "Getting files ready", wxPoint(statusText_X, statusText_Y), wxDefaultSize);
-    }
+    wxSize fixedSize = wxSize(statusText_Size_X, statusText_Size_Y);
 
+    // Create the static text control with a fixed size
+    statusText = new wxStaticText(panel, wxID_ANY, "Getting files ready",
+                                 wxPoint(statusText_X, statusText_Y), fixedSize,
+                                 wxST_NO_AUTORESIZE | wxALIGN_CENTER_VERTICAL);
     // Create the progress gauge
-    progressGauge = new wxGauge(panel, wxID_ANY, 100, wxPoint(progressGauge_X, progressGauge_Y), wxSize(progressGauge_Size_X, progressGauge_Size_Y));
+    progressGauge = new wxGauge(panel, wxID_ANY, 100, wxPoint(progressGauge_X, progressGauge_Y), wxSize(progressGauge_Size_X, progressGauge_Size_Y), wxGA_SMOOTH);
 
     // Create the static bitmap to display the image
     wxStaticBitmap* displayImage = new wxStaticBitmap(panel, wxID_ANY, bitmap, wxPoint(imageX, imageY), wxSize(imageSizeX, imageSizeY));
