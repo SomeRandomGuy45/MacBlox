@@ -483,8 +483,8 @@ void GetCurrentCountOfModFolder(std::string& directoryPath, std::string& folder)
     int folderCount = 0;
 
     try {
-        for (const auto& entry : fs::directory_iterator(directoryPath)) {
-            if (entry.is_directory()) {
+        for (const auto& entry : fs::recursive_directory_iterator(directoryPath)) {
+            if (entry.path().filename().string() != ".DS_Store") {
                 folderCount++;
             }
         }
@@ -514,8 +514,8 @@ int countCurrentMods(std::string& directoryPath)
     int folderCount = 0;
 
     try {
-        for (const auto& entry : fs::directory_iterator(directoryPath)) {
-            if (entry.is_directory()) {
+        for (const auto& entry : fs::recursive_directory_iterator(directoryPath)) {
+            if (entry.path().filename().string() != ".DS_Store") {
                 folderCount++;
             }
         }

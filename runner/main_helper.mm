@@ -1287,6 +1287,7 @@ int main_loop() {
         dispatch_async(dispatch_get_main_queue(), ^{
             NSLog(@"[INFO] Closing program");
         });
+        [NSApp terminate:nil];
     });
     return 0;
 }
