@@ -183,12 +183,6 @@ std::string BootstrapperFrame::GetModFolder()
 
 void BootstrapperFrame::BootstrapData1(json BootStrapData)
 {
-    /*
-    
-        TODO:
-            Refactor this so its better and more readable.
-
-    */
     auto getPosition = [](const nlohmann::json& jsonObj, const std::string& key, int& x, int& y) {
         try {
             if (jsonObj.contains(key)) {

@@ -8,6 +8,7 @@
 #include <pthread.h>
 #include <Cocoa/Cocoa.h>
 
+
 // bool
 bool isDebug = false;
 bool isRblxRunning = false;
@@ -408,6 +409,7 @@ void executeScript(const std::string& script) {
         return;
     }
 }
+
 
 //Maybe make this a struct
 static void UpdDiscordActivity(

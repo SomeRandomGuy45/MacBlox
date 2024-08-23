@@ -16,7 +16,7 @@ create_runner_app:
 	@mkdir $(BUILDPATH)
 	@mkdir $(BUILDPATH)/Macblox
 	$(CC) $(CXXFLAGS) $(LDFLAGS) -o $(BUILDPATH)/runner $(CURDIR)/runner/main.m $(CURDIR)/runner/helper.mm $(CURDIR)/runner/AppDelegate.mm $(CURDIR)/runner/main_helper.mm
-	@./appify -s build/runner -n play -i test
+	@./appify_background -s build/runner -n play -i test
 	@codesign --sign - --entitlements Macblox.plist --deep play.app --force
 	@mv -f play.app $(BUILDPATH)/play.app
 	@mv $(BUILDPATH)/play.app $(BUILDPATH)/Macblox/"Play.app"
