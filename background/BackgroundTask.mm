@@ -16,6 +16,7 @@ REFACTOR MEEEEEEEE
 #include <fstream>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sstream>
 #include <dispatch/dispatch.h>
 #include <filesystem>
 #import <minizip/unzip.h>
