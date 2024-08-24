@@ -124,6 +124,9 @@ std::map<std::string, ArgHandler> argTable;
 // std::unordered_map
 std::unordered_map<std::string, std::string> GeolocationCache;
 
+// NSString
+NSString* message;
+
 std::string currentDateTime() {
     time_t now = time(0);
     struct tm tstruct;
@@ -141,73 +144,19 @@ std::string getLogPath() {
     std::string currentDate = currentDateTime();
     std::string path = "/Users/" + localuser + "/Library/Logs/Macblox";
     if (std::filesystem::exists(path)) {
-        NSLog(@"[INFO] Folder already exists.");
+        //NSLog(@"[INFO] Folder already exists.");
     } else {
         if (std::filesystem::create_directory(path)) {
-            NSLog(@"[INFO] Folder created successfully.");
+            //NSLog(@"[INFO] Folder created successfully.");
         } else {
-            NSLog(@"[ERROR] Failed to create folder.");
+            //NSLog(@"[ERROR] Failed to create folder.");
             return "";
         }
     }
     return path + "/" + currentDate + "_runner_log.log";
 }
 
-std::string filePath = getLogPath();
 
-void CustomNSLog(NSString *format, ...) {
-    // Open the file in append mode
-    FILE *logFile = fopen(filePath.c_str(), "a");
-
-    if (logFile != nullptr) {
-        va_list args;
-        va_start(args, format);
-
-        // Create an NSString with the formatted message
-        NSString *formattedMessage = [[NSString alloc] initWithFormat:format arguments:args];
-
-        // Get the current time with microseconds
-        struct timeval tv;
-        gettimeofday(&tv, NULL);
-
-        // Format the time
-        struct tm *timeinfo;
-        char timeBuffer[80];
-        timeinfo = localtime(&tv.tv_sec);
-        strftime(timeBuffer, sizeof(timeBuffer), "%Y-%m-%d %H:%M:%S", timeinfo);
-
-        // Calculate milliseconds
-        int milliseconds = tv.tv_usec / 1000;
-
-        // Get the current process ID and process name
-        pid_t pid = [[NSProcessInfo processInfo] processIdentifier];
-        NSString *processName = [[NSProcessInfo processInfo] processName];
-
-        // Format the log message to match the NSLog style
-        NSString *logEntry = [NSString stringWithFormat:@"%s.%03d %s[%d:%x] %s\n",
-                              timeBuffer,
-                              milliseconds,
-                              [processName UTF8String],
-                              pid,
-                              (unsigned int)pthread_mach_thread_np(pthread_self()),
-                              [formattedMessage UTF8String]];
-
-        // Print to the console
-        fprintf(stdout, "%s", [logEntry UTF8String]);
-
-        // Print to the file
-        fprintf(logFile, "%s", [logEntry UTF8String]);
-
-        va_end(args);
-
-        // Close the file
-        fclose(logFile);
-    } else {
-        NSLog(@"[ERROR] Failed to open file for logging: %s", filePath.c_str());
-    }
-}
-
-#define NSLog(format, ...) CustomNSLog(format, ##__VA_ARGS__)
 
 NSString* toNSString(const std::string& value) {
     return [NSString stringWithUTF8String:value.c_str()];
@@ -250,12 +199,12 @@ std::string GetDataFromURL(std::string URL)
     } 
     catch (curlpp::LogicError &e)
     {
-        NSLog(@"[ERROR] curlpp::LogicError: " );
+        //NSLog(@"[ERROR] curlpp::LogicError: " );
         return e.what();
     }
     catch (curlpp::RuntimeError &e)
     {
-        NSLog(@"[ERROR] curlpp::RuntimeError: " );
+        //NSLog(@"[ERROR] curlpp::RuntimeError: " );
         return e.what();
     }
 }
@@ -297,11 +246,11 @@ void CreateNotification(const wxString &title, const wxString &message, int Time
     wxNotificationMessage notification(title, message);
     if (!notification.Show(Timeout))
     {
-        NSLog(@"[ERROR] Failed to show notification");
+        //NSLog(@"[ERROR] Failed to show notification");
     }
     else
     {
-        NSLog(@"[INFO] Notification shown successfully");
+        //NSLog(@"[INFO] Notification shown successfully");
     }
 }
 
@@ -399,13 +348,13 @@ void executeScript(const std::string& script) {
             end tell')";
     NSString* appleScriptStr = toNSString(appleScript);
     NSString* msg = [NSString stringWithFormat:@"[INFO] Running AppleScript command: %@", appleScriptStr];
-    NSLog(@"%@", msg);
+    //NSLog(@"%@", msg);
 
     // Run the AppleScript command
     int result = system(appleScript.c_str());
 
     if (result != 0) {
-        NSLog(@"[ERROR] Failed to execute the AppleScript." );
+        //NSLog(@"[ERROR] Failed to execute the AppleScript." );
         return;
     }
 }
@@ -456,7 +405,7 @@ static void UpdDiscordActivity(
 
     NSString* scriptFix = toNSString(new_script);
     NSString* msg = [NSString stringWithFormat:@"[INFO] Running script: %@", scriptFix];
-    NSLog(@"%@",msg);
+    //NSLog(@"%@",msg);
     std::ofstream scriptFile(path_script);
     if (!scriptFile.is_open()) {
         return;
@@ -482,7 +431,7 @@ static void UpdDiscordActivity(
 
     discordThread.detach();
 
-    NSLog(@"[INFO] Updated activity" );
+    //NSLog(@"[INFO] Updated activity" );
 }
 
 
@@ -499,16 +448,16 @@ std::string GetBasePath() {
         
         // Create the directory and any necessary parent directories
         if (fs::create_directories(appSupportPath)) {
-            //NSLog(@"[INFO] Directory created successfully: " + appSupportPath );
+            ////NSLog(@"[INFO] Directory created successfully: " + appSupportPath );
         } else {
-            //NSLog(@"[INFO] Directory already exists or failed to create: " + appSupportPath );
+            ////NSLog(@"[INFO] Directory already exists or failed to create: " + appSupportPath );
         }
         return appSupportPath;
     } catch (const fs::filesystem_error& e) {
-        NSLog(@"[ERORR] Filesystem error: "  );
+        //NSLog(@"[ERORR] Filesystem error: "  );
         return "";
     } catch (const std::exception& e) {
-        NSLog(@"[ERROR] "  );
+        //NSLog(@"[ERROR] "  );
         return "";
     }
 }
@@ -554,7 +503,7 @@ bool isBootstrapRunning()
 std::string ReadFile(const std::string& filename) {
     std::ifstream file(filename);
     if (!file.is_open()) {
-        NSLog(@"[ERROR] Unable to open file");
+        //NSLog(@"[ERROR] Unable to open file");
         return "";
     }
     return std::string((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
@@ -568,12 +517,12 @@ json GetGameData(long customID) {
     // Download the JSON file
     std::string url_getunid = "https://apis.roblox.com/universes/v1/places/" + std::to_string(customID) + "/universe";
     std::string downloadedFilePath = GetDataFromURL(url_getunid);
-    //NSLog(@"[INFO] Got data " + downloadedFilePath );
+    ////NSLog(@"[INFO] Got data " + downloadedFilePath );
     json data;
     try {
         data = json::parse(downloadedFilePath);
     } catch (const json::parse_error& e) {
-        NSLog(@"[ERROR] JSON parse error");
+        //NSLog(@"[ERROR] JSON parse error");
     }
 
     // Extract the universe ID
@@ -586,27 +535,27 @@ json GetGameData(long customID) {
             } else if (data["universeId"].is_string()) {
                 universeID = data["universeId"].get<std::string>();
             } else {
-                NSLog(@"[ERROR] Unexpected type for 'universeId'");
+                //NSLog(@"[ERROR] Unexpected type for 'universeId'");
             }
         } else {
-            NSLog(@"[ERROR] 'universeId' not found in JSON" );
+            //NSLog(@"[ERROR] 'universeId' not found in JSON" );
         }
     } catch (const json::type_error& e) {
-        NSLog(@"[ERROR] JSON type error");
+        //NSLog(@"[ERROR] JSON type error");
     }
     if (!universeID.empty() && std::stol(universeID) <= 0) {
         universeID = std::to_string(std::stol(universeID) * -1);
     }
     NSString *universeFixed = toNSString(universeID);
     NSString* msg = [NSString stringWithFormat:@"[INFO] new universeId: %@", universeFixed];
-    NSLog(@"%@", msg);
+    //NSLog(@"%@", msg);
     std::string URL = "https://games.roblox.com/v1/games?universeIds=" + universeID;
     std::string downloadData = GetDataFromURL(URL);
     json data_game_data;
     try {
         data_game_data = json::parse(downloadData);
     } catch (const json::parse_error& e) {
-        NSLog(@"[ERROR] JSON parse error: "  );
+        //NSLog(@"[ERROR] JSON parse error: "  );
     }
     return data_game_data;
 }
@@ -615,12 +564,12 @@ std::string GetGameThumb(long customID) {
     // Download the JSON file
     std::string url_getunid = "https://apis.roblox.com/universes/v1/places/" + std::to_string(customID) + "/universe";
     std::string downloadedFilePath = GetDataFromURL(url_getunid);
-    //NSLog(@"[INFO] Got data " + downloadedFilePath );
+    ////NSLog(@"[INFO] Got data " + downloadedFilePath );
     json data;
     try {
         data = json::parse(downloadedFilePath);
     } catch (const json::parse_error& e) {
-        NSLog(@"[ERROR] JSON parse error: "  );
+        //NSLog(@"[ERROR] JSON parse error: "  );
         return "";
     }
 
@@ -634,15 +583,15 @@ std::string GetGameThumb(long customID) {
             } else if (data["universeId"].is_string()) {
                 universeID = data["universeId"].get<std::string>();
             } else {
-                NSLog(@"[ERROR] Unexpected type for 'universeId'" );
+                //NSLog(@"[ERROR] Unexpected type for 'universeId'" );
                 return "";
             }
         } else {
-            NSLog(@"[ERROR] 'universeId' not found in JSON" );
+            //NSLog(@"[ERROR] 'universeId' not found in JSON" );
             return "";
         }
     } catch (const json::type_error& e) {
-        NSLog(@"[ERROR] JSON type error: "  );
+        //NSLog(@"[ERROR] JSON type error: "  );
         return "";
     }
     if (!universeID.empty() && std::stol(universeID) <= 0) {
@@ -650,7 +599,7 @@ std::string GetGameThumb(long customID) {
     }
     NSString *universeFixed = toNSString(universeID);
     NSString* msg = [NSString stringWithFormat:@"[INFO] new universeId: %@", universeFixed];
-    NSLog(@"%@", msg);
+    //NSLog(@"%@", msg);
 
     // Download the game thumbnail JSON file
     std::string gameThumbURL = "https://thumbnails.roblox.com/v1/games/icons?universeIds=" + universeID + "&returnPolicy=PlaceHolder&size=512x512&format=Png&isCircular=false";
@@ -661,7 +610,7 @@ std::string GetGameThumb(long customID) {
     try {
         thumbnailData = json::parse(thumbnailFileContent);
     } catch (const json::parse_error& e) {
-        NSLog(@"[ERROR] JSON parse error: "  );
+        //NSLog(@"[ERROR] JSON parse error: "  );
         return "";
     }
     std::string thumbnailUrl = "";
@@ -694,7 +643,7 @@ int64_t getCurrentTimeMillis() {
 
 
 void doFunc(const std::string& logtxt) {
-    //NSLog(@logtxt );
+    ////NSLog(@logtxt );
     if (processedLogs.find(logtxt) != processedLogs.end()) {
         return; // Skip processing if the log entry has already been handled
     }
@@ -702,17 +651,17 @@ void doFunc(const std::string& logtxt) {
     if (logtxt.find("[FLog::SingleSurfaceApp] initiateTeleport") != std::string::npos) 
     {
         _teleportMarker = true;
-        NSLog(@"[INFO] Attempting to teleport into new server");
+        //NSLog(@"[INFO] Attempting to teleport into new server");
     }
     else if (_teleportMarker && logtxt.find("[FLog::GameJoinUtil] GameJoinUtil::initiateTeleportToReservedServer") != std::string::npos) 
     {
         _reservedTeleportMarker = true;
-        NSLog(@"[INFO] Attempting to join reserved server");
+        //NSLog(@"[INFO] Attempting to join reserved server");
     } 
     else if (logtxt.find("[FLog::GameJoinUtil] GameJoinUtil::joinGamePostPrivateServer") != std::string::npos) 
     {
         Current = Private;
-        NSLog(@"[INFO] Attempting to join private server");
+        //NSLog(@"[INFO] Attempting to join private server");
     } 
     else if (logtxt.find("[FLog::Output] ! Joining game") != std::string::npos && !ActivityInGame && placeId == 0 && (Current == Home)) 
     {
@@ -772,8 +721,8 @@ void doFunc(const std::string& logtxt) {
             NSString* placeIdStr = toNSString(placeId);
             NSString* jobIdStr = toNSString(jobId);
             NSString* activityMachineAddressStr = toNSString(ActivityMachineAddress);
-            NSString* message = [NSString stringWithFormat:@"[INFO] Joining Game (%@/%@/%@)", placeIdStr, jobIdStr, activityMachineAddressStr];
-            NSLog(@"%@", message);
+            message = [NSString stringWithFormat:@"[INFO] Joining Game (%@/%@/%@)", placeIdStr, jobIdStr, activityMachineAddressStr];
+            //NSLog(@"%@", message);
             //https://github.com/pizzaboxer/bloxstrap/blob/7e95fb4d8fc4d132ee4633ba38b68a384ff897da/Bloxstrap/Integrations/DiscordRichPresence.cs
             GameIMG = GetGameThumb(placeId);
             std::vector<std::pair<std::string, std::string>> buttonPairs;
@@ -837,7 +786,7 @@ void doFunc(const std::string& logtxt) {
     } 
     else if (logtxt.find("[FLog::Network] Time to disconnect replication data:") != std::string::npos || logtxt.find("[FLog::SingleSurfaceApp] leaveUGCGameInternal") != std::string::npos && !ActivityInGame && placeId != 0 && Current != Home) 
     {
-        NSLog(@"[INFO] player disconnected");
+        //NSLog(@"[INFO] player disconnected");
         jobId = "";
         placeId = 0;
         ActivityInGame = false;
@@ -859,14 +808,14 @@ void doFunc(const std::string& logtxt) {
         }
         else
         {
-            NSLog(@"[ERROR] Something happened" );
+            //NSLog(@"[ERROR] Something happened" );
         }
     }
     else if (logtxt.find("[FLog::Output] [BloxstrapRPC]") != std::string::npos && Current != Home)
     {
         if (std::time(nullptr) - lastRPCTime <= 1)
         {
-            NSLog(@"[WARN] Dropping message (rate limit exceeded)");
+            //NSLog(@"[WARN] Dropping message (rate limit exceeded)");
             return;
         }
         std::regex pattern("\\[BloxstrapRPC\\] (.*)");
@@ -1028,33 +977,6 @@ std::string GetBashPath() {
     return std::string(dir);
 }
 
-void CallBacks()
-{
-    /*
-        TODO
-    */
-}
-
-std::future<void> monitorRoblox() {
-    return std::async(std::launch::async, [] {
-        long CallBackCount = 0;
-        long BackupCallBackCount = 0;
-
-        while (isRobloxRunning()) {
-            CallBacks();
-            CallBackCount++;
-            if (CallBackCount >= 1000) {
-                BackupCallBackCount += CallBackCount;
-                CallBackCount = 0;
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    NSLog(@"[INFO] CallBacks called %lu times", BackupCallBackCount);
-                });
-            }
-            std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Sleep for 100ms
-        }
-    });
-}
-
 bool OpenAppWithPath(const std::string &appPath) {
     // Escape the appPath for use in the AppleScript
     std::string escapedPath = appPath;
@@ -1073,7 +995,6 @@ bool OpenAppWithPath(const std::string &appPath) {
     // Execute the AppleScript command
     FILE *pipe = popen(appleScript.c_str(), "r");
     if (!pipe) {
-        std::cerr << "[ERROR] Failed to open application with path: " << appPath << std::endl;
         return false;
     }
 
@@ -1085,11 +1006,9 @@ bool OpenAppWithPath(const std::string &appPath) {
 
     int status = pclose(pipe);
     if (status != 0) {
-        std::cerr << "[ERROR] Failed to open application with path: " << appPath << std::endl;
         return false;
     }
 
-    std::cout << "Successfully opened application at path: " << appPath << std::endl;
     return true;
 }
 
@@ -1125,24 +1044,13 @@ int main_loop() {
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         if (!isBackgroundAppRunning())
         {
-            OpenAppWithPath(GetExPath() + "/BackgroundApp.app");
+            
+            //OpenAppWithPath(GetExPath() + "/BackgroundApp.app");
         }
-        if (doesAppExist("/Applications/Discord.app"))
-        {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                NSLog(@"[INFO] Discord IPC found");
-            });
-        }
-        else
+        if (!doesAppExist("/Applications/Discord.app"))
         {
             isDiscordFound = false;
         }
-
-        NSString* basePythonScriptStr = toNSString(basePythonScript);
-        NSString* message = [NSString stringWithFormat:@"[INFO] Python script is %@", basePythonScriptStr];
-        dispatch_async(dispatch_get_main_queue(), ^{
-            NSLog(@"%@", message);
-        });
 
         InitTable();
 
@@ -1150,7 +1058,6 @@ int main_loop() {
         if (!CanAccessFolder(defaultPath))
         {
             dispatch_async(dispatch_get_main_queue(), ^{
-            std::cout << "[INFO] Default log directory URL is: " << "file://localhost" + defaultPath << "\n";
             logfile = ShowOpenFileDialog("file://localhost" + defaultPath);
 
             if (logfile != "/Users/" + localuser + "/Library/Logs/Roblox")
@@ -1171,9 +1078,6 @@ int main_loop() {
         }
         else
         {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                NSLog(@"[INFO] We have access");
-            });
             logfile = defaultPath;
         }
 
@@ -1188,16 +1092,8 @@ int main_loop() {
         isRblxRunning = isRobloxRunning();
         std::this_thread::sleep_for(std::chrono::seconds(5));
 
-        dispatch_async(dispatch_get_main_queue(), ^{
-            NSLog(@"[INFO] Roblox player is running");
-        });
-
         std::string latestLogFile = getLatestLogFile(false);
         do {latestLogFile = getLatestLogFile(false);} while (latestLogFile.empty());
-
-        dispatch_async(dispatch_get_main_queue(), ^{
-            NSLog(@"[INFO] Reading log file now!");
-        });
 
         if (latestLogFile.empty()) {
             throw std::runtime_error("[ERROR] Roblox log file not found!");
@@ -1232,52 +1128,25 @@ int main_loop() {
                 logFilePath = getLatestLogFile(true);
             }
             std::condition_variable logUpdatedEvent;
-            std::mutex mtx;
             std::ifstream logFile(logFilePath);
-            std::thread logThread([&]() {
-                while (true) {
-                    if (!isRobloxRunning()) {
-                        break;
-                    }
-                    std::this_thread::sleep_for(std::chrono::milliseconds(250));
-                    std::ifstream logFileStream(logFilePath);
-                    if (logFileStream) {
-                        std::string line;
-                        while (std::getline(logFileStream, line)) {
-                            std::lock_guard<std::mutex> lock(mtx);
-                            logUpdated = true;
-                            logUpdatedEvent.notify_one();
-                            doFunc(line);
-                        }
-                    } else {
-                        dispatch_async(dispatch_get_main_queue(), ^{
-                            NSString* str = toNSString(logFilePath);
-                            message = [NSString stringWithFormat:@"[INFO] Unable to open file at %@. Stopping all services", str];
-                            NSLog(@"%@", message);
-                        });
-                        break;
-                    }
+            while (true) {
+                if (!isRobloxRunning()) {
+                    break;
                 }
-            });
-            logThread.detach();
-            dispatch_async(dispatch_get_main_queue(), ^{
-                NSLog(@"[INFO] Started main thread");
-            });
-            monitorRoblox();
-            logThread = std::thread([&]() {
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    NSLog(@"[INFO] Stopping main thread");
-                });
-            });
-            if (logThread.joinable()) 
-            {
-                logThread.join();
-                logThread.~thread();
+                std::this_thread::sleep_for(std::chrono::milliseconds(250));
+                std::ifstream logFileStream(logFilePath);
+                if (logFileStream) {
+                    std::string line;
+                    while (std::getline(logFileStream, line)) {
+                        logUpdated = true;
+                        doFunc(line);
+                    }
+                } else {
+                    break;
+                }
             }
             discordThread = std::thread([&]() {
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    NSLog(@"[INFO] Stopping discord thread");
-                });
+                //NSLog(@"[INFO] Stopping discord thread");
             });
             if (!discordThread.joinable())
             {
@@ -1287,7 +1156,7 @@ int main_loop() {
         }
         runAppleScriptAndGetOutput(ScriptNeededToRun);
         dispatch_async(dispatch_get_main_queue(), ^{
-            NSLog(@"[INFO] Closing program");
+            //NSLog(@"[INFO] Closing program");
         });
         [NSApp terminate:nil];
     });

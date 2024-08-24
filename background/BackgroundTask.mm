@@ -97,17 +97,17 @@ void downloadFile(const char* urlString, const char* destinationPath) {
         NSURLSessionDownloadTask *downloadTask = [session downloadTaskWithURL:url completionHandler:^(NSURL *location, NSURLResponse *response, NSError *error) {
             if (error) {
                 if ([error isKindOfClass:[NSError class]]) {
-                    NSLog(@"[ERROR] Download failed with error: %@", [error localizedDescription]);
+                    //NSLog(@"[ERROR] Download failed with error: %@", [error localizedDescription]);
                 } else {
-                    NSLog(@"[ERROR] Download failed with unknown error: %@", error);
+                    //NSLog(@"[ERROR] Download failed with unknown error: %@", error);
                 }
             } else {
                 if ([response isKindOfClass:[NSHTTPURLResponse class]]) {
                     NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
-                    NSLog(@"[INFO] Response status code: %ld", (long)[httpResponse statusCode]);
-                    NSLog(@"[INFO] Response headers: %@", [httpResponse allHeaderFields]);
+                    //NSLog(@"[INFO] Response status code: %ld", (long)[httpResponse statusCode]);
+                    //NSLog(@"[INFO] Response headers: %@", [httpResponse allHeaderFields]);
                 } else {
-                    NSLog(@"[INFO] Response: %@", response);
+                    //NSLog(@"[INFO] Response: %@", response);
                 }
                 
                 NSFileManager *fileManager = [NSFileManager defaultManager];
@@ -119,9 +119,9 @@ void downloadFile(const char* urlString, const char* destinationPath) {
                     BOOL removeSuccess = [fileManager removeItemAtPath:destPath error:&fileError];
                     if (!removeSuccess) {
                         if ([fileError isKindOfClass:[NSError class]]) {
-                            NSLog(@"[ERROR] Failed to remove existing file: %@", [fileError localizedDescription]);
+                            //NSLog(@"[ERROR] Failed to remove existing file: %@", [fileError localizedDescription]);
                         } else {
-                            NSLog(@"[ERROR] Failed to remove existing file with unknown error: %@", fileError);
+                            //NSLog(@"[ERROR] Failed to remove existing file with unknown error: %@", fileError);
                         }
                         dispatch_semaphore_signal(semaphore);
                         return;
@@ -130,16 +130,6 @@ void downloadFile(const char* urlString, const char* destinationPath) {
                 
                 // Move the downloaded file to the destination path
                 BOOL success = [fileManager moveItemAtURL:location toURL:[NSURL fileURLWithPath:destPath] error:&fileError];
-                
-                if (!success) {
-                    if ([fileError isKindOfClass:[NSError class]]) {
-                        NSLog(@"[ERROR] File move failed with error: %@", [fileError localizedDescription]);
-                    } else {
-                        NSLog(@"[ERROR] File move failed with unknown error: %@", fileError);
-                    }
-                } else {
-                    NSLog(@"[INFO] File downloaded successfully to %@", destPath);
-                }
             }
             
             dispatch_semaphore_signal(semaphore);
@@ -169,10 +159,8 @@ std::string Path() {
         }
         return appSupportPath;
     } catch (const fs::filesystem_error& e) {
-        std::cerr << "[ERORR] Filesystem error: " << e.what() << std::endl;
         return "";
     } catch (const std::exception& e) {
-        std::cerr << "[ERROR] " << e.what() << std::endl;
         return "";
     }
 }
@@ -198,16 +186,11 @@ std::string Checker(const std::string path) {
             }
             file.close();
             
-            // Log the content for demonstration
-            NSLog(@"[INFO] File contents:\n%@", [NSString stringWithUTF8String:fileContent.c_str()]);
-            
             return fileContent;
         } else {
-            NSLog(@"[ERROR] Failed to open file: %@", nsPath);
             return "";
         }
     } else {
-        NSLog(@"[ERROR] File does not exist: %@", nsPath);
         return "";
     }
 }
@@ -219,10 +202,8 @@ bool removeQuarantineAttribute(const std::string& filePath) {
     ssize_t attrSize = getxattr(filePath.c_str(), attributeName, nullptr, 0, 0, 0);
     if (attrSize == -1) {
         if (errno == ENOATTR) {
-            std::cout << "[WARN] Attribute does not exist." << std::endl;
             return true; // Attribute does not exist, so nothing to remove
         } else {
-            std::cerr << "[ERROR] Error checking attribute size: " << strerror(errno) << std::endl;
             return false;
         }
     }
@@ -233,14 +214,12 @@ bool removeQuarantineAttribute(const std::string& filePath) {
     // Get the actual attribute value
     attrSize = getxattr(filePath.c_str(), attributeName, buffer.data(), buffer.size(), 0, 0);
     if (attrSize == -1) {
-        std::cerr << "[ERROR] Error retrieving attribute: " << strerror(errno) << std::endl;
         return false;
     }
 
     // Remove the attribute
     int result = removexattr(filePath.c_str(), attributeName, 0);
     if (result == -1) {
-        std::cerr << "[ERROR] Failed to remove attribute: " << strerror(errno) << std::endl;
         return false;
     }
 
@@ -262,7 +241,6 @@ bool ensureDirectoryExists(const std::string& path) {
     NSError *error = nil;
     BOOL success = [fileManager createDirectoryAtPath:nsPath withIntermediateDirectories:YES attributes:nil error:&error];
     if (!success) {
-        NSLog(@"Failed to create directory: %@", [error localizedDescription]);
         return false;
     }
     
@@ -277,7 +255,6 @@ std::string GetDownloads() {
     
     // Ensure the directory exists
     if (!ensureDirectoryExists(pathString)) {
-        std::cerr << "Failed to ensure the Downloads folder exists." << std::endl;
         return "";
     }
     
@@ -286,11 +263,7 @@ std::string GetDownloads() {
 
 void Check(int result)
 {
-    if (result == 0) {
-        std::cout << "[INFO] Command executed successfully." << std::endl;
-    } else {
-        std::cerr << "[ERROR] Command failed with exit code: " << result << std::endl;
-    }
+    return;
 }
 
 void RenameFile(const char* oldPathCStr, const char* newPathCStr)
@@ -306,17 +279,10 @@ void RenameFile(const char* oldPathCStr, const char* newPathCStr)
     if ([[NSFileManager defaultManager] fileExistsAtPath:newPath]) {
         // Remove the existing file
         if (![[NSFileManager defaultManager] removeItemAtPath:newPath error:&error]) {
-            NSLog(@"[INFO] Error removing existing file: %@", [error localizedDescription]);
             return; // Exit if the removal failed
         }
     }
     
-    // Attempt to rename (move) the file
-    if (![[NSFileManager defaultManager] moveItemAtPath:oldPath toPath:newPath error:&error]) {
-        NSLog(@"[INFO] Error renaming file: %@", [error localizedDescription]);
-    } else {
-        NSLog(@"[INFO] File renamed successfully.");
-    }
 }
 
 json GetModData()
@@ -324,18 +290,10 @@ json GetModData()
     json Data;
     std::ifstream file(Path() + "/config_data.json");
     if (!file.is_open()) {
-        std::cerr << "[ERROR] Could not open file " << Path() + "/config_data.json" << std::endl;
         return Data;
     }
-    try
-    {
-        file >> Data;
-        file.close();
-    } catch (const nlohmann::json::parse_error& e) {
-        std::cerr << "[ERROR] JSON parse error: " << e.what() << std::endl;
-    } catch (const std::exception& e) {
-        std::cerr << "[ERROR] Exception: " << e.what() << std::endl;
-    }
+    file >> Data;
+    file.close();
     return Data;
 }
 
@@ -362,13 +320,11 @@ bool unzipFile(const char* zipFilePath, const char* destinationPath) {
         
         unzFile zipFile = unzOpen([zipPath fileSystemRepresentation]);
         if (!zipFile) {
-            NSLog(@"[ERROR] Failed to open zip file: %s", zipFilePath);
             return false;
         }
         
         int ret = unzGoToFirstFile(zipFile);
         if (ret != UNZ_OK) {
-            NSLog(@"[ERROR] Failed to go to first file in zip archive");
             unzClose(zipFile);
             return false;
         }
@@ -378,7 +334,6 @@ bool unzipFile(const char* zipFilePath, const char* destinationPath) {
             unz_file_info fileInfo;
             ret = unzGetCurrentFileInfo(zipFile, &fileInfo, filename, sizeof(filename), NULL, 0, NULL, 0);
             if (ret != UNZ_OK) {
-                NSLog(@"[ERROR] Failed to get file info");
                 unzClose(zipFile);
                 return false;
             }
@@ -389,14 +344,12 @@ bool unzipFile(const char* zipFilePath, const char* destinationPath) {
             } else {
                 ret = unzOpenCurrentFile(zipFile);
                 if (ret != UNZ_OK) {
-                    NSLog(@"[ERROR] Failed to open file in zip archive");
                     unzClose(zipFile);
                     return false;
                 }
 
                 FILE *outFile = fopen([filePath fileSystemRepresentation], "wb");
                 if (!outFile) {
-                    NSLog(@"[ERROR] Failed to open output file");
                     unzCloseCurrentFile(zipFile);
                     unzClose(zipFile);
                     return false;
@@ -423,16 +376,16 @@ std::string GetModFolder()
     std::string path = GetBasePath + "/ModFolder";
     if (fs::exists(path))
     {
-        std::cout << "[INFO] Folder already exists.\n";
+        //
     }
     else 
     {
 		// Create the folder
 		if (fs::create_directory(path)) {
-			std::cout << "[INFO] Folder created successfully. at \n";
+			//std::cout << "[INFO] Folder created successfully. at \n";
 		}
 		else {
-			std::cerr << "[ERROR] Failed to create folder.\n";
+			//std::cerr << "[ERROR] Failed to create folder.\n";
 			return "";
 		}
 	}
@@ -481,7 +434,7 @@ std::string modifyPath(const std::string& path) {
         }
     }
 
-    std::cout << "[INFO] Checking: " << (shouldContinue ? "yes" : "no") << std::endl;
+    //std::cout << "[INFO] Checking: " << (shouldContinue ? "yes" : "no") << std::endl;
 
     if (!shouldContinue) {
         // Remove two segments from the path
@@ -496,10 +449,10 @@ std::string modifyPath(const std::string& path) {
             newPathStream << segments[i];
         }
 
-        std::cout << "[INFO] Path is: " << newPathStream.str() << std::endl;
+        //std::cout << "[INFO] Path is: " << newPathStream.str() << std::endl;
         return newPathStream.str();
     } else {
-        std::cout << "[INFO] Path is: " << newPath << std::endl;
+        //std::cout << "[INFO] Path is: " << newPath << std::endl;
         return newPath;
     }
 }
@@ -550,13 +503,13 @@ bool deleteFolder(const std::string& folderPath) {
             NSError* error = nil;
             // Attempt to remove the folder
             if ([fileManager removeItemAtPath:path error:&error]) {
-                NSLog(@"Folder deleted successfully at path: %@", path);
+                ////NSLog(@"Folder deleted successfully at path: %@", path);
                 return true;
             } else {
-                NSLog(@"Failed to delete folder at path: %@, error: %@", path, error);
+                ////NSLog(@"Failed to delete folder at path: %@, error: %@", path, error);
             }
         } else {
-            NSLog(@"Folder does not exist at path: %@", path);
+            ////NSLog(@"Folder does not exist at path: %@", path);
         }
     }
     return false;
@@ -573,7 +526,7 @@ void copyFile(const std::string& oldPath, const std::string& newPath) {
         
         // Check if source file exists
         if (![fileManager fileExistsAtPath:sourcePath]) {
-            NSLog(@"[ERROR] Source file does not exist: %@", sourcePath);
+            ////NSLog(@"[ERROR] Source file does not exist: %@", sourcePath);
             return;
         }
 
@@ -581,7 +534,7 @@ void copyFile(const std::string& oldPath, const std::string& newPath) {
         NSString *destinationDirectory = [destinationPath stringByDeletingLastPathComponent];
         if (![fileManager fileExistsAtPath:destinationDirectory]) {
             if (![fileManager createDirectoryAtPath:destinationDirectory withIntermediateDirectories:YES attributes:nil error:&error]) {
-                NSLog(@"[ERROR] Failed to create directory: %@", destinationDirectory);
+                ////NSLog(@"[ERROR] Failed to create directory: %@", destinationDirectory);
                 return;
             }
         }
@@ -589,16 +542,16 @@ void copyFile(const std::string& oldPath, const std::string& newPath) {
         // Check if destination file already exists and remove it
         if ([fileManager fileExistsAtPath:destinationPath]) {
             if (![fileManager removeItemAtPath:destinationPath error:&error]) {
-                NSLog(@"[ERROR] Failed to remove existing file at destination: %@", error.localizedDescription);
+                ////NSLog(@"[ERROR] Failed to remove existing file at destination: %@", error.localizedDescription);
                 return;
             }
         }
 
         // Copy the file from oldPath to newPath
         if (![fileManager copyItemAtPath:sourcePath toPath:destinationPath error:&error]) {
-            NSLog(@"[ERROR] Failed to copy file: %@", error.localizedDescription);
+            ////NSLog(@"[ERROR] Failed to copy file: %@", error.localizedDescription);
         } else {
-            NSLog(@"[INFO] File copied successfully from %@ to %@", sourcePath, destinationPath);
+            ////NSLog(@"[INFO] File copied successfully from %@ to %@", sourcePath, destinationPath);
         }
     }
 }
@@ -616,7 +569,7 @@ void copyFolderContents(const std::string& sourcePath, const std::string& destin
     try {
         // Ensure the source path exists and is a directory
         if (!fs::exists(sourcePath) || !fs::is_directory(sourcePath)) {
-            std::cerr << "[ERROR] Source path is invalid or not a directory: " << sourcePath << std::endl;
+            //std::cerr << "[ERROR] Source path is invalid or not a directory: " << sourcePath << std::endl;
             return;
         }
 
@@ -631,7 +584,7 @@ void copyFolderContents(const std::string& sourcePath, const std::string& destin
             auto destination = fs::path(destinationPath) / path.filename();
             if (entry.path().filename() == "ouch.ogg" && !shouldRemove)
             {
-                std::cout << "[INFO] keeping old ouch.ogg file\n";
+                //std::cout << "[INFO] keeping old ouch.ogg file\n";
                 continue;
             }
             try {
@@ -641,14 +594,14 @@ void copyFolderContents(const std::string& sourcePath, const std::string& destin
                 } else if (fs::is_regular_file(path)) {
                     // Copy files
                     fs::copy_file(path, destination, fs::copy_options::overwrite_existing);
-                    std::cout << "[INFO] Copied file: " << path << " to " << destination << std::endl;
+                    //std::cout << "[INFO] Copied file: " << path << " to " << destination << std::endl;
                 }
             } catch (fs::filesystem_error& e) {
-                std::cerr << "[ERROR] cant copying " << path << ": " << e.what() << std::endl;
+                //std::cerr << "[ERROR] cant copying " << path << ": " << e.what() << std::endl;
             }
         }
     } catch (fs::filesystem_error& e) {
-        std::cerr << "[ERROR] accessing directory: " << e.what() << std::endl;
+        //std::cerr << "[ERROR] accessing directory: " << e.what() << std::endl;
     }
 }
 
@@ -662,7 +615,7 @@ bool FolderExists(const std::string& path) {
 
 void runCppTask() {
     std::string folder_parent_path = checkParentDirectory(getParentFolderOfApp());
-    std::cout << "[INFO] Path to parent folder is: " << folder_parent_path << "\n";
+    //std::cout << "[INFO] Path to parent folder is: " << folder_parent_path << "\n";
 
     while (true) {
         while (!isRobloxRunning() && !isRunnerRunning()) {
@@ -683,7 +636,7 @@ void runCppTask() {
             }
             else
             {
-                std::cout << "[WARN] Couldn't find roblox_version.json, assuming the client is not up to date." << std::endl;
+                //std::cout << "[WARN] Couldn't find roblox_version.json, assuming the client is not up to date." << std::endl;
             }
             std::string downloadPath = GetBasePath + "/roblox_version_data_install.json";
             downloadFile("https://clientsettings.roblox.com/v2/client-version/MacPlayer", downloadPath.c_str());
@@ -695,7 +648,7 @@ void runCppTask() {
             }
             else
             {
-                std::cout << "[WARN] Couldn't find roblox_version.json after downloading, assuming the client is not up to date." << std::endl;
+                //std::cout << "[WARN] Couldn't find roblox_version.json after downloading, assuming the client is not up to date." << std::endl;
             }
             if (current_version_from_file != current_version)
             {
@@ -711,15 +664,11 @@ void runCppTask() {
                 std::string unzipCommand = "unzip \"" + zipPath + "\" -d \"" + mainPath + "\"";
                 if (!system(unzipCommand.c_str()))
                 {
-                    dispatch_async(dispatch_get_main_queue(), ^{
-                        std::cerr << "[ERROR] Couldn't unzip file" << std::endl;
-                    });
+
                 }
                 else
                 {
-                    dispatch_async(dispatch_get_main_queue(), ^{
-                    std::cout << "[INFO] unzipped file" << std::endl;
-                    });
+
                 }
                 std::string DownloadPath = Download +"/RobloxPlayer.zip";
                 if (!CustomChannel.empty())
@@ -815,7 +764,7 @@ void runCppTask() {
 
                 std::string ArrowCursor = ResourcePath + "/Mods/Cursor/" + cursorVersion + "/ArrowCursor.png";
                 std::string ArrowFarCursor = ResourcePath + "/Mods/Cursor/" + cursorVersion + "/ArrowFarCursor.png";
-                std::cout << "[INFO] Arrow Paths: " << ArrowCursor << " " << ArrowFarCursor << std::endl;
+                //std::cout << "[INFO] Arrow Paths: " << ArrowCursor << " " << ArrowFarCursor << std::endl;
                 // Copy both the ArrowCursor and ArrowFarCursor files
                 copyFile(ArrowCursor.c_str(), paths["ArrowCursor"].c_str());
                 copyFile(ArrowFarCursor.c_str(), paths["ArrowFarCursor"].c_str());
@@ -825,7 +774,7 @@ void runCppTask() {
             std::this_thread::sleep_for(std::chrono::seconds(5));
         }
 
-        std::cout << "[INFO] Roblox is running! Starting background task..." << std::endl;
+        //std::cout << "[INFO] Roblox is running! Starting background task..." << std::endl;
         runApp(folder_parent_path + "/Play.app", true);
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
