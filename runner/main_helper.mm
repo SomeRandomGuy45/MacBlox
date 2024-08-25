@@ -8,6 +8,7 @@
 #include <pthread.h>
 #include <cstdlib>
 #include <Cocoa/Cocoa.h>
+#import "helper.h"
 
 
 // bool
@@ -22,7 +23,7 @@ bool scriptFinished = true;
 bool shouldKill = false;
 bool isDiscordFound = true;
 bool errorOccurred = false;
-bool SBackground = false;
+bool SBackground = true;
 
 // std::string
 std::string tempDirStr = getTemp();
@@ -34,6 +35,11 @@ std::string ActivityMachineAddress = "";
 std::string basePythonScript = "python3 " + GetResourcesFolderPath() + "/discord.py";
 std::string path_script = GetResourcesFolderPath() + "/helper.sh";
 std::string temp_dir;
+std::string fileContent = "";
+std::string current_version_from_file = "";
+std::string current_version = "";
+std::string CustomChannel = "";
+std::string bootstrapDataFileData = "";
 std::string script = R"(
         tell application "System Events"
             set appList to name of every process
@@ -62,6 +68,17 @@ std::string script_bootstrap = R"(
         end tell
 
         if "bootstrap" is in appList then
+            return "true"
+        else
+            return "false"
+        end if
+    )";
+std::string script_discord = R"(
+        tell application "System Events"
+            set appList to name of every process
+        end tell
+
+        if "discord" is in appList then
             return "true"
         else
             return "false"
@@ -129,6 +146,47 @@ std::unordered_map<std::string, std::string> GeolocationCache;
 // NSString
 NSString* message;
 
+std::string getApplicationSupportPath() {
+    return "/Users/" + localuser + "/Library/Application Support/MacBlox_Data";
+}
+
+std::string GetBasePath() {
+    try {
+        std::string appSupportPath = getApplicationSupportPath();
+        
+        // Create the directory and any necessary parent directories
+        if (fs::create_directories(appSupportPath)) {
+            //NSLog(@"[INFO] Directory created successfully: " + appSupportPath );
+        } else {
+            //NSLog(@"[INFO] Directory already exists or failed to create: " + appSupportPath );
+        }
+        return appSupportPath;
+    } catch (const fs::filesystem_error& e) {
+        NSLog(@"[ERORR] Filesystem error");
+        return "";
+    } catch (const std::exception& e) {
+        return "";
+    }
+}
+
+std::string basePath = GetBasePath();
+
+json GetModData()
+{
+    json Data;
+    std::ifstream file(basePath + "/config_data.json");
+    if (!file.is_open()) {
+        return Data;
+    }
+    file >> Data;
+    file.close();
+    return Data;
+}
+
+// json
+json Mod_Data = GetModData();
+json bootstrapData;
+
 std::string currentDateTime() {
     time_t now = time(0);
     struct tm tstruct;
@@ -158,7 +216,61 @@ std::string getLogPath() {
     return path + "/" + currentDate + "_runner_log.log";
 }
 
+std::string filePath = getLogPath();
 
+void CustomNSLog(NSString *format, ...) {
+    // Open the file in append mode
+    FILE *logFile = fopen(filePath.c_str(), "a");
+
+    if (logFile != nullptr) {
+        va_list args;
+        va_start(args, format);
+
+        // Create an NSString with the formatted message
+        NSString *formattedMessage = [[NSString alloc] initWithFormat:format arguments:args];
+
+        // Get the current time with microseconds
+        struct timeval tv;
+        gettimeofday(&tv, NULL);
+
+        // Format the time
+        struct tm *timeinfo;
+        char timeBuffer[80];
+        timeinfo = localtime(&tv.tv_sec);
+        strftime(timeBuffer, sizeof(timeBuffer), "%Y-%m-%d %H:%M:%S", timeinfo);
+
+        // Calculate milliseconds
+        int milliseconds = tv.tv_usec / 1000;
+
+        // Get the current process ID and process name
+        pid_t pid = [[NSProcessInfo processInfo] processIdentifier];
+        NSString *processName = [[NSProcessInfo processInfo] processName];
+
+        // Format the log message to match the NSLog style
+        NSString *logEntry = [NSString stringWithFormat:@"%s.%03d %s[%d:%x] %s\n",
+                              timeBuffer,
+                              milliseconds,
+                              [processName UTF8String],
+                              pid,
+                              (unsigned int)pthread_mach_thread_np(pthread_self()),
+                              [formattedMessage UTF8String]];
+
+        // Print to the console
+        fprintf(stdout, "%s", [logEntry UTF8String]);
+
+        // Print to the file
+        fprintf(logFile, "%s", [logEntry UTF8String]);
+
+        va_end(args);
+
+        // Close the file
+        fclose(logFile);
+    } else {
+        NSLog(@"[ERROR] Failed to open file for logging: %s", filePath.c_str());
+    }
+}
+
+//#define NSLog(format, ...) CustomNSLog(format, ##__VA_ARGS__)
 
 NSString* toNSString(const std::string& value) {
     return [NSString stringWithUTF8String:value.c_str()];
@@ -379,6 +491,7 @@ static void UpdDiscordActivity(
     )
 {
     if (!isDiscordFound) {
+        NSLog(@"[ERROR] Discord is not found. Please make sure Discord is running and the Discord");
         return;
     }
 
@@ -436,34 +549,6 @@ static void UpdDiscordActivity(
     NSLog(@"[INFO] Updated activity" );
 }
 
-
-std::string getApplicationSupportPath() {
-    const char* homeDir = std::getenv("HOME");  // Get the localuser's home directory
-    if (!homeDir) {
-        throw std::runtime_error("Failed to get home directory");
-    }
-    return std::string(homeDir);
-}
-std::string GetBasePath() {
-    try {
-        std::string appSupportPath = getApplicationSupportPath();
-        
-        // Create the directory and any necessary parent directories
-        if (fs::create_directories(appSupportPath)) {
-            //NSLog(@"[INFO] Directory created successfully: " + appSupportPath );
-        } else {
-            //NSLog(@"[INFO] Directory already exists or failed to create: " + appSupportPath );
-        }
-        return appSupportPath;
-    } catch (const fs::filesystem_error& e) {
-        NSLog(@"[ERORR] Filesystem error: "  );
-        return "";
-    } catch (const std::exception& e) {
-        NSLog(@"[ERROR] "  );
-        return "";
-    }
-}
-
 std::string getLatestLogFile(bool need) {
     std::vector<std::string> logFiles;
 
@@ -499,6 +584,12 @@ bool isBackgroundAppRunning()
 bool isBootstrapRunning()
 {
     std::string output = runAppleScriptAndGetOutput(script_bootstrap);
+    return output == "true" ? true : false;
+}
+
+bool isDiscordRunning()
+{
+    std::string output = runAppleScriptAndGetOutput(script_discord);
     return output == "true" ? true : false;
 }
 
@@ -631,21 +722,21 @@ std::string to_string(const T& value) {
     return oss.str();
 }
 
-void openAndHideApp(const std::string& appPath) {
-    // Extract the application name from the appPath
-    size_t lastSlashPos = appPath.find_last_of('/');
-    std::string appName = appPath.substr(lastSlashPos + 1);
-    if (appName.find(".app") != std::string::npos) {
-        appName = appName.substr(0, appName.find(".app"));
+void HideApp(const std::string& appPath) {
+    // Extract the application name from the path
+    std::string appName = appPath.substr(appPath.find_last_of('/') + 1);
+    
+    // Remove the ".app" extension if it exists
+    if (appName.size() > 4 && appName.substr(appName.size() - 4) == ".app") {
+        appName = appName.substr(0, appName.size() - 4);
     }
 
-    // Construct the AppleScript command
-    std::string command = "osascript -e 'tell application \"" + appPath + "\" to activate' "
-                          "-e 'delay 0.5' "
-                          "-e 'tell application \"System Events\" to set visible of process \"" + appName + "\" to false'";
-
-    // Execute the command
-    std::system(command.c_str());
+    // Escape double quotes within the AppleScript command
+    std::string appleScript = "tell application \"System Events\" to set visible of application process \"" + appName + "\" to false";
+    
+    std::string command = "osascript -e " + std::string("\"") + appleScript + std::string("\"");
+    std::cout << "[INFO] Command that is going to run is: " << command << "\n";
+    system(command.c_str());
 }
 
 
@@ -788,6 +879,10 @@ void doFunc(const std::string& logtxt) {
                 [](const std::pair<std::string, std::string>& pair) {
                     return pair.first == "See game page";
                 });
+            if (isDiscordFound == false)
+            {
+                return;
+            } 
             if (it != buttonPairs.end())
             {
                 UpdDiscordActivity("Playing " + gameName, status, TimeStartedUniverse, 0, -1, gameName, "Roblox", it->first, it2->first, it->second, it2->second, 0);
@@ -933,7 +1028,10 @@ void doFunc(const std::string& logtxt) {
                 int64_t timeStart = (!_data["data"]["timeStart"].is_null() && _data["data"]["timeStart"].get<int64_t>() != 0) 
                     ? _data["data"]["timeStart"].get<int64_t>() 
                     : 0;
-
+                if (isDiscordFound == false)
+                {
+                    return;
+                } 
                 if (it != buttonPairs.end())
                 {
                     UpdDiscordActivity(details, status, timeStart, id_long, id_small, largeImageHover, smallImageHover, it->first, it2->first, it->second, it2->second, timeEnd);
@@ -948,6 +1046,62 @@ void doFunc(const std::string& logtxt) {
                 }
             }
         }
+    }
+}
+
+void downloadFile(const char* urlString, const char* destinationPath) {
+    @autoreleasepool {
+        NSString *urlStr = [NSString stringWithUTF8String:urlString];
+        NSString *destPath = [NSString stringWithUTF8String:destinationPath];
+        NSURL *url = [NSURL URLWithString:urlStr];
+        NSURLSession *session = [NSURLSession sharedSession];
+        
+        dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+        
+        NSURLSessionDownloadTask *downloadTask = [session downloadTaskWithURL:url completionHandler:^(NSURL *location, NSURLResponse *response, NSError *error) {
+            if (error) {
+                if ([error isKindOfClass:[NSError class]]) {
+                    //NSLog(@"[ERROR] Download failed with error: %@", [error localizedDescription]);
+                } else {
+                    //NSLog(@"[ERROR] Download failed with unknown error: %@", error);
+                }
+            } else {
+                if ([response isKindOfClass:[NSHTTPURLResponse class]]) {
+                    NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
+                    //NSLog(@"[INFO] Response status code: %ld", (long)[httpResponse statusCode]);
+                    //NSLog(@"[INFO] Response headers: %@", [httpResponse allHeaderFields]);
+                } else {
+                    //NSLog(@"[INFO] Response: %@", response);
+                }
+                
+                NSFileManager *fileManager = [NSFileManager defaultManager];
+                NSError *fileError;
+                
+                // Check if the file already exists at the destination path
+                if ([fileManager fileExistsAtPath:destPath]) {
+                    // Remove the existing file
+                    BOOL removeSuccess = [fileManager removeItemAtPath:destPath error:&fileError];
+                    if (!removeSuccess) {
+                        if ([fileError isKindOfClass:[NSError class]]) {
+                            //NSLog(@"[ERROR] Failed to remove existing file: %@", [fileError localizedDescription]);
+                        } else {
+                            //NSLog(@"[ERROR] Failed to remove existing file with unknown error: %@", fileError);
+                        }
+                        dispatch_semaphore_signal(semaphore);
+                        return;
+                    }
+                }
+                
+                // Move the downloaded file to the destination path
+                BOOL success = [fileManager moveItemAtURL:location toURL:[NSURL fileURLWithPath:destPath] error:&fileError];
+            }
+            
+            dispatch_semaphore_signal(semaphore);
+        }];
+        
+        [downloadTask resume];
+        
+        dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
     }
 }
 
@@ -969,36 +1123,6 @@ std::string GetCoolFile(const std::string& logDirectory) {
     });
 
     return latestFile->path().string();
-}
-
-std::string Checker(const std::string path) {
-    // Convert std::string to NSString
-    NSString *nsPath = [NSString stringWithUTF8String:path.c_str()];
-    
-    // Create an NSFileManager instance
-    NSFileManager *fileManager = [NSFileManager defaultManager];
-    
-    // Check if the file exists
-    if ([fileManager fileExistsAtPath:nsPath]) {
-        std::ifstream file(path);
-        
-        if (file.is_open()) {
-            std::string line;
-            std::string fileContent;
-            
-            // Read file contents
-            while (std::getline(file, line)) {
-                fileContent += line + "\n";
-            }
-            file.close();
-            
-            return fileContent;
-        } else {
-            return "";
-        }
-    } else {
-        return "";
-    }
 }
 
 /*
@@ -1089,11 +1213,21 @@ std::string GetExPath() {
 }
 
 int main_loop() {
-    while (true) {
-        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        while (true) {
             if (!doesAppExist("/Applications/Discord.app"))
             {
+                NSLog(@"[INFO] Discord not found in /Applications/Discord.app");
                 isDiscordFound = false;
+            }
+            if (!isDiscordRunning())
+            {
+                NSLog(@"[INFO] Discord not running");
+                isDiscordFound = false;
+            }
+            else
+            {
+                isDiscordFound = true;
             }
 
             InitTable();
@@ -1102,79 +1236,94 @@ int main_loop() {
             if (!CanAccessFolder(defaultPath))
             {
                 dispatch_async(dispatch_get_main_queue(), ^{
-                logfile = ShowOpenFileDialog("file://localhost" + defaultPath);
+                    logfile = ShowOpenFileDialog("file://localhost" + defaultPath);
 
-                if (logfile != "/Users/" + localuser + "/Library/Logs/Roblox")
-                {
-                    std::string path = "The location of the Roblox log file isn't correct. The location is /Users/" + localuser + "/Library/Logs/Roblox";
-                    wxString toWxString(path.c_str(), wxConvUTF8);
-                    wxMessageBox(toWxString, "Error", wxOK | wxICON_ERROR);
+                    if (logfile != "/Users/" + localuser + "/Library/Logs/Roblox")
+                    {
+                        std::string path = "The location of the Roblox log file isn't correct. The location is /Users/" + localuser + "/Library/Logs/Roblox";
+                        wxString toWxString(path.c_str(), wxConvUTF8);
+                        wxMessageBox(toWxString, "Error", wxOK | wxICON_ERROR);
 
-                    // Handle the error outside the block if necessary.
-                    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-                        errorOccurred = true;
-                    });
+                        // Handle the error outside the block if necessary.
+                        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+                            errorOccurred = true;
+                        });
 
-                    return; // Ensure the block returns void
-                }
-            });
+                        return; // Ensure the block returns void
+                    }
+                });
 
             }
             else
             {
                 logfile = defaultPath;
             }
-
-            do {
+            bool shouldEnd = false;
+            while (!isRobloxRunning() && shouldEnd == false) {
                 if (SBackground == false)
                 {
+                    NSLog(@"[INFO] Opening app");
                     OpenAppWithPath(GetExPath() + "/Bootstrap.app");
                     do {} while (isBootstrapRunning());
                     runApp("/Applications/Roblox.app", false);
-                    break;
+                    shouldEnd = true;
                 }
                 else
                 {
-                    //add this
-                    //openAndHideApp
-                    //later
-                    std::string fileContent = Checker(GetBasePath() + "/roblox_version_data_install.json");
-                    std::string current_version_from_file = "";
-                    std::string current_version = "";
-                    std::string bootstrapDataFileData = Checker(GetBasePath() + "/bootstrap_data.json");
+                    std::cout << "[INFO] Base Path is : " << basePath << "\n";
+                    fileContent = FileChecker(basePath + "/roblox_version_data_install.json");
+                    std::cout << "[INFO] Data is: " << fileContent << "\n";
+                    current_version_from_file = "";
+                    current_version = "";
+                    bootstrapDataFileData = FileChecker(basePath + "/bootstrap_data.json");
                     Mod_Data = GetModData();
                     if (!bootstrapDataFileData.empty())
                     {
                         bootstrapData = json::parse(bootstrapDataFileData);
                         CustomChannel = bootstrapData["channel"].get<std::string>();
+                        NSLog(@"[INFO] Got custom channel");
                     }
                     if (!fileContent.empty())
                     {
                         json data = json::parse(fileContent);
                         current_version_from_file = data["clientVersionUpload"].get<std::string>();
+                        std::cout << "[INFO] Current version from file: " << current_version_from_file << " : dump is: " << data.dump(4) << "\n";
                     }
                     else
                     {
+                        NSLog(@"[INFO] Updating roblox!");
                         //std::cout << "[WARN] Couldn't find roblox_version.json, assuming the client is not up to date." << std::endl;
                     }
-                    std::string downloadPath = GetBasePath() + "/roblox_version_data_install.json";
-                    downloadFile("https://clientsettings.roblox.com/v2/client-version/MacPlayer", downloadPath.c_str());
-                    std::string v2fileContent = Checker(GetBasePath() + "/roblox_version_data_install.json");
+                    std::string downloadPath = basePath + "/roblox_version_data_install.json";
+                    std::string v2fileContent = GetDataFromURL("https://clientsettings.roblox.com/v2/client-version/MacPlayer");
                     if (!v2fileContent.empty())
                     {
                         json data = json::parse(v2fileContent);
                         current_version = data["clientVersionUpload"].get<std::string>();
+                        std::cout << "[INFO] Version from download: " << current_version << "\n";
                     }
                     else
                     {
+                        NSLog(@"[INFO] Updating roblox!");
                         //std::cout << "[WARN] Couldn't find roblox_version.json after downloading, assuming the client is not up to date." << std::endl;
+                    }
+                    if (!doesAppExist("/Applications/Roblox.app")) {
+                        NSLog(@"Couldn't find /Applications/Roblox.app");
+                        current_version = "";
                     }
                     if (current_version_from_file != current_version)
                     {
-                        
+                        if (isBootstrapRunning())
+                        {
+                            return;
+                        }
+                        NSLog(@"[INFO] Doing thing");
+                        OpenAppWithPath(GetExPath() + "/Bootstrap.app");
+                        HideApp(GetExPath() + "/Bootstrap.app");
                     }
+                    std::this_thread::sleep_for(std::chrono::seconds(5));
                 }
-            } while (!isRobloxRunning());
+            }
             SBackground = true;
             isRblxRunning = isRobloxRunning();
             std::this_thread::sleep_for(std::chrono::seconds(5));
@@ -1242,8 +1391,9 @@ int main_loop() {
             }
             runAppleScriptAndGetOutput(ScriptNeededToRun);
             SBackground = true;
-        });
-        std::this_thread::sleep_for(std::chrono::seconds(5)); // Adjust delay as needed
-    }
+            shouldEnd = false;
+            std::this_thread::sleep_for(std::chrono::seconds(5)); // Adjust delay as needed
+        }
+    });
     return 0;
 }

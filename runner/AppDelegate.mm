@@ -71,16 +71,13 @@ void checkAndCloseRoblox() {
 @implementation AppDelegate
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
+    runLoginInScript("Background_Runner", getCurrentAppPath());
     main_loop();
 }
 
 - (void)applicationWillTerminate:(NSNotification *)notification {
     checkAndCloseRoblox();
     std::cout << "[INFO] App is about to terminate\n";
-}
-
-- (void)addToLoginItems {
-    runLoginInScript("Background_Runner", getCurrentAppPath());
 }
 
 @end
