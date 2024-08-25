@@ -35,9 +35,7 @@ jobs:
         brew install curl
         brew install minizip
         brew install openssl
-        pip3 install --upgrade pip
-        pip3 install https://github.com/SomeRandomGuy45/pypresence/archive/master.zip
-
+        
     - name: Building
       run: |
         git clone https://github.com/SomeRandomGuy45/MacBlox.git
