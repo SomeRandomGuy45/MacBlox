@@ -29,12 +29,8 @@ jobs:
       run: |
         NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
         echo "[INFO] Installing Required Libraries"
-        brew install wxwidgets@3.2
-        brew install curlpp
-        brew install cmake
-        brew install curl
-        brew install minizip
-        brew install openssl
+        export PKG_CONFIG_PATH="/opt/homebrew/lib/pkgconfig"
+        export CPLUS_INCLUDE_PATH="/opt/homebrew/include"
 
     - name: Building
       run: |
