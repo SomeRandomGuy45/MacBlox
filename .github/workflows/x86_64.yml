@@ -1,4 +1,4 @@
-name: ARM Build
+name: x86_64 Build
 
 on:
   push:
