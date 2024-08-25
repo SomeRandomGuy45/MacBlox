@@ -7,7 +7,9 @@ BREW_PREFIX = $(shell brew --prefix)
 BREW_INCLUDE = -L$(BREW_PREFIX)/include
 BREW_LIB = -L$(BREW_PREFIX)/lib
 CC = clang++
-CXXFLAGS = -x objective-c++ $(WX_CONFIG) $(LIBRARY_PATH) $(BREW_LIB) $(BREW_INCLUDE)
+CURLPP_INCLUDE = -I$(BREW_PREFIX)/include/curlpp
+MINIZIP_INCLUDE = -I$(BREW_PREFIX)/include/minizip
+CXXFLAGS = -x objective-c++ $(WX_CONFIG) $(LIBRARY_PATH) $(BREW_LIB) $(BREW_INCLUDE) $(CURLPP_INCLUDE) $(MINIZIP_INCLUDE)
 LDFLAGS = $(ARCH_FLAGS) $(WX_CONFIG) $(CPATH) -lcurl -lcurlpp -lz -lminizip -framework CoreFoundation -framework DiskArbitration -framework Foundation -framework Cocoa -framework UserNotifications -framework ServiceManagement -lssl -lcrypto --std=c++20
 
 # Default target
