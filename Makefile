@@ -6,11 +6,11 @@ ARCH_FLAGS = $(shell if [ "$(ARCH)" = "arm64" ]; then echo "-arch arm64"; fi)
 BREW_PREFIX = $(shell brew --prefix)
 BREW_INCLUDE = -L$(BREW_PREFIX)/include
 BREW_LIB = -L$(BREW_PREFIX)/lib
+CURLPP_CONFIG_LIBS = $(shell curlpp-config --libs)
+CURLPP_CONFIG_CFLAGS = $(shell curlpp-config --cflags)
 CC = clang++
-CURLPP_INCLUDE = -I$(BREW_PREFIX)/include/curlpp
-MINIZIP_INCLUDE = -I$(BREW_PREFIX)/include/minizip
-CXXFLAGS = -x objective-c++ $(WX_CONFIG) $(LIBRARY_PATH) $(BREW_LIB) $(BREW_INCLUDE) $(CURLPP_INCLUDE) $(MINIZIP_INCLUDE)
-LDFLAGS = $(ARCH_FLAGS) $(WX_CONFIG) $(CPATH) -lcurl -lcurlpp -lz -lminizip -framework CoreFoundation -framework DiskArbitration -framework Foundation -framework Cocoa -framework UserNotifications -framework ServiceManagement -lssl -lcrypto --std=c++20
+CXXFLAGS = -x objective-c++ $(WX_CONFIG) $(LIBRARY_PATH) $(BREW_LIB) $(BREW_INCLUDE)
+LDFLAGS = $(ARCH_FLAGS) $(WX_CONFIG) $(CPATH) $(CURLPP_CONFIG_CFLAGS) $(CURLPP_CONFIG_LIBS) -lz -lminizip -framework CoreFoundation -framework DiskArbitration -framework Foundation -framework Cocoa -framework UserNotifications -framework ServiceManagement -lssl -lcrypto --std=c++20
 
 # Default target
 all: create_runner_app create_main_app create_background_app
