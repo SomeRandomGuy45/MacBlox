@@ -2,8 +2,8 @@
 > This project is in the alpha stage which means you should execpt alot of bugs.
 
 # Macblox
-[![GitHub Workflow Status for ARM](https://img.shields.io/github/actions/workflow/status/SomeRandomGuy45/MacBlox/arm.yml?branch=main&label=arm build)](https://github.com/SomeRandomGuy45/MacBlox/actions/workflows/arm.yml)
-[![GitHub Workflow Status x86_64](https://img.shields.io/github/actions/workflow/status/SomeRandomGuy45/MacBlox/x86_64.yml?branch=main&label=x86_64 build)](https://github.com/SomeRandomGuy45/MacBlox/actions/workflows/x86_64.ymls)
+[![GitHub Workflow Status for ARM](https://img.shields.io/github/actions/workflow/status/SomeRandomGuy45/MacBlox/arm.yml?branch=main&label=arm%20uild)](https://github.com/SomeRandomGuy45/MacBlox/actions/workflows/arm.yml)
+[![GitHub Workflow Status x86_64](https://img.shields.io/github/actions/workflow/status/SomeRandomGuy45/MacBlox/x86_64.yml?branch=main&label=x86_64%20build)](https://github.com/SomeRandomGuy45/MacBlox/actions/workflows/x86_64.ymls)
 [![Discord Server](https://img.shields.io/discord/1273371922226483342?logo=discord&logoColor=white&color=4d3dff)](https://discord.gg/veT7GWJQ6Q)
 [![cool image!](https://img.shields.io/badge/macblox%20is%20cool-yes-8A2BE2)](https://tenor.com/view/pizza-pizza-rolls-pizza-roll-gif-26147512)
 
