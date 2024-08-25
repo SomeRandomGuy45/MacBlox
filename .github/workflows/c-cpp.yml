@@ -9,7 +9,7 @@ on:
 jobs:
   build:
 
-    runs-on: macos-13
+    runs-on: macos-latest
 
     steps:
     - uses: actions/checkout@v4
@@ -29,6 +29,9 @@ jobs:
       run: |
         NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
         echo "[INFO] Installing Required Libraries"
+        brew install wxwidgets@3.2
+        brew install curlpp
+        brew install minizip
 
     - name: Building
       run: |
