@@ -4,13 +4,17 @@ WX_CONFIG = $(shell wx-config --cxxflags --libs)
 ARCH = $(shell uname -m)
 ARCH_FLAGS = $(shell if [ "$(ARCH)" = "arm64" ]; then echo "-arch arm64"; fi)
 BREW_PREFIX = $(shell brew --prefix)
-BREW_INCLUDE = -L$(BREW_PREFIX)/include
+BREW_INCLUDE = -I$(BREW_PREFIX)/include
 BREW_LIB = -L$(BREW_PREFIX)/lib
-CURLPP_CONFIG_LIBS = $(shell curlpp-config --libs)
-CURLPP_CONFIG_CFLAGS = $(shell curlpp-config --cflags)
+CURLPP_CONFIG = $(shell brew --prefix curlpp)
+CURLPP_CONFIG_LIBS = -I$(CURLPP_CONFIG)/include
+CURLPP_CONFIG_INCLUDE = -L$(CURLPP_CONFIG)/lib
+MINI_CONFIG = $(shell brew --prefix minizip)
+MINI_CONFIG_LIBS = -I$(MINI_CONFIG)/include
+MINI_CONFIG_INCLUDE = -L$(MINI_CONFIG)/lib
 CC = clang++
 CXXFLAGS = -x objective-c++ $(WX_CONFIG) $(LIBRARY_PATH) $(BREW_LIB) $(BREW_INCLUDE)
-LDFLAGS = $(ARCH_FLAGS) $(WX_CONFIG) $(CPATH) $(CURLPP_CONFIG_CFLAGS) $(CURLPP_CONFIG_LIBS) -lz -lminizip -framework CoreFoundation -framework DiskArbitration -framework Foundation -framework Cocoa -framework UserNotifications -framework ServiceManagement -lssl -lcrypto --std=c++20
+LDFLAGS = $(ARCH_FLAGS) $(WX_CONFIG) $(CPATH) $(CURLPP_CONFIG_CFLAGS) $(CURLPP_CONFIG_INCLUDE) $(MINI_CONFIG_LIBS) $(MINI_CONFIG_INCLUDE) -lcurl -lcurlpp -lz -lminizip -framework CoreFoundation -framework DiskArbitration -framework Foundation -framework Cocoa -framework UserNotifications -framework ServiceManagement -lssl -lcrypto --std=c++20
 
 # Default target
 all: create_runner_app create_main_app create_background_app
