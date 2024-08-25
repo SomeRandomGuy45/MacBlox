@@ -9,7 +9,7 @@ on:
 jobs:
   build:
 
-    runs-on: macos-latest
+    runs-on: macos-13
 
     steps:
     - uses: actions/checkout@v4
@@ -35,7 +35,7 @@ jobs:
         brew install curl
         brew install minizip
         brew install openssl
-        
+
     - name: Building
       run: |
         git clone https://github.com/SomeRandomGuy45/MacBlox.git
