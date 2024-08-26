@@ -3,4 +3,8 @@
 
 @interface AppDelegate : NSObject <NSApplicationDelegate>
 
+@property (nonatomic, strong) NSArray *arguments;
+
+- (instancetype)initWithArguments:(NSArray *)arguments;
+
 @end

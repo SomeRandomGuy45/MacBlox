@@ -25,6 +25,8 @@
 #include "helper.h"
 #include "json.hpp"
 
+#import <Foundation/Foundation.h>
+
 namespace fs = std::filesystem;
 using json = nlohmann::json;
 
@@ -161,6 +163,17 @@ std::map<std::string, std::string> findFilesInFolder(const fs::path& folderPath,
     }
 
     return filePaths;
+}
+
+std::string getParentFolderOfApp() {
+    // Get the bundle path
+    NSString *bundlePath = [[NSBundle mainBundle] bundlePath];
+    
+    // Get the parent directory of the bundle
+    NSString *parentPath = [bundlePath stringByDeletingLastPathComponent];
+    
+    // Convert NSString to std::string
+    return std::string([parentPath UTF8String]);
 }
 
 std::string BootstrapperFrame::GetModFolder() 

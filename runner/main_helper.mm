@@ -170,6 +170,27 @@ std::string GetBasePath() {
 }
 
 std::string basePath = GetBasePath();
+std::string GetModFolder() 
+{
+    std::string path = basePath + "/ModFolder";
+    if (fs::exists(path))
+    {
+        std::cout << "[INFO] Folder already exists.\n";
+    }
+    else 
+    {
+		// Create the folder
+		if (fs::create_directory(path)) {
+			std::cout << "[INFO] Folder created successfully. at \n";
+		}
+		else {
+			std::cerr << "[ERROR] Failed to create folder.\n";
+			return "";
+		}
+	}
+    return path;
+}
+std::string ModFolder = GetModFolder();
 
 json GetModData()
 {
@@ -725,16 +746,17 @@ std::string to_string(const T& value) {
 void HideApp(const std::string& appPath) {
     // Extract the application name from the path
     std::string appName = appPath.substr(appPath.find_last_of('/') + 1);
-    
+
     // Remove the ".app" extension if it exists
     if (appName.size() > 4 && appName.substr(appName.size() - 4) == ".app") {
         appName = appName.substr(0, appName.size() - 4);
     }
 
     // Escape double quotes within the AppleScript command
-    std::string appleScript = "tell application \"System Events\" to set visible of application process \"" + appName + "\" to false";
-    
-    std::string command = "osascript -e " + std::string("\"") + appleScript + std::string("\"");
+    std::string appleScript = "tell application \\\"System Events\\\" to set visible of application process \\\"" + appName + "\\\" to false";
+
+    // Construct the full osascript command
+    std::string command = "osascript -e \"" + appleScript + "\"";
     std::cout << "[INFO] Command that is going to run is: " << command << "\n";
     system(command.c_str());
 }
@@ -1149,6 +1171,74 @@ std::string GetBashPath() {
     return std::string(dir);
 }
 
+int loadFolderCount(const std::string& jsonFilePath) {
+    std::ifstream inFile(jsonFilePath);
+    if (!inFile.is_open()) {
+        std::cerr << "[ERROR] Failed to open the JSON file." << std::endl;
+        return -1;
+    }
+
+    json inputJson;
+    inFile >> inputJson;
+
+    inFile.close();
+
+    if (inputJson.contains("folder_count")) {
+        return inputJson["folder_count"].get<int>();
+    } else {
+        std::cerr << "[ERROR] JSON file does not contain 'folder_count'." << std::endl;
+        return -1;
+    }
+}
+
+void GetCurrentCountOfModFolder(std::string& directoryPath, std::string& folder)
+{
+    int folderCount = 0;
+
+    try {
+        for (const auto& entry : fs::recursive_directory_iterator(directoryPath)) {
+            if (entry.path().filename().string() != ".DS_Store") {
+                folderCount++;
+            }
+        }
+    } catch (const fs::filesystem_error& e) {
+        std::cerr << "[ERROR] Filesystem error: " << e.what() << std::endl;
+        return;
+    }
+
+    // Create the JSON object
+    json outputJson;
+    outputJson["folder_count"] = folderCount;
+
+    // Write the JSON object to a file
+    std::ofstream outFile(folder+"/mod_count_data.json");
+    if (outFile.is_open()) {
+        outFile << outputJson.dump(4); // Pretty-print with an indentation of 4 spaces
+        outFile.close();
+        std::cout << "[INFO] JSON file created successfully!" << std::endl;
+    } else {
+        std::cerr << "[ERROR] Failed to create the JSON file." << std::endl;
+        return;
+    }
+}
+
+int countCurrentMods(std::string& directoryPath)
+{
+    int folderCount = 0;
+
+    try {
+        for (const auto& entry : fs::recursive_directory_iterator(directoryPath)) {
+            if (entry.path().filename().string() != ".DS_Store") {
+                folderCount++;
+            }
+        }
+    } catch (const fs::filesystem_error& e) {
+        std::cerr << "[ERROR] Filesystem error: " << e.what() << std::endl;
+        return -1;
+    }
+    return folderCount;
+}
+
 bool OpenAppWithPath(const std::string &appPath) {
     // Escape the appPath for use in the AppleScript
     std::string escapedPath = appPath;
@@ -1212,7 +1302,20 @@ std::string GetExPath() {
     return std::string(dir);
 }
 
-int main_loop() {
+int main_loop(NSArray *arguments) {
+    std::vector<std::string> stdArguments;
+    for (NSString *arg in arguments) {
+        stdArguments.push_back([arg UTF8String]);
+    }
+    for (const auto& arg: stdArguments)
+    {
+        std::cout << "[INFO] new arg is: " << arg << "\n";
+        if (arg == "--supercoolhackthing" | arg == "-scht")
+        {
+            NSLog(@"[INFO] supercoolhackthing found >:)");
+            SBackground = false;
+        }
+    }
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         while (true) {
             if (!doesAppExist("/Applications/Discord.app"))
@@ -1244,12 +1347,11 @@ int main_loop() {
                         wxString toWxString(path.c_str(), wxConvUTF8);
                         wxMessageBox(toWxString, "Error", wxOK | wxICON_ERROR);
 
-                        // Handle the error outside the block if necessary.
                         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
                             errorOccurred = true;
                         });
 
-                        return; // Ensure the block returns void
+                        return;
                     }
                 });
 
@@ -1267,9 +1369,14 @@ int main_loop() {
                     do {} while (isBootstrapRunning());
                     runApp("/Applications/Roblox.app", false);
                     shouldEnd = true;
+                    SBackground = true;
                 }
                 else
                 {
+                    if (isBootstrapRunning())
+                    {
+                        continue;
+                    }
                     std::cout << "[INFO] Base Path is : " << basePath << "\n";
                     fileContent = FileChecker(basePath + "/roblox_version_data_install.json");
                     std::cout << "[INFO] Data is: " << fileContent << "\n";
@@ -1277,6 +1384,8 @@ int main_loop() {
                     current_version = "";
                     bootstrapDataFileData = FileChecker(basePath + "/bootstrap_data.json");
                     Mod_Data = GetModData();
+                    int JsonCount = loadFolderCount(basePath + "/mod_count_data.json");
+                    int currentCount = countCurrentMods(ModFolder);
                     if (!bootstrapDataFileData.empty())
                     {
                         bootstrapData = json::parse(bootstrapDataFileData);
@@ -1311,17 +1420,13 @@ int main_loop() {
                         NSLog(@"Couldn't find /Applications/Roblox.app");
                         current_version = "";
                     }
-                    if (current_version_from_file != current_version)
-                    {
-                        if (isBootstrapRunning())
-                        {
-                            return;
-                        }
+                    if (current_version_from_file != current_version || JsonCount != currentCount) {
                         NSLog(@"[INFO] Doing thing");
                         OpenAppWithPath(GetExPath() + "/Bootstrap.app");
                         HideApp(GetExPath() + "/Bootstrap.app");
+                        GetCurrentCountOfModFolder(ModFolder, basePath);
+                        std::this_thread::sleep_for(std::chrono::milliseconds(500));
                     }
-                    std::this_thread::sleep_for(std::chrono::seconds(5));
                 }
             }
             SBackground = true;

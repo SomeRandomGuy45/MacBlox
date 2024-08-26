@@ -14,6 +14,8 @@
 #include "Downloader.h"
 #include "json.hpp"
 
+#import <Foundation/Foundation.h>
+
 using json = nlohmann::json;
 
 bool isRobloxRunning()
@@ -215,6 +217,17 @@ void MainFrame::ReinitializePanels()
     panel->Layout();
 }
 
+std::string getParentFolderOfApp() {
+    // Get the bundle path
+    NSString *bundlePath = [[NSBundle mainBundle] bundlePath];
+    
+    // Get the parent directory of the bundle
+    NSString *parentPath = [bundlePath stringByDeletingLastPathComponent];
+    
+    // Convert NSString to std::string
+    return std::string([parentPath UTF8String]);
+}
+
 void MainFrame::OnModSelection(wxCommandEvent& event)
 {
     int selectionIndex = event.GetInt();
@@ -315,5 +328,8 @@ void MainFrame::OnLaunchButtonClick(wxCommandEvent& event)
         */
     }
     wxMessageBox("Added config to Roblox app","Info", wxOK | wxICON_INFORMATION);
-    runApp("/Applications/Roblox.app", false);
+    std::string command__ = "open " + getParentFolderOfApp() + "/Play.app --args --supercoolhackthing";
+    std::cout << "[INFO] Command is: " << command__ << "\n";
+    system(command__.c_str());
+    exit(0);
 }

@@ -47,7 +47,7 @@ create_runner_app:
 	@mv $(BUILDPATH)/Macblox/"Bootstrap.app" $(BUILDPATH)/Macblox/"Play.app"/Contents/MacOS
 
 create_main_app:
-	$(CC) $(CXXFLAGS) $(LDFLAGS) -o $(BUILDPATH)/main $(CURDIR)/main_app/main.cpp $(CURDIR)/main_app/Downloader.mm
+	$(CC) $(CXXFLAGS) $(LDFLAGS) -o $(BUILDPATH)/main $(CURDIR)/main_app/main.mm $(CURDIR)/main_app/Downloader.mm
 	@./appify -s build/main -n Macblox -i test
 	@codesign --sign - --entitlements Macblox.plist --deep Macblox.app --force
 	@mv -f Macblox.app $(BUILDPATH)/Macblox/Macblox.app

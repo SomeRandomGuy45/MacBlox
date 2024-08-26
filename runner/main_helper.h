@@ -48,5 +48,6 @@
 #include <cstdio>
 #include "json.hpp"
 #include "helper.h"
+#include <Foundation/Foundation.h>
 
-int main_loop();
+int main_loop(NSArray *arguments);

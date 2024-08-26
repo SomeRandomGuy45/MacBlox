@@ -25,8 +25,12 @@ int main(int argc, char* argv[]) {
     //discord::Core* core = nullptr;
     //DiscordState state;
     @autoreleasepool {
+        NSMutableArray *arguments = [NSMutableArray arrayWithCapacity:argc];
+        for (int i = 0; i < argc; ++i) {
+            [arguments addObject:[NSString stringWithUTF8String:argv[i]]];
+        }
         NSApplication *app = [NSApplication sharedApplication];
-        AppDelegate *delegate = [[AppDelegate alloc] init];
+        AppDelegate *delegate = [[AppDelegate alloc] initWithArguments:arguments];
         createStatusBarIcon(GetResourcesFolderPath() + "/test_icon.png");
         [app setDelegate:delegate];
         [app run];

@@ -70,9 +70,17 @@ void checkAndCloseRoblox() {
 
 @implementation AppDelegate
 
+- (instancetype)initWithArguments:(NSArray *)arguments {
+    self = [super init];
+    if (self) {
+        _arguments = arguments;
+    }
+    return self;
+}
+
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
     runLoginInScript("Background_Runner", getCurrentAppPath());
-    main_loop();
+    main_loop(_arguments);
 }
 
 - (void)applicationWillTerminate:(NSNotification *)notification {
