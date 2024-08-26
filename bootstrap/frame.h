@@ -83,7 +83,6 @@ public:
     void DoLogic();
     void LoadBootstrapData(json BootStrapData);
 private:
-
     void BootstrapData1(json BootStrapData);
     std::string GetModFolder();
     bool isDone = false;
@@ -113,6 +112,10 @@ private:
     int imageY = 100;
     int imageSizeX = 128;
     int imageSizeY = 128;
+    int r_color = 192;
+    int g_color = 192;
+    int b_color = 192;
+    int _alpha = 128;
 };
 
 std::string BootstrapperFrame::findFileInDirectory(const std::string& directoryPath, const std::string& fileName)
@@ -218,7 +221,32 @@ void BootstrapperFrame::BootstrapData1(json BootStrapData)
             std::cerr << "[ERROR] Exception in getSize: " << e.what() << std::endl;
         }
     };
-
+    auto getColor = [](const nlohmann::json& jsonObj, const std::string& key, int& r, int& g, int& b, int& alpha) {
+        try {
+            if (jsonObj.contains(key)) {
+                if (jsonObj[key].contains("r")) {
+                    std::string rStr = jsonObj[key]["r"].get<std::string>();
+                    r = std::stoi(rStr);  // Convert std::string to int
+                }
+                if (jsonObj[key].contains("g")) {
+                    std::string gStr = jsonObj[key]["g"].get<std::string>();
+                    g = std::stoi(gStr);  // Convert std::string to int
+                }
+                if (jsonObj[key].contains("b")) {
+                    std::string bStr = jsonObj[key]["b"].get<std::string>();
+                    b = std::stoi(bStr);  // Convert std::string to int
+                }
+                if (jsonObj[key].contains("a")) {
+                    std::string aStr = jsonObj[key]["a"].get<std::string>();
+                    alpha = std::stoi(aStr);  // Convert std::string to int
+                }
+            }
+        } catch (const std::invalid_argument& ia) {
+            std::cerr << "[ERROR] Invalid argument: " << ia.what() << std::endl;
+        } catch (const std::exception& e) {
+            std::cerr << "[ERROR] Exception in getSize: " << e.what() << std::endl;
+        }
+    };
     try {
         // Extract position and size for progressGauge
         if (BootStrapData.contains("progressGauge")) {
@@ -242,6 +270,12 @@ void BootstrapperFrame::BootstrapData1(json BootStrapData)
             getSize(BootStrapData["statusText"], "size", statusText_Size_X, statusText_Size_Y);
             std::cout << "[INFO] statusText position: " << statusText_X << "x" << statusText_Y << std::endl;
             std::cout << "[INFO] statusText size: " << statusText_Size_X << "x" << statusText_Size_Y << std::endl;
+        }
+
+        if (BootStrapData.contains("background_color"))
+        {
+            getColor(BootStrapData, "background_color", r_color, g_color, b_color, _alpha);
+            std::cout << "[INFO] Background color: RGBA(" << r_color << ", " << g_color << ", " << b_color << ", " << _alpha << ")" << std::endl;
         }
 
         std::cout << "[INFO] Bootstrap data loaded successfully" << std::endl;
@@ -813,6 +847,7 @@ void BootstrapperFrame::SetStatusText(const wxString& text)
 BootstrapperFrame::BootstrapperFrame(const wxString& title, long style, const wxSize& size)
     : wxFrame(nullptr, wxID_ANY, title, wxDefaultPosition, size, style)
 {
+    SetBackgroundColour(wxColour(192,192,192,128));
     TestCommand();
     ModFolder = GetModFolder();
     std::cout << "[INFO] Mod folder is: " << ModFolder << std::endl;
@@ -821,7 +856,7 @@ BootstrapperFrame::BootstrapperFrame(const wxString& title, long style, const wx
 
     // Create the panel
     panel = new wxPanel(this);
-
+    panel->SetBackgroundColour(wxColour(192,192,192,128));
     // Load the image using wxImage
     wxImage image(ResourcePath + "/bootstrap_icon.png", wxBITMAP_TYPE_PNG);
     if (!image.IsOk())

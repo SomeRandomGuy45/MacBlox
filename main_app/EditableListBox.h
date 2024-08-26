@@ -93,13 +93,29 @@ wxEditableListBox::wxEditableListBox(wxWindow* parent, wxWindowID id)
     : wxPanel(parent, id), lastSelectedItemIndex(-1)
 {
     // Set the background color of the panel to black
-    SetBackgroundColour(*wxBLACK);
+    wxColour bgColor = GetBackgroundColour();
+    unsigned char r = bgColor.Red();
+    unsigned char g = bgColor.Green();
+    unsigned char b = bgColor.Blue();
+    std::cout << "[INFO] Background color: (" << (int)r << ", " << (int)g << ", " << (int)b << ")\n";
+    if (int(r) == 231 && int(g) == 231 && int(b) == 231) {
+        SetBackgroundColour(wxColour(128, 128, 128));
+    }
+    else
+    {
+        SetBackgroundColour(*wxBLACK);
+    }
 
     listCtrl = new wxListCtrl(this, ID_LISTCTRL, wxDefaultPosition, wxSize(400, 200),
                               wxLC_REPORT | wxLC_SINGLE_SEL);
 
-    // Set the background color of the list control to black
-    listCtrl->SetBackgroundColour(*wxBLACK);
+    if (int(r) == 231 && int(g) == 231 && int(b) == 231) {
+        listCtrl->SetBackgroundColour(wxColour(128, 128, 128));
+    }
+    else
+    {
+        listCtrl->SetBackgroundColour(*wxBLACK);
+    }
 
     listCtrl->InsertColumn(0, "Items", wxLIST_FORMAT_LEFT, 400);
 

@@ -11,6 +11,12 @@
         "x" : "600",
         "y" : "400"
     },
+    "background_color" : {
+        "r" : "192",
+        "g" : "192",
+        "b" : "192",
+        "a" : "128"
+    },
     "_comment5" : "same here with progressGauge and statusText but now with position",
     "progressGauge" : {
         "size" : {
