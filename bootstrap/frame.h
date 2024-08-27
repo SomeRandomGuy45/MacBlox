@@ -2,6 +2,7 @@
 #include <wx/wx.h>
 #include <wx/notifmsg.h>
 #include <wx/image.h>
+#include <wx/graphics.h>
 #include <cerrno>
 #include <sys/xattr.h>
 #include <cstring>
@@ -12,6 +13,8 @@
 #include <map>
 #include <iostream>
 #include <libgen.h>
+#include <objc/objc.h>
+#include <objc/message.h>
 #include <libproc.h>
 #include <string>
 #include <cmath>
@@ -22,12 +25,14 @@
 #include <sstream>
 #include <thread>
 #include <exception>
+#include "tinyxml2.h"
 #include "helper.h"
 #include "json.hpp"
 
 #import <Foundation/Foundation.h>
 
 namespace fs = std::filesystem;
+using namespace tinyxml2;
 using json = nlohmann::json;
 
 void CreateNotification(const wxString &title, const wxString &message, int Timeout)
@@ -197,6 +202,84 @@ std::string BootstrapperFrame::GetModFolder()
     return path;
 }
 
+bool ModifyPlist(const std::string& path) {
+    // Load the XML document
+    XMLDocument doc;
+    if (doc.LoadFile(path.c_str()) != XML_SUCCESS) {
+        std::cerr << "Failed to load file: " << path << std::endl;
+        return false;
+    }
+
+    // Access the root element <plist>
+    XMLElement* root = doc.RootElement();
+    if (!root || std::string(root->Name()) != "plist") {
+        std::cerr << "Invalid plist file: " << path << std::endl;
+        return false;
+    }
+
+    // Navigate to the <dict> element
+    XMLElement* dictElement = root->FirstChildElement("dict");
+    if (!dictElement) {
+        std::cerr << "No <dict> element found in plist file." << std::endl;
+        return false;
+    }
+
+    // Iterate over the elements in <dict>
+    for (XMLElement* element = dictElement->FirstChildElement(); element != nullptr; element = element->NextSiblingElement()) {
+        // Check for <key> elements
+        if (std::string(element->Name()) == "key" && std::string(element->GetText()) == "CFBundleURLTypes") {
+            XMLElement* arrayElement = element->NextSiblingElement("array");
+            if (arrayElement) {
+                // Iterate over <dict> elements inside the <array>
+                for (XMLElement* dictInsideArray = arrayElement->FirstChildElement("dict"); dictInsideArray != nullptr; dictInsideArray = dictInsideArray->NextSiblingElement("dict")) {
+                    for (XMLElement* dictChild = dictInsideArray->FirstChildElement(); dictChild != nullptr; dictChild = dictChild->NextSiblingElement()) {
+                        if (std::string(dictChild->Name()) == "key" && std::string(dictChild->GetText()) == "CFBundleURLSchemes") {
+                            XMLElement* urlSchemesArray = dictChild->NextSiblingElement("array");
+                            if (urlSchemesArray) {
+                                for (XMLElement* stringElement = urlSchemesArray->FirstChildElement("string"); stringElement != nullptr; stringElement = stringElement->NextSiblingElement("string")) {
+                                    const char* value = stringElement->GetText();
+                                    if (value) {
+                                        std::string newValue(value);
+                                        if (newValue == "roblox-player") {
+                                            newValue = "roblox";
+                                        } else if (newValue == "roblox") {
+                                            newValue = "roblox";
+                                        }
+                                        stringElement->SetText(newValue.c_str());
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Save the modified document back to the file
+    if (doc.SaveFile(path.c_str()) != XML_SUCCESS) {
+        std::cerr << "Failed to save modified plist file: " << path << std::endl;
+        return false;
+    }
+
+    return true;
+}
+
+std::string GetMacOSApperance()
+{
+    // Get the NSUserDefaults instance
+    id userDefaults = ((id(*)(Class, SEL))objc_msgSend)(objc_getClass("NSUserDefaults"), sel_registerName("standardUserDefaults"));
+    
+    // Get the AppleInterfaceStyle key
+    id appearance = ((id(*)(id, SEL, id))objc_msgSend)(userDefaults, sel_registerName("stringForKey:"), (id)@"AppleInterfaceStyle");
+    
+    if (appearance != nil)
+    {
+        NSString* appearanceString = (NSString*)appearance;
+        return [appearanceString UTF8String];
+    }
+}
+
 void BootstrapperFrame::BootstrapData1(json BootStrapData)
 {
     auto getPosition = [](const nlohmann::json& jsonObj, const std::string& key, int& x, int& y) {
@@ -287,7 +370,19 @@ void BootstrapperFrame::BootstrapData1(json BootStrapData)
 
         if (BootStrapData.contains("background_color"))
         {
-            getColor(BootStrapData, "background_color", r_color, g_color, b_color, _alpha);
+            wxColour bgColor = GetBackgroundColour();
+            unsigned char r = bgColor.Red();
+            unsigned char g = bgColor.Green();
+            unsigned char b = bgColor.Blue();
+            std::cout << "[INFO] Background color: (" << (int)r << ", " << (int)g << ", " << (int)b << ")\n";
+            if (GetMacOSApperance() == "Light")
+            {
+                getColor(BootStrapData, "background_color", r_color, g_color, b_color, _alpha);
+            }
+            else
+            {
+                getColor(BootStrapData, "background_color_back", r_color, g_color, b_color, _alpha);
+            }
             std::cout << "[INFO] Background color: RGBA(" << r_color << ", " << g_color << ", " << b_color << ", " << _alpha << ")" << std::endl;
         }
 
@@ -742,6 +837,7 @@ void BootstrapperFrame::DoLogic()
                 Close(true);
                 return;
             }
+            ModifyPlist(Download + "/RobloxPlayer.app/Contents/Info.plist");
             fixInstall(Download + "/RobloxPlayer.app");
             removeQuarantineAttribute(Download + "/RobloxPlayer.app");
             std::string pa_th  = Download + "/RobloxPlayer.app";
@@ -762,6 +858,10 @@ void BootstrapperFrame::DoLogic()
             Check(result);
             std::string spam = "/Applications/Roblox.app";
             fixInstall(spam);
+            ModifyPlist("/Applications/Roblox.app/Contents/Info.plist");
+            std::string redo = "codesign --sign - --entitlements " + GetResourcesFolderPath() + "/Macblox.plist /Applications/Roblox.app --force --deep";
+            std::cout << "[INFO] Resigning command is: " << redo << std::endl;
+            system(redo.c_str());
             removeQuarantineAttribute(spam);
             if (!FolderExists("/Applications/Roblox.app/Contents/MacOS/ClientSettings"))
             {
@@ -860,7 +960,6 @@ void BootstrapperFrame::SetStatusText(const wxString& text)
 BootstrapperFrame::BootstrapperFrame(const wxString& title, long style, const wxSize& size)
     : wxFrame(nullptr, wxID_ANY, title, wxDefaultPosition, size, style)
 {
-    SetBackgroundColour(wxColour(192,192,192,128));
     TestCommand();
     ModFolder = GetModFolder();
     std::cout << "[INFO] Mod folder is: " << ModFolder << std::endl;
@@ -869,7 +968,9 @@ BootstrapperFrame::BootstrapperFrame(const wxString& title, long style, const wx
 
     // Create the panel
     panel = new wxPanel(this);
-    panel->SetBackgroundColour(wxColour(192,192,192,128));
+    panel->SetBackgroundStyle(wxBG_STYLE_PAINT);
+    panel->SetBackgroundColour(wxColour(r_color, g_color, b_color, _alpha));
+    panel->Refresh();
     // Load the image using wxImage
     wxImage image(ResourcePath + "/bootstrap_icon.png", wxBITMAP_TYPE_PNG);
     if (!image.IsOk())

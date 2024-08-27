@@ -8,6 +8,9 @@
 #include <fstream>
 #include <sstream> 
 #include <filesystem>
+#include <objc/objc.h>
+#include <objc/message.h>
+#include <Foundation/Foundation.h>
 #include "json.hpp"  // Include the nlohmann JSON library
 
 using json = nlohmann::json;
@@ -62,6 +65,21 @@ wxBEGIN_EVENT_TABLE(wxEditableListBox, wxPanel)
     EVT_BUTTON(ID_CLOSE_BUTTON, wxEditableListBox::OnCloseButtonClick)
 wxEND_EVENT_TABLE()
 
+std::string GetMacOSApperance()
+{
+    // Get the NSUserDefaults instance
+    id userDefaults = ((id(*)(Class, SEL))objc_msgSend)(objc_getClass("NSUserDefaults"), sel_registerName("standardUserDefaults"));
+    
+    // Get the AppleInterfaceStyle key
+    id appearance = ((id(*)(id, SEL, id))objc_msgSend)(userDefaults, sel_registerName("stringForKey:"), (id)@"AppleInterfaceStyle");
+    
+    if (appearance != nil)
+    {
+        NSString* appearanceString = (NSString*)appearance;
+        return [appearanceString UTF8String];
+    }
+}
+
 std::string getApplicationSupportPath() {
     const char* homeDir = std::getenv("HOME");  // Get the user's home directory
     if (!homeDir) {
@@ -98,7 +116,7 @@ wxEditableListBox::wxEditableListBox(wxWindow* parent, wxWindowID id)
     unsigned char g = bgColor.Green();
     unsigned char b = bgColor.Blue();
     std::cout << "[INFO] Background color: (" << (int)r << ", " << (int)g << ", " << (int)b << ")\n";
-    if (int(r) == 231 && int(g) == 231 && int(b) == 231) {
+    if (GetMacOSApperance() == "Light") {
         SetBackgroundColour(wxColour(128, 128, 128));
     }
     else

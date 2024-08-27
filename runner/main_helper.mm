@@ -23,7 +23,7 @@ bool scriptFinished = true;
 bool shouldKill = false;
 bool isDiscordFound = true;
 bool errorOccurred = false;
-bool SBackground = true;
+bool SBackground = false;
 
 // std::string
 std::string tempDirStr = getTemp();
@@ -291,7 +291,7 @@ void CustomNSLog(NSString *format, ...) {
     }
 }
 
-//#define NSLog(format, ...) CustomNSLog(format, ##__VA_ARGS__)
+#define NSLog(format, ...) CustomNSLog(format, ##__VA_ARGS__)
 
 NSString* toNSString(const std::string& value) {
     return [NSString stringWithUTF8String:value.c_str()];
@@ -1302,7 +1302,7 @@ std::string GetExPath() {
     return std::string(dir);
 }
 
-int main_loop(NSArray *arguments) {
+int main_loop(NSArray *arguments, std::string supercoolvar) {
     std::vector<std::string> stdArguments;
     for (NSString *arg in arguments) {
         stdArguments.push_back([arg UTF8String]);
@@ -1317,7 +1317,7 @@ int main_loop(NSArray *arguments) {
         }
     }
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        while (true) {
+        //while (true) {
             if (!doesAppExist("/Applications/Discord.app"))
             {
                 NSLog(@"[INFO] Discord not found in /Applications/Discord.app");
@@ -1367,7 +1367,16 @@ int main_loop(NSArray *arguments) {
                     NSLog(@"[INFO] Opening app");
                     OpenAppWithPath(GetExPath() + "/Bootstrap.app");
                     do {} while (isBootstrapRunning());
-                    runApp("/Applications/Roblox.app", false);
+                    if (supercoolvar.empty())
+                    {
+                        runApp("/Applications/Roblox.app", false);
+                    }
+                    else
+                    {
+                        std::string run_to_open_lol = "open \"" + supercoolvar + "\"";
+                        NSLog(@"[INFO] Ok got it running this command %s", run_to_open_lol.c_str());
+                        system(run_to_open_lol.c_str());
+                    }
                     shouldEnd = true;
                     SBackground = true;
                 }
@@ -1497,8 +1506,8 @@ int main_loop(NSArray *arguments) {
             runAppleScriptAndGetOutput(ScriptNeededToRun);
             SBackground = true;
             shouldEnd = false;
-            std::this_thread::sleep_for(std::chrono::seconds(5)); // Adjust delay as needed
-        }
+            exit(0);
+        //}
     });
     return 0;
 }
