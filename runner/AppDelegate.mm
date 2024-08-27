@@ -2,6 +2,8 @@
 #import "helper.h"
 #import <Foundation/Foundation.h>
 
+std::string finalURLString = "";
+
 std::string getCurrentAppPath() {
     NSBundle *bundle = [NSBundle mainBundle];
     NSString *appPath = [bundle bundlePath];
@@ -68,6 +70,91 @@ void checkAndCloseRoblox() {
     terminateApplicationByName("Roblox");
 }
 
+std::string currentDateTime_() {
+    time_t now = time(0);
+    struct tm tstruct;
+    char buf[80];
+    if (localtime_r(&now, &tstruct) == nullptr) {
+        return "[ERROR] Failed to get local time";
+    }
+    if (strftime(buf, sizeof(buf), "%Y-%m-%d-%H-%M-%S", &tstruct) == 0) {
+        return "[ERROR] Failed to format time";
+    }
+    return buf;
+}
+
+std::string getLogPath_() {
+    std::string currentDate = currentDateTime_();
+    std::string path = "/Users/" + std::string(getenv("USER")) + "/Library/Logs/Macblox";
+    if (std::filesystem::exists(path)) {
+        NSLog(@"[INFO] Folder already exists.");
+    } else {
+        if (std::filesystem::create_directory(path)) {
+            NSLog(@"[INFO] Folder created successfully.");
+        } else {
+            NSLog(@"[ERROR] Failed to create folder.");
+            return "";
+        }
+    }
+    return path + "/" + currentDate + "_runner_db_task_log.log";
+}
+
+std::string filePath_ = getLogPath_();
+
+void CustomNSLog_(NSString *format, ...) {
+    // Open the file in append mode
+    FILE *logFile = fopen(filePath_.c_str(), "a");
+
+    if (logFile != nullptr) {
+        va_list args;
+        va_start(args, format);
+
+        // Create an NSString with the formatted message
+        NSString *formattedMessage = [[NSString alloc] initWithFormat:format arguments:args];
+
+        // Get the current time with microseconds
+        struct timeval tv;
+        gettimeofday(&tv, NULL);
+
+        // Format the time
+        struct tm *timeinfo;
+        char timeBuffer[80];
+        timeinfo = localtime(&tv.tv_sec);
+        strftime(timeBuffer, sizeof(timeBuffer), "%Y-%m-%d %H:%M:%S", timeinfo);
+
+        // Calculate milliseconds
+        int milliseconds = tv.tv_usec / 1000;
+
+        // Get the current process ID and process name
+        pid_t pid = [[NSProcessInfo processInfo] processIdentifier];
+        NSString *processName = [[NSProcessInfo processInfo] processName];
+
+        // Format the log message to match the NSLog style
+        NSString *logEntry = [NSString stringWithFormat:@"%s.%03d %s[%d:%x] %s\n",
+                              timeBuffer,
+                              milliseconds,
+                              [processName UTF8String],
+                              pid,
+                              (unsigned int)pthread_mach_thread_np(pthread_self()),
+                              [formattedMessage UTF8String]];
+
+        // Print to the console
+        fprintf(stdout, "%s", [logEntry UTF8String]);
+
+        // Print to the file
+        fprintf(logFile, "%s", [logEntry UTF8String]);
+
+        va_end(args);
+
+        // Close the file
+        fclose(logFile);
+    } else {
+        NSLog(@"[ERROR] Failed to open file for logging: %s", filePath_.c_str());
+    }
+}
+
+#define NSLog(format, ...) CustomNSLog_(format, ##__VA_ARGS__)
+
 @implementation AppDelegate
 
 - (instancetype)initWithArguments:(NSArray *)arguments {
@@ -78,9 +165,42 @@ void checkAndCloseRoblox() {
     return self;
 }
 
+- (void)application:(NSApplication *)application openURLs:(NSArray<NSURL *> *)urls {
+    for (NSURL *url in urls) {
+        NSLog(@"App opened with URL: %@", url);
+        
+        // Get the scheme of the URL
+        NSString *scheme = [url scheme];
+        NSMutableString *modifiedURLString = [NSMutableString stringWithString:[url absoluteString]];
+        
+        // Check if the scheme is "roblox-player"
+        if ([scheme isEqualToString:@"roblox-player"]) {
+            // Replace "roblox-player" with "roblox-test"
+            [modifiedURLString replaceOccurrencesOfString:@"roblox-player"
+                                               withString:@"roblox-test"
+                                                  options:0
+                                                    range:NSMakeRange(0, [modifiedURLString length])];
+        }
+        // Check if the scheme is "roblox"
+        else if ([scheme isEqualToString:@"roblox"]) {
+            // Replace "roblox" with "roblox_test"
+            [modifiedURLString replaceOccurrencesOfString:@"roblox"
+                                               withString:@"roblox-test"
+                                                  options:0
+                                                    range:NSMakeRange(0, [modifiedURLString length])];
+        }
+        
+        // Convert the modified URL to std::string
+        finalURLString = std::string([modifiedURLString UTF8String]);
+        
+        // Log the final URL
+        NSLog(@"Modified URL: %s", finalURLString.c_str());
+    }
+}
+
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
-    runLoginInScript("Background_Runner", getCurrentAppPath());
-    main_loop(_arguments);
+    //runLoginInScript("Background_Runner", getCurrentAppPath());
+    main_loop(_arguments, finalURLString);
 }
 
 - (void)applicationWillTerminate:(NSNotification *)notification {

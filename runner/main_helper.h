@@ -50,4 +50,4 @@
 #include "helper.h"
 #include <Foundation/Foundation.h>
 
-int main_loop(NSArray *arguments);
+int main_loop(NSArray *arguments, std::string supercoolvar);
