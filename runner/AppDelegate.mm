@@ -167,36 +167,53 @@ void CustomNSLog_(NSString *format, ...) {
 
 - (void)application:(NSApplication *)application openURLs:(NSArray<NSURL *> *)urls {
     for (NSURL *url in urls) {
-        NSLog(@"App opened with URL: %@", url);
+        NSLog(@"[INFO] App opened with URL: %@", url);
         
-        // Get the scheme of the URL
-        NSString *scheme = [url scheme];
-        NSMutableString *modifiedURLString = [NSMutableString stringWithString:[url absoluteString]];
+        // Get the URL as a string
+        NSString *urlString = [url absoluteString];
+        
+        // Decode the URL string
+        NSString *decodedURLString = [urlString stringByRemovingPercentEncoding];
+        NSLog(@"[INFO] Decoded URL: %@", decodedURLString);
         
         // Check if the scheme is "roblox-player"
-        if ([scheme isEqualToString:@"roblox-player"]) {
-            // Replace "roblox-player" with "roblox-test"
-            [modifiedURLString replaceOccurrencesOfString:@"roblox-player"
-                                               withString:@"roblox-test"
-                                                  options:0
-                                                    range:NSMakeRange(0, [modifiedURLString length])];
+        if ([[url scheme] isEqualToString:@"roblox-player"]) {
+            // Decode the URL components
+            NSURLComponents *components = [NSURLComponents componentsWithString:decodedURLString];
+            NSString *newScheme = @"roblox";
+            NSString *newPath = @"//experiences/start";
+            NSString *placeIdValue = nil;
+            NSString *accessCodeValue = nil;
+            
+            // Extract the query items
+            for (NSURLQueryItem *item in [components queryItems]) {
+                if ([[item name] isEqualToString:@"placeId"]) {
+                    placeIdValue = [item value];
+                } else if ([[item name] isEqualToString:@"gameId"]) {
+                    accessCodeValue = [item value];
+                }
+            }
+            
+            if (placeIdValue) {
+                // Construct the new URL
+                NSMutableString *newURLString = [NSMutableString stringWithFormat:@"%@:%@?placeId=%@", newScheme, newPath, placeIdValue];
+                
+                // Add accessCode as gameInstanceId if it exists
+                if (accessCodeValue) {
+                    [newURLString appendFormat:@"&gameInstanceId=%@", accessCodeValue];
+                }
+                
+                finalURLString = std::string([newURLString UTF8String]);
+                
+                // Log the final URL
+                NSLog(@"[INFO] Modified URL: %s", finalURLString.c_str());
+            } else {
+                NSLog(@"[WARN] placeId not found in the URL");
+            }
         }
-        // Check if the scheme is "roblox"
-        else if ([scheme isEqualToString:@"roblox"]) {
-            // Replace "roblox" with "roblox_test"
-            [modifiedURLString replaceOccurrencesOfString:@"roblox"
-                                               withString:@"roblox-test"
-                                                  options:0
-                                                    range:NSMakeRange(0, [modifiedURLString length])];
-        }
-        
-        // Convert the modified URL to std::string
-        finalURLString = std::string([modifiedURLString UTF8String]);
-        
-        // Log the final URL
-        NSLog(@"Modified URL: %s", finalURLString.c_str());
     }
 }
+
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
     //runLoginInScript("Background_Runner", getCurrentAppPath());

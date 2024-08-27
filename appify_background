@@ -113,7 +113,6 @@ cat <<EOF > $DIR/Info.plist
 			<key>CFBundleURLSchemes</key>
 			<array>
             <string>roblox-player</string>
-				<string>roblox</string>
 			</array>
 		</dict>
 	</array>

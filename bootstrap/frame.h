@@ -241,9 +241,9 @@ bool ModifyPlist(const std::string& path) {
                                     if (value) {
                                         std::string newValue(value);
                                         if (newValue == "roblox-player") {
-                                            newValue = "roblox-test";
+                                            newValue = "roblox";
                                         } else if (newValue == "roblox") {
-                                            newValue = "roblox_test";
+                                            newValue = "roblox";
                                         }
                                         stringElement->SetText(newValue.c_str());
                                     }
