@@ -1,10 +1,13 @@
 import sys
 import time
+import os
 from pypresence import Presence
 
 class DiscordRPC:
     def __init__(self):
         self.client_id = '1267308900420419664'
+        self.current_script_path = os.path.abspath(__file__)
+        self.path_to_rpc = os.path.dirname(self.current_script_path)
 
     def print_usage_and_exit(self):
         print("Usage: python discord_rpc.py <details> <state> <startTimestamp> <AssetIDLarge> <AssetIDSmall> <largeImgText> <smallImageText> <button1label> <button2label> <button1url> <button2url> <pipe_location> <timeend>")
@@ -60,9 +63,13 @@ class DiscordRPC:
 
         self.connect(pipe_location)
         self.update_presence(details, state, ts_start, ts_end, large_image, small_image, large_text, small_text, label1, label2, url1, url2)
-
+        print(self.path_to_rpc)
         while True:
             time.sleep(0)
+            if os.path.exists(self.path_to_rpc + "/kill.txt"):
+                print("found kill.txt (killing self)")
+                self.rpc.close()
+                os._exit(0)
 
 if __name__ == "__main__":
     discord_rpc = DiscordRPC()

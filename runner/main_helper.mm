@@ -4,6 +4,7 @@
 #include <Foundation/Foundation.h>
 #include <dispatch/dispatch.h>
 #include <ctime>
+#include <fstream>
 #include <sys/time.h>
 #include <pthread.h>
 #include <cstdlib>
@@ -468,19 +469,15 @@ void executeScript(const std::string& script) {
     scriptFinished = false;
 
     std::string appleScript = R"(osascript -e '
-            tell application "System Events"
-                set isTerminalRunning to (exists (processes whose name is "Terminal"))
-            end tell
-
-            if isTerminalRunning then
-                do shell script "killall -QUIT Terminal"
-            end if
-            -- Wait a bit to ensure windows are closed
-            delay 0.25
-            -- Open a new Terminal window and run the script
-            tell application "Terminal"
+        tell application "Terminal"
+            if (count of windows) > 0 then
+                -- Run the script in the first existing Terminal window
+                do script ")" + path_script + R"(" in front window
+            else
+                -- If no windows are open, open a new window and run the script
                 do script ")" + path_script + R"("
-            end tell')";
+            end if
+        end tell')";
     NSString* appleScriptStr = toNSString(appleScript);
     NSString* msg = [NSString stringWithFormat:@"[INFO] Running AppleScript command: %@", appleScriptStr];
     NSLog(@"%@", msg);
@@ -546,6 +543,7 @@ static void UpdDiscordActivity(
     if (!scriptFile.is_open()) {
         return;
     }
+    scriptFile << "#!/bin/bash" << std::endl;
     scriptFile << new_script;
     scriptFile.close();
     pid_t pidToTerminate = -1;
@@ -558,10 +556,26 @@ static void UpdDiscordActivity(
         currentScriptPID = -1; // Reset PID after waiting
     }
 
-    runAppleScriptAndGetOutput(ScriptNeededToRun);
+    std::string filename = GetResourcesFolderPath() + "/kill.txt";
 
+    std::ofstream outfile(filename);
+
+    if (outfile.is_open()) {
+        // Write to the file
+        outfile << "if kill then kill_thing() end" << std::endl;
+        outfile.close();
+    }
     // Run the custom function in a separate thread
-    discordThread = std::thread([new_script]() {
+    discordThread = std::thread([new_script, filename]() {
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+        try {
+            if (std::filesystem::remove(filename)) {
+                NSLog(@"[INFO] Successfully deleted kill.txt" );
+            }
+        } catch (const std::filesystem::filesystem_error& e) {
+            std::cerr << "[ERROR] Filesystem error: " << e.what() << std::endl;
+        }
+        std::this_thread::sleep_for(std::chrono::seconds(1));
         executeScript(new_script);
     });
 
@@ -931,7 +945,23 @@ void doFunc(const std::string& logtxt) {
         Current = Home;
         GameIMG = "";
         TimeStartedUniverse = 0;
-        runAppleScriptAndGetOutput(ScriptNeededToRun);
+        std::string filename = GetResourcesFolderPath() + "/kill.txt";
+
+        std::ofstream outfile(filename);
+
+        if (outfile.is_open()) {
+            // Write to the file
+            outfile << "if kill then kill_thing() end" << std::endl;
+            outfile.close();
+        }
+
+        try {
+            if (std::filesystem::remove(filename)) {
+                NSLog(@"[INFO] Successfully deleted kill.txt" );
+            }
+        } catch (const std::filesystem::filesystem_error& e) {
+            std::cerr << "[ERROR] Filesystem error: " << e.what() << std::endl;
+        }
     }
     else if (logtxt.find("[FLog::Network] UDMUX Address = ") != std::string::npos && !ActivityInGame && placeId != 0 && Current != Home) 
     {
@@ -1502,6 +1532,23 @@ int main_loop(NSArray *arguments, std::string supercoolvar) {
                 {
                     discordThread.join();
                 }
+            }
+            std::string filename = GetResourcesFolderPath() + "/kill.txt";
+
+            std::ofstream outfile(filename);
+
+            if (outfile.is_open()) {
+                // Write to the file
+                outfile << "if kill then kill_thing() end" << std::endl;
+                outfile.close();
+            }
+
+            try {
+                if (std::filesystem::remove(filename)) {
+                    NSLog(@"[INFO] Successfully deleted kill.txt" );
+                }
+            } catch (const std::filesystem::filesystem_error& e) {
+                std::cerr << "[ERROR] Filesystem error: " << e.what() << std::endl;
             }
             runAppleScriptAndGetOutput(ScriptNeededToRun);
             SBackground = true;
