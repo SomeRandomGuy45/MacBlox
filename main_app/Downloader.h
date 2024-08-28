@@ -16,4 +16,6 @@ bool isAppRunning(const std::string &appName);
 
 std::string GetMacOSAppearance();
 
+std::string GetResourcesFolderPath();
+
 #endif // DOWNLOADER_H

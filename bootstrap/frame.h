@@ -744,8 +744,15 @@ void BootstrapperFrame::DoLogic()
         std::string current_version = "";
         if (!fileContent.empty())
         {
-            json data = json::parse(fileContent);
-            current_version_from_file = data["clientVersionUpload"].get<std::string>();
+            if (fileContent.find("Adaptive Concurrency Limits Enforced. The server is temporarily unavailable due to high load. Please retry later.") != std::string::npos)
+            {
+                current_version_from_file = "";
+            }
+            else
+            {
+                json data = json::parse(fileContent);
+                current_version_from_file = data["clientVersionUpload"].get<std::string>();
+            }
         }
         else
         {
@@ -755,12 +762,21 @@ void BootstrapperFrame::DoLogic()
             NeedToReinstall = true;
         }
         std::string downloadPath = GetBasePath + "/roblox_version_data_install.json";
+        std::cout << "[INFO] Downloading file " << downloadPath << std::endl;
         downloadFile("https://clientsettings.roblox.com/v2/client-version/MacPlayer", downloadPath.c_str());
         std::string v2fileContent = FileChecker(GetBasePath + "/roblox_version_data_install.json");
+        std::cout << "[INFO] Downloaded file\n";
         if (!v2fileContent.empty())
         {
-            json data = json::parse(v2fileContent);
-            current_version = data["clientVersionUpload"].get<std::string>();
+            if (fileContent.find("Adaptive Concurrency Limits Enforced. The server is temporarily unavailable due to high load. Please retry later.") != std::string::npos)
+            {
+                current_version = "";
+            }
+            else
+            {
+                json data = json::parse(v2fileContent);
+                current_version = data["clientVersionUpload"].get<std::string>();
+            }
         }
         else
         {

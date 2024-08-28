@@ -47,6 +47,7 @@ public:
 
 private:
     void OnLaunchButtonClick(wxCommandEvent& event);
+    void SetBootstrapIcon(std::string selectedIcon);
     void OnModSelection(wxCommandEvent& event);
     void OpenPages(wxCommandEvent& event);
     void DestroyPanel();
@@ -66,6 +67,13 @@ private:
         {"Old Death sound", false},
         {"Old Sounds", false},
         {"Old Avatar Background", false},
+        {"2008 Bootstrap icon", false},
+        {"2011 Bootstrap icon", false},
+        {"Early2015 Bootstrap icon", false},
+        {"Late2015 Bootstrap icon", false},
+        {"2017 Bootstrap icon", false},
+        {"2019 Bootstrap icon", false},
+        {"2022 Bootstrap icon", false},
     };
     int lastX = 250;
     enum IDS {
@@ -73,6 +81,23 @@ private:
         BtnID_START = 3  // Start button IDs from a different base
     };
 };
+
+void MainFrame::SetBootstrapIcon(std::string selectedIcon) {
+    // Iterate through the map and disable all Bootstrap icons
+    for (auto& mod : modsEnabled) {
+        if (mod.first.find("Bootstrap icon") != std::string::npos && mod.first != selectedIcon) {
+            mod.second = false;
+        }
+    }
+
+    // Enable the selected icon
+    modsEnabled[selectedIcon] = true;
+
+    if (selectedIcon.find("Bootstrap icon") != std::string::npos) {
+        std::string cutted_selected_icon = GetBasePath() + "/Resources/Icon" + selectedIcon.substr(0, selectedIcon.find("Bootstrap icon") - 1) + ".png";
+        std::cout << "[INFO] Selected icon: " << cutted_selected_icon << std::endl;
+    }
+}
 
 void MainFrame::CreateModsFolder()
 {
@@ -247,6 +272,10 @@ void MainFrame::OnModSelection(wxCommandEvent& event)
             }
         }
         modsEnabled[modName] = EditBox->IsChecked(selectionIndex);
+    }
+    if (modName.find("Bootstrap icon") != std::string::npos)
+    {
+        SetBootstrapIcon(modName);
     }
     EditBox->Clear();
     // Loop through the modsEnabled map and print the status

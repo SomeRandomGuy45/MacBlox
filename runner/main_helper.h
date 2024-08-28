@@ -1,3 +1,7 @@
+/*
+* Very funny .h file lol
+*/
+
 #include <iostream>
 #include <vector>
 #include <libproc.h>
@@ -16,14 +20,13 @@
 #include <map>
 #include <cstdlib>
 #include <functional>
-#include <sys/stat.h>   
-//#include "discord-game-sdk/discord.h"
-#include <curl/curl.h> //for downloading files
-#include "curlpp/cURLpp.hpp" //requests with out creating files
+#include <sys/stat.h>
+#include <curl/curl.h>
+#include "curlpp/cURLpp.hpp"
 #include "curlpp/Options.hpp"
 #include <libgen.h>
-#include <signal.h>  // For kill function
-#include <errno.h>   // For errno
+#include <signal.h>
+#include <errno.h>
 #include <thread>
 #include <chrono>
 #include <condition_variable>
@@ -37,11 +40,11 @@
 #include <mutex>
 #include <stdexcept>
 #include <future>
-#include <ctime> 
+#include <ctime>
 #include <spawn.h>
 #include <sys/wait.h>
 #include <wx/notifmsg.h>
-#include <wx/msgdlg.h> 
+#include <wx/msgdlg.h>
 #include <unordered_set>
 #include <utility>
 #include <iomanip>

@@ -109,6 +109,19 @@ void runApp(const std::string &launchPath, bool Check) {
                                      completionHandler:nil];
 }
 
+std::string GetResourcesFolderPath()
+{
+    // Get the main bundle
+    NSBundle *mainBundle = [NSBundle mainBundle];
+
+    // Get the path to the resources folder
+    NSString *resourcesFolderPath = [mainBundle resourcePath];
+
+    // Convert NSString to std::string and return
+    return std::string([resourcesFolderPath UTF8String]);
+}
+
+
 bool isAppRunning(const std::string &appName) {
     @autoreleasepool {
         // Convert std::string to NSString
