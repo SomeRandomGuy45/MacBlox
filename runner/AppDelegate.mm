@@ -4,6 +4,8 @@
 
 std::string finalURLString = "";
 
+bool isFound = true;
+
 std::string getCurrentAppPath() {
     NSBundle *bundle = [NSBundle mainBundle];
     NSString *appPath = [bundle bundlePath];
@@ -217,7 +219,17 @@ void CustomNSLog_(NSString *format, ...) {
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
     //runLoginInScript("Background_Runner", getCurrentAppPath());
-    main_loop(_arguments, finalURLString);
+    if (!doesAppExist("/Applications/Discord.app"))
+    {
+        NSLog(@"[INFO] Discord not found in /Applications/Discord.app");
+        isFound = false;
+    }
+    if (!isAppRunning("Discord"))
+    {
+        NSLog(@"[INFO] Discord not running");
+        isFound = false;
+    }
+    main_loop(_arguments, finalURLString, isFound);
 }
 
 - (void)applicationWillTerminate:(NSNotification *)notification {

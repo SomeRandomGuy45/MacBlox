@@ -18,6 +18,26 @@ BOOL isAdminUser;
 static NSString * const sAppAdminInstallPath = @"/Applications";
 static NSString * const sAppUserInstallPath  =@"~/Applications";
 
+std::string GetMacOSAppearance()
+{
+    std::string appearance = "Light";
+    
+    #ifdef __APPLE__
+    @autoreleasepool {
+        NSAppearance *appearanceSetting = [NSApp effectiveAppearance];
+        NSString *name = [appearanceSetting name];
+        
+        if ([name isEqualToString:NSAppearanceNameDarkAqua]) {
+            appearance = "Dark";
+        } else if ([name isEqualToString:NSAppearanceNameAqua]) {
+            appearance = "Light";
+        }
+    }
+    #endif
+    
+    return appearance;
+}
+
 void TestCommand() {
     isAdminUser = [[NSFileManager defaultManager] isWritableFileAtPath:sAppAdminInstallPath];
     NSLog(@"Is admin user: %@", isAdminUser? @"Yes" : @"No");

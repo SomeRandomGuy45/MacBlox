@@ -14,6 +14,7 @@ bool deleteFolder(const std::string& folderPath);
 std::string getLogFile(const std::string& logDir);
 std::string ShowOpenFileDialog(const std::string& defaultDirectory);
 std::string ShowOpenFileDialog_WithCustomText(const std::string& defaultDirectory, const std::string& customText);
+std::string GetMacOSAppearance();
 void runApp(const std::string &launchPath, bool Check);
 
 std::string runAppleScriptAndGetOutput(const std::string &script);

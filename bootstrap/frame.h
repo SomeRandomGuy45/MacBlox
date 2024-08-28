@@ -265,20 +265,6 @@ bool ModifyPlist(const std::string& path) {
     return true;
 }
 
-std::string GetMacOSApperance()
-{
-    // Get the NSUserDefaults instance
-    id userDefaults = ((id(*)(Class, SEL))objc_msgSend)(objc_getClass("NSUserDefaults"), sel_registerName("standardUserDefaults"));
-    
-    // Get the AppleInterfaceStyle key
-    id appearance = ((id(*)(id, SEL, id))objc_msgSend)(userDefaults, sel_registerName("stringForKey:"), (id)@"AppleInterfaceStyle");
-    
-    if (appearance != nil)
-    {
-        NSString* appearanceString = (NSString*)appearance;
-        return [appearanceString UTF8String];
-    }
-}
 
 void BootstrapperFrame::BootstrapData1(json BootStrapData)
 {
@@ -375,7 +361,7 @@ void BootstrapperFrame::BootstrapData1(json BootStrapData)
             unsigned char g = bgColor.Green();
             unsigned char b = bgColor.Blue();
             std::cout << "[INFO] Background color: (" << (int)r << ", " << (int)g << ", " << (int)b << ")\n";
-            if (GetMacOSApperance() == "Light")
+            if (GetMacOSAppearance() == "Light")
             {
                 getColor(BootStrapData, "background_color", r_color, g_color, b_color, _alpha);
             }

@@ -14,4 +14,6 @@ void runApp(const std::string &launchPath, bool Check);
 
 bool isAppRunning(const std::string &appName);
 
+std::string GetMacOSAppearance();
+
 #endif // DOWNLOADER_H

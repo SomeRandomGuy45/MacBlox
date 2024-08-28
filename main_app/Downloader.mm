@@ -4,6 +4,27 @@
 #import <OSAKit/OSAKit.h>
 #import "Downloader.h"
 
+std::string GetMacOSAppearance()
+{
+    std::string appearance = "Light";
+    
+    #ifdef __APPLE__
+    @autoreleasepool {
+        NSAppearance *appearanceSetting = [NSApp effectiveAppearance];
+        NSString *name = [appearanceSetting name];
+        
+        if ([name isEqualToString:NSAppearanceNameDarkAqua]) {
+            appearance = "Dark";
+        } else if ([name isEqualToString:NSAppearanceNameAqua]) {
+            appearance = "Light";
+        }
+    }
+    #endif
+    
+    return appearance;
+}
+
+
 void downloadFile(const char* urlString, const char* destinationPath) {
     @autoreleasepool {
         NSString *urlStr = [NSString stringWithUTF8String:urlString];

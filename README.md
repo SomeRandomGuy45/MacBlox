@@ -36,3 +36,5 @@ make
 * Bloxstrap for some code and inspiration [Github](https://github.com/pizzaboxer/bloxstrap)
 * Roblox Studio Mod Manager [Github](https://github.com/MaximumADHD/Roblox-Studio-Mod-Manager)
 * appify.sh [Github](https://gist.github.com/advorak/1403124)
+* nlohmann json [Github](https://github.com/nlohmann/json)
+* tinyxml2 [Github](https://github.com/leethomason/tinyxml2)

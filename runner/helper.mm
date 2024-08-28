@@ -7,6 +7,41 @@
 #import <ScriptingBridge/ScriptingBridge.h>
 
 namespace fs = std::filesystem;
+bool isDiscordFound_ = false;
+
+@interface HelperClass : NSObject
+- (void)toggleOption:(NSMenuItem *)sender;
+@end
+
+@implementation HelperClass
+
+- (void)toggleOption:(NSMenuItem *)sender
+{
+    if (!doesAppExist("/Applications/Discord.app"))
+    {
+        NSLog(@"[INFO] Discord not found in /Applications/Discord.app");
+        return;
+    }
+    if (!isAppRunning("Discord"))
+    {
+        NSLog(@"[INFO] Discord not running");
+        return;
+    }
+    // Toggle the state
+    if ([sender state] == NSControlStateValueOn) {
+        [sender setState:NSControlStateValueOff];
+        // Handle the option being turned off
+        NSLog(@"Option is now OFF");
+        isDiscordFound_ = false;
+    } else {
+        [sender setState:NSControlStateValueOn];
+        // Handle the option being turned on
+        NSLog(@"Option is now ON");
+        isDiscordFound_ = true;
+    }
+}
+
+@end
 
 bool isAppRunning(const std::string &appName) {
     @autoreleasepool {
@@ -203,6 +238,11 @@ std::string runAppleScriptAndGetOutput(const std::string &script) {
     }
 }
 
+bool foundDiscord()
+{
+    return isDiscordFound_;
+}
+
 std::string ShowOpenFileDialog(const std::string& defaultDirectory) {
     NSOpenPanel* openPanel = [NSOpenPanel openPanel];
     [openPanel setCanChooseFiles:NO];
@@ -360,13 +400,41 @@ void createStatusBarIcon(const std::string &imagePath)
     // Access the button associated with the NSStatusItem
     NSButton *statusButton = [statusItem button];
     if (statusButton) {
-        [statusButton setToolTip:@"Your tooltip text"];
+        [statusButton setToolTip:@"tooltip lol"];
     }
 
     // Create and set up a menu for the status item
     NSMenu *menu = [[NSMenu alloc] init];
-    NSMenuItem *quitMenuItem = [[NSMenuItem alloc] initWithTitle:@"Quit" action:@selector(terminate:) keyEquivalent:@""];
+    
+    // Create an instance of HelperClass
+    HelperClass *helper = [[HelperClass alloc] init];
+
+    // Create a custom view for the menu item with a checkbox
+    NSView *menuItemView = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, 150, 22)];
+
+    NSButton *checkbox = [[NSButton alloc] initWithFrame:NSMakeRect(0, 0, 150, 22)];
+    [checkbox setButtonType:NSSwitchButton]; // Set the button type to a checkbox
+    [checkbox setTitle:@"Toggle Discord RPC"];
+    [checkbox setState:NSControlStateValueOff]; // Initial state is off
+    [checkbox setTarget:helper];
+    [checkbox setAction:@selector(toggleOption:)];
+
+    [menuItemView addSubview:checkbox];
+
+    // Create the menu item with the custom view
+    NSMenuItem *boolMenuItem = [[NSMenuItem alloc] init];
+    [boolMenuItem setView:menuItemView];
+
+    [menu addItem:boolMenuItem];
+
+    [menu addItem:[NSMenuItem separatorItem]];
+
+    // Add the Quit menu item
+    NSMenuItem *quitMenuItem = [[NSMenuItem alloc] initWithTitle:@"Quit" 
+                                                          action:@selector(terminate:) 
+                                                   keyEquivalent:@""];
     [menu addItem:quitMenuItem];
+    
     [statusItem setMenu:menu];
 }
 

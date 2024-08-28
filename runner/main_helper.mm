@@ -508,10 +508,6 @@ static void UpdDiscordActivity(
     int64_t endTimestamp
     )
 {
-    if (!isDiscordFound) {
-        NSLog(@"[ERROR] Discord is not found. Please make sure Discord is running and the Discord");
-        return;
-    }
 
     // Set default timestamps if not provided
     startTimestamp = startTimestamp != 0 ? startTimestamp : time(0);
@@ -915,10 +911,20 @@ void doFunc(const std::string& logtxt) {
                 [](const std::pair<std::string, std::string>& pair) {
                     return pair.first == "See game page";
                 });
-            if (isDiscordFound == false)
+            if (!doesAppExist("/Applications/Discord.app"))
             {
+                NSLog(@"[INFO] Discord not found in /Applications/Discord.app");
                 return;
-            } 
+            }
+            if (!isAppRunning("Discord"))
+            {
+                NSLog(@"[INFO] Discord not running");
+                return;
+            }
+            if (!isDiscordFound) {
+                NSLog(@"[ERROR] Discord is not found. Please make sure Discord is running and the Discord");
+                return;
+            }
             if (it != buttonPairs.end())
             {
                 UpdDiscordActivity("Playing " + gameName, status, TimeStartedUniverse, 0, -1, gameName, "Roblox", it->first, it2->first, it->second, it2->second, 0);
@@ -1080,10 +1086,20 @@ void doFunc(const std::string& logtxt) {
                 int64_t timeStart = (!_data["data"]["timeStart"].is_null() && _data["data"]["timeStart"].get<int64_t>() != 0) 
                     ? _data["data"]["timeStart"].get<int64_t>() 
                     : 0;
-                if (isDiscordFound == false)
+                if (!doesAppExist("/Applications/Discord.app"))
                 {
+                    NSLog(@"[INFO] Discord not found in /Applications/Discord.app");
                     return;
-                } 
+                }
+                if (!isAppRunning("Discord"))
+                {
+                    NSLog(@"[INFO] Discord not running");
+                    return;
+                }
+                if (!isDiscordFound) {
+                    NSLog(@"[ERROR] Discord is not found. Please make sure Discord is running and the Discord");
+                    return;
+                }
                 if (it != buttonPairs.end())
                 {
                     UpdDiscordActivity(details, status, timeStart, id_long, id_small, largeImageHover, smallImageHover, it->first, it2->first, it->second, it2->second, timeEnd);
@@ -1332,11 +1348,12 @@ std::string GetExPath() {
     return std::string(dir);
 }
 
-int main_loop(NSArray *arguments, std::string supercoolvar) {
+int main_loop(NSArray *arguments, std::string supercoolvar, bool dis) {
     std::vector<std::string> stdArguments;
     for (NSString *arg in arguments) {
         stdArguments.push_back([arg UTF8String]);
     }
+    isDiscordFound = dis;
     for (const auto& arg: stdArguments)
     {
         std::cout << "[INFO] new arg is: " << arg << "\n";
@@ -1348,20 +1365,6 @@ int main_loop(NSArray *arguments, std::string supercoolvar) {
     }
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         //while (true) {
-            if (!doesAppExist("/Applications/Discord.app"))
-            {
-                NSLog(@"[INFO] Discord not found in /Applications/Discord.app");
-                isDiscordFound = false;
-            }
-            if (!isDiscordRunning())
-            {
-                NSLog(@"[INFO] Discord not running");
-                isDiscordFound = false;
-            }
-            else
-            {
-                isDiscordFound = true;
-            }
 
             InitTable();
 
@@ -1509,6 +1512,10 @@ int main_loop(NSArray *arguments, std::string supercoolvar) {
                 }
                 std::condition_variable logUpdatedEvent;
                 std::ifstream logFile(logFilePath);
+                std::thread DiscordLookerThread([]() {
+                    isDiscordFound = foundDiscord();
+                    std::this_thread::sleep_for(std::chrono::seconds(1));
+                });
                 while (true) {
                     if (!isRobloxRunning()) {
                         break;
@@ -1528,9 +1535,16 @@ int main_loop(NSArray *arguments, std::string supercoolvar) {
                 discordThread = std::thread([&]() {
                     NSLog(@"[INFO] Stopping discord thread");
                 });
+                DiscordLookerThread = std::thread([&]() {
+                    NSLog(@"[INFO] Stopping thread");
+                });
                 if (discordThread.joinable())
                 {
                     discordThread.join();
+                }
+                if (DiscordLookerThread.joinable())
+                {
+                    DiscordLookerThread.join();
                 }
             }
             std::string filename = GetResourcesFolderPath() + "/kill.txt";

@@ -24,4 +24,6 @@ void runApp(const std::string &launchPath, bool Check);
 void terminateApplicationByName(const std::string& appName);
 void createStatusBarIcon(const std::string &imagePath);
 
+bool foundDiscord();
+
 #endif // HELPER_H
