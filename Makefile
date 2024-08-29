@@ -40,12 +40,17 @@ create_runner_app:
 	@mv -f bootstrap.app $(BUILDPATH)/bootstrap.app
 	@mv $(BUILDPATH)/bootstrap.app $(BUILDPATH)/Macblox/"Bootstrap.app"
 	@cp -R $(CURDIR)/bootstrap/bootstrap_data.json $(BUILDPATH)/Macblox/"Bootstrap.app"/Contents/Resources/
-	@cp -R $(CURDIR)/bootstrap/bootstrap_icon.png $(BUILDPATH)/Macblox/"Bootstrap.app"/Contents/Resources/
+	@cp -R $(CURDIR)/bootstrap/bootstrap_icon.ico $(BUILDPATH)/Macblox/"Bootstrap.app"/Contents/Resources/
 	@cp -R $(CURDIR)/bootstrap/helper.sh $(BUILDPATH)/Macblox/"Bootstrap.app"/Contents/Resources/
 	@cp -R $(CURDIR)/Macblox.plist $(BUILDPATH)/Macblox/"Bootstrap.app"/Contents/Resources/
 	@chmod +x $(BUILDPATH)/Macblox/"Bootstrap.app"/Contents/Resources/helper.sh
 	@rm -f $(BUILDPATH)/bootstrap
 	@mv $(BUILDPATH)/Macblox/"Bootstrap.app" $(BUILDPATH)/Macblox/"Play.app"/Contents/MacOS
+	$(CC) $(CXXFLAGS) $(LDFLAGS) -o $(BUILDPATH)/openRoblox $(CURDIR)/openRoblox/main.m $(CURDIR)/openRoblox/AppDelegate.mm
+	@./appify -s build/openRoblox -n openRoblox -i test
+	@codesign --sign - --entitlements Macblox.plist --deep openRoblox.app --force
+	@mv -f openRoblox.app $(BUILDPATH)/Macblox/"Open Roblox.app"
+	@rm -f $(BUILDPATH)/openRoblox
 
 create_main_app:
 	$(CC) $(CXXFLAGS) $(LDFLAGS) -o $(BUILDPATH)/main $(CURDIR)/main_app/main.mm $(CURDIR)/main_app/Downloader.mm

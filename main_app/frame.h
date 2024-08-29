@@ -40,6 +40,17 @@ void CreateNotification(const wxString &title, const wxString &message, int Time
     }
 }
 
+std::string getParentFolderOfApp() {
+    // Get the bundle path
+    NSString *bundlePath = [[NSBundle mainBundle] bundlePath];
+    
+    // Get the parent directory of the bundle
+    NSString *parentPath = [bundlePath stringByDeletingLastPathComponent];
+    
+    // Convert NSString to std::string
+    return std::string([parentPath UTF8String]);
+}
+
 class MainFrame : public wxFrame
 {
 public:
@@ -96,6 +107,9 @@ void MainFrame::SetBootstrapIcon(std::string selectedIcon) {
     if (selectedIcon.find("Bootstrap icon") != std::string::npos) {
         std::string cutted_selected_icon = GetBasePath() + "/Resources/Icon" + selectedIcon.substr(0, selectedIcon.find("Bootstrap icon") - 1) + ".png";
         std::cout << "[INFO] Selected icon: " << cutted_selected_icon << std::endl;
+        std::string copyPath = getParentFolderOfApp() + "/Play.app/Contents/MacOS/Bootstrap.app/Contents/Resources/bootstrap_icon.ico";
+        std::cout << "[INFO] Copying to this path: " << copyPath << "\n";
+        copyFile(cutted_selected_icon, copyPath);
     }
 }
 
@@ -240,17 +254,6 @@ void MainFrame::ReinitializePanels()
     mainSizer->Add(gridSizer, 1, wxEXPAND | wxALL, 5);
     panel->SetSizer(mainSizer);  // Ensure that the sizer is set for the panel
     panel->Layout();
-}
-
-std::string getParentFolderOfApp() {
-    // Get the bundle path
-    NSString *bundlePath = [[NSBundle mainBundle] bundlePath];
-    
-    // Get the parent directory of the bundle
-    NSString *parentPath = [bundlePath stringByDeletingLastPathComponent];
-    
-    // Convert NSString to std::string
-    return std::string([parentPath UTF8String]);
 }
 
 void MainFrame::OnModSelection(wxCommandEvent& event)

@@ -974,10 +974,10 @@ BootstrapperFrame::BootstrapperFrame(const wxString& title, long style, const wx
     panel->SetBackgroundColour(wxColour(r_color, g_color, b_color, _alpha));
     panel->Refresh();
     // Load the image using wxImage
-    wxImage image(ResourcePath + "/bootstrap_icon.png", wxBITMAP_TYPE_PNG);
+    wxImage image(ResourcePath + "/bootstrap_icon.ico", wxBITMAP_TYPE_ICO);
     if (!image.IsOk())
     {
-        std::cerr << "[ERROR] Failed to load image!" << std::endl;
+        std::cerr << "[ERROR] Failed to load image with path: " << ResourcePath + "/bootstrap_icon.png" << std::endl;
         return;
     }
 

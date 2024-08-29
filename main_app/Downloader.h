@@ -7,15 +7,15 @@
 #include <iostream>
 
 extern "C" void downloadFile(const char* urlString, const char* destinationPath);
-std::string downloadFile_WITHOUT_DESTINATION(const char* urlString);
-bool unzipFile(const char* zipFilePath, const char* destinationPath);
 
+void copyFile(const std::string& oldPath, const std::string& newPath);
 void runApp(const std::string &launchPath, bool Check);
 
+bool unzipFile(const char* zipFilePath, const char* destinationPath);
 bool isAppRunning(const std::string &appName);
+std::string downloadFile_WITHOUT_DESTINATION(const char* urlString);
 
 std::string GetMacOSAppearance();
 
 std::string GetResourcesFolderPath();
-
 #endif // DOWNLOADER_H

@@ -643,8 +643,8 @@ std::string ReadFile(const std::string& filename) {
     return std::string((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
 }
 
-std::string GetGameURL(long customID) {
-    return "roblox://experiences/start?placeId="+ std::to_string(customID) +"&gameInstanceId=" + jobId;
+std::string GetGameURL(long customID, bool isMacblox) {
+    return isMacblox == true ? "roblox-player:placeId="+ std::to_string(customID) +"&gameId=" + jobId : "roblox://experiences/start?placeId="+ std::to_string(customID) +"&gameInstanceId=" + jobId;
 }
 
 json GetGameData(long customID) {
@@ -879,16 +879,18 @@ void doFunc(const std::string& logtxt) {
             std::vector<std::pair<std::string, std::string>> buttonPairs;
             if (Current != CurrentTypes::Reserved && Current != CurrentTypes::Private)
             {
-                std::string URL = GetGameURL(placeId);
-                buttonPairs.emplace_back("Join Server", URL);
+                std::string URL = GetGameURL(placeId, true);
+                buttonPairs.emplace_back("Join Server (Macblox)", URL);
+                URL = GetGameURL(placeId, false);
+                buttonPairs.emplace_back("Join Server (Other)", URL);
             }
             else
             {
                 std::string URL = "https://www.roblox.com/home";
                 buttonPairs.emplace_back("Roblox", URL);
+                std::string page = "https://www.roblox.com/games/" + std::to_string(placeId);
+                buttonPairs.emplace_back("See game page",page);
             }
-            std::string page = "https://www.roblox.com/games/" + std::to_string(placeId);
-            buttonPairs.emplace_back("See game page",page);
             json GameDetails = GetGameData(placeId);
             std::string status = "";
             if (Current == CurrentTypes::Private)
@@ -1014,17 +1016,18 @@ void doFunc(const std::string& logtxt) {
 
                 if (Current != CurrentTypes::Reserved && Current != CurrentTypes::Private)
                 {
-                    std::string URL = GetGameURL(placeId);
-                    buttonPairs.emplace_back("Join Server", URL);
+                    std::string URL = GetGameURL(placeId, true);
+                    buttonPairs.emplace_back("Join Server (Macblox)", URL);
+                    URL = GetGameURL(placeId, false);
+                    buttonPairs.emplace_back("Join Server (Other)", URL);
                 }
                 else
                 {
                     std::string URL = "https://www.roblox.com/home";
                     buttonPairs.emplace_back("Roblox", URL);
+                    std::string page = "https://www.roblox.com/games/" + std::to_string(placeId);
+                    buttonPairs.emplace_back("See game page", page);
                 }
-
-                std::string page = "https://www.roblox.com/games/" + std::to_string(placeId);
-                buttonPairs.emplace_back("See game page", page);
 
                 json GameDetails = GetGameData(placeId);
                 std::string status = "";

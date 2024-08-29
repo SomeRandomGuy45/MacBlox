@@ -234,7 +234,7 @@ void CustomNSLog_(NSString *format, ...) {
 
 - (void)applicationWillTerminate:(NSNotification *)notification {
     checkAndCloseRoblox();
-    std::cout << "[INFO] App is about to terminate\n";
+    NSLog(@"[INFO] App is about to terminate\n");
 }
 
 @end

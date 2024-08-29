@@ -97,6 +97,8 @@ cat <<EOF > $DIR/Info.plist
 	<string>6.0</string>
    <key>BreakpadVendor</key>
 	<string>Macblox</string>
+   <key>LSUIElement</key>
+   <false/>
    <key>CFBundleName</key>
 	<string>MacBlox</string>
    <key>CFBundleSignature</key>

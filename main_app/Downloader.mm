@@ -24,6 +24,46 @@ std::string GetMacOSAppearance()
     return appearance;
 }
 
+void copyFile(const std::string& oldPath, const std::string& newPath) {
+    @autoreleasepool {
+        // Convert std::string to NSString
+        NSString *sourcePath = [NSString stringWithUTF8String:oldPath.c_str()];
+        NSString *destinationPath = [NSString stringWithUTF8String:newPath.c_str()];
+
+        NSFileManager *fileManager = [NSFileManager defaultManager];
+        NSError *error = nil;
+        
+        // Check if source file exists
+        if (![fileManager fileExistsAtPath:sourcePath]) {
+            NSLog(@"[ERROR] Source file does not exist: %@", sourcePath);
+            return;
+        }
+
+        // Create necessary directories for the destination path
+        NSString *destinationDirectory = [destinationPath stringByDeletingLastPathComponent];
+        if (![fileManager fileExistsAtPath:destinationDirectory]) {
+            if (![fileManager createDirectoryAtPath:destinationDirectory withIntermediateDirectories:YES attributes:nil error:&error]) {
+                NSLog(@"[ERROR] Failed to create directory: %@", destinationDirectory);
+                return;
+            }
+        }
+
+        // Check if destination file already exists and remove it
+        if ([fileManager fileExistsAtPath:destinationPath]) {
+            if (![fileManager removeItemAtPath:destinationPath error:&error]) {
+                NSLog(@"[ERROR] Failed to remove existing file at destination: %@", error.localizedDescription);
+                return;
+            }
+        }
+
+        // Copy the file from oldPath to newPath
+        if (![fileManager copyItemAtPath:sourcePath toPath:destinationPath error:&error]) {
+            NSLog(@"[ERROR] Failed to copy file: %@", error.localizedDescription);
+        } else {
+            NSLog(@"[INFO] File copied successfully from %@ to %@", sourcePath, destinationPath);
+        }
+    }
+}
 
 void downloadFile(const char* urlString, const char* destinationPath) {
     @autoreleasepool {
