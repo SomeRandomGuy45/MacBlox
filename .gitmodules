@@ -1,3 +1,3 @@
-[submodule "Create_Installer"]
-    path = Create_Installer
-    url = https://github.com/SomeRandomGuy45/CreateMacbloxInstaller
+[submodule "CreateMacbloxInstaller"]
+	path = CreateMacbloxInstaller
+	url = https://github.com/SomeRandomGuy45/CreateMacbloxInstaller
