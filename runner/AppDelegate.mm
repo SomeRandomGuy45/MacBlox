@@ -3,6 +3,17 @@
 #import <Foundation/Foundation.h>
 
 std::string finalURLString = "";
+std::string checkIfRobloxIsRunning = R"(
+                    tell application "System Events"
+                        set appList to name of every process
+                    end tell
+
+                    if "RobloxPlayer" is in appList then
+                        return "true"
+                    else
+                        return "false"
+                    end if
+                            )";
 
 bool isFound = true;
 
@@ -10,6 +21,16 @@ std::string getCurrentAppPath() {
     NSBundle *bundle = [NSBundle mainBundle];
     NSString *appPath = [bundle bundlePath];
     return [appPath UTF8String];
+}
+
+bool isAppRunningTerminal() {
+    std::string command = "pgrep -x \"Terminal\" > /dev/null 2>&1";
+    return system(command.c_str()) == 0;
+}
+
+void quitTerminal() {
+    std::string command = "osascript -e 'do shell script \"killall -QUIT Terminal\"'";
+    system(command.c_str());
 }
 
 void runLoginInScript(const std::string& appName, const std::string& appPath) {
@@ -98,7 +119,7 @@ std::string getLogPath_() {
             return "";
         }
     }
-    return path + "/" + currentDate + "_runner_db_task_log.log";
+    return path + "/" + currentDate + "_runner_ad_task_log.log";
 }
 
 std::string filePath_ = getLogPath_();
@@ -174,25 +195,40 @@ void CustomNSLog_(NSString *format, ...) {
         // Get the URL as a string
         NSString *urlString = [url absoluteString];
         
+        // Replace "placeid/=" with "placeId="
+        if ([urlString containsString:@"placeid/="]) {
+            urlString = [urlString stringByReplacingOccurrencesOfString:@"placeid/=" withString:@"placeId="];
+            NSLog(@"[INFO] Updated URL after replacement: %@", urlString);
+        }
+
         // Decode the URL string
         NSString *decodedURLString = [urlString stringByRemovingPercentEncoding];
         NSLog(@"[INFO] Decoded URL: %@", decodedURLString);
-        
+        NSLog(@"[INFO] URL scheme: %@", [url scheme]);
+
         // Check if the scheme is "roblox-player"
-        if ([[url scheme] isEqualToString:@"roblox-player"]) {
-            // Decode the URL components
-            NSURLComponents *components = [NSURLComponents componentsWithString:decodedURLString];
+        if ([[url scheme] isEqualToString:@"roblox-player"] || [urlString containsString:@"roblox-player://"]) {
+            // Manually parse the query items
+            NSString *queryString = [[decodedURLString componentsSeparatedByString:@"?"] lastObject];
+            NSArray<NSString *> *queryItems = [queryString componentsSeparatedByString:@"&"];
+            
             NSString *newScheme = @"roblox";
             NSString *newPath = @"//experiences/start";
             NSString *placeIdValue = nil;
             NSString *accessCodeValue = nil;
             
-            // Extract the query items
-            for (NSURLQueryItem *item in [components queryItems]) {
-                if ([[item name] isEqualToString:@"placeId"]) {
-                    placeIdValue = [item value];
-                } else if ([[item name] isEqualToString:@"gameId"]) {
-                    accessCodeValue = [item value];
+            for (NSString *queryItem in queryItems) {
+                NSArray<NSString *> *pair = [queryItem componentsSeparatedByString:@"="];
+                if ([pair count] == 2) {
+                    NSString *key = pair[0];
+                    NSString *value = pair[1];
+                    NSLog(@"[INFO] Found item: %@ = %@", key, value);
+
+                    if ([key isEqualToString:@"placeId"] || [key isEqualToString:@"roblox-player://placeId"]) {
+                        placeIdValue = value;
+                    } else if ([key isEqualToString:@"gameId"]) {
+                        accessCodeValue = value;
+                    }
                 }
             }
             
@@ -206,7 +242,13 @@ void CustomNSLog_(NSString *format, ...) {
                 }
                 
                 finalURLString = std::string([newURLString UTF8String]);
-                
+                if (runAppleScriptAndGetOutput(checkIfRobloxIsRunning) == "true")
+                {
+                    std::string run_to_open_lol = "open \"" + finalURLString + "\"";
+                    NSLog(@"[INFO] Ok got it running this command %s", run_to_open_lol.c_str());
+                    system(run_to_open_lol.c_str());
+                }
+
                 // Log the final URL
                 NSLog(@"[INFO] Modified URL: %s", finalURLString.c_str());
             } else {
@@ -233,6 +275,9 @@ void CustomNSLog_(NSString *format, ...) {
 }
 
 - (void)applicationWillTerminate:(NSNotification *)notification {
+    if (isAppRunning("Terminal")) {
+        quitTerminal();
+    }
     checkAndCloseRoblox();
     NSLog(@"[INFO] App is about to terminate\n");
 }

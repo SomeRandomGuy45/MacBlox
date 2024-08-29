@@ -18,6 +18,7 @@
 #include <sys/time.h>
 #include <pthread.h>
 #include <cstdlib>
+#include <iomanip>
 #include <Cocoa/Cocoa.h>
 #import "helper.h"
 
@@ -246,6 +247,26 @@ std::string getLogPath() {
         }
     }
     return path + "/" + currentDate + "_runner_log.log";
+}
+
+
+std::string urlEncode(const std::string& value) {
+    std::ostringstream encoded;
+    encoded.fill('0');
+    encoded << std::hex;
+
+    for (char c : value) {
+        // Keep alphanumeric characters and a few special characters as they are
+        if (isalnum(static_cast<unsigned char>(c)) || 
+            c == '-' || c == '_' || c == '.' || c == '~') {
+            encoded << c;
+        } else {
+            // Convert other characters to their percent-encoded form
+            encoded << '%' << std::setw(2) << static_cast<int>(static_cast<unsigned char>(c));
+        }
+    }
+
+    return encoded.str();
 }
 
 std::string filePath = getLogPath();
@@ -644,7 +665,13 @@ std::string ReadFile(const std::string& filename) {
 }
 
 std::string GetGameURL(long customID, bool isMacblox) {
-    return isMacblox == true ? "roblox-player:placeId="+ std::to_string(customID) +"&gameId=" + jobId : "roblox://experiences/start?placeId="+ std::to_string(customID) +"&gameInstanceId=" + jobId;
+    std::string returnString = "roblox-player://placeId="+ std::to_string(customID) +"&gameId=" + jobId;
+    if (!isMacblox)
+    {
+        returnString = "roblox://experiences/start?placeId="+  std::to_string(customID) +"&gameInstanceId=" + jobId;
+    }
+    NSLog(@"[INFO] Returning string %s", returnString.c_str());
+    return returnString;
 }
 
 json GetGameData(long customID) {
@@ -868,86 +895,115 @@ void doFunc(const std::string& logtxt) {
                     Title_Text = "Connected to public server";
                 }
             }
-            CreateNotification(Title_Text, Msg_Text, wxNotificationMessage::Timeout_Auto);
-            NSString* placeIdStr = toNSString(placeId);
-            NSString* jobIdStr = toNSString(jobId);
-            NSString* activityMachineAddressStr = toNSString(ActivityMachineAddress);
-            message = [NSString stringWithFormat:@"[INFO] Joining Game (%@/%@/%@)", placeIdStr, jobIdStr, activityMachineAddressStr];
-            NSLog(@"%@", message);
-            //https://github.com/pizzaboxer/bloxstrap/blob/7e95fb4d8fc4d132ee4633ba38b68a384ff897da/Bloxstrap/Integrations/DiscordRichPresence.cs
-            GameIMG = GetGameThumb(placeId);
-            std::vector<std::pair<std::string, std::string>> buttonPairs;
-            if (Current != CurrentTypes::Reserved && Current != CurrentTypes::Private)
-            {
-                std::string URL = GetGameURL(placeId, true);
-                buttonPairs.emplace_back("Join Server (Macblox)", URL);
-                URL = GetGameURL(placeId, false);
-                buttonPairs.emplace_back("Join Server (Other)", URL);
-            }
-            else
-            {
-                std::string URL = "https://www.roblox.com/home";
-                buttonPairs.emplace_back("Roblox", URL);
-                std::string page = "https://www.roblox.com/games/" + std::to_string(placeId);
-                buttonPairs.emplace_back("See game page",page);
-            }
-            json GameDetails = GetGameData(placeId);
-            std::string status = "";
-            if (Current == CurrentTypes::Private)
-            {
-                status = "In a private server";
-            }
-            else if (Current == CurrentTypes::Reserved)
-            {
-                status = "In a reserved server";
-            }
-            else
-            {
-                status = "by " + to_string(GameDetails["data"][0]["creator"]["name"]);
-                status.erase(std::remove(status.begin(), status.end(), '"'), status.end());
-                if (GameDetails["data"][0]["creator"]["hasVerifiedBadge"])
-                {
-                    status += " ☑️";
+            try {
+                // Create notification
+                CreateNotification(Title_Text, Msg_Text, wxNotificationMessage::Timeout_Auto);
+
+                // Convert C++ strings to NSString
+                NSString* placeIdStr = toNSString(placeId);
+                NSString* jobIdStr = toNSString(jobId);
+                NSString* activityMachineAddressStr = toNSString(ActivityMachineAddress);
+                
+                // Log the game joining info
+                NSString* message = [NSString stringWithFormat:@"[INFO] Joining Game (%@/%@/%@)", placeIdStr, jobIdStr, activityMachineAddressStr];
+                NSLog(@"%@", message);
+
+                // Get game thumbnail
+                GameIMG = GetGameThumb(placeId);
+                if (GameIMG.empty()) {
+                    NSLog(@"[ERROR] Failed to get game thumbnail");
+                    return;
                 }
-            }
-            TimeStartedUniverse = getCurrentTimeMillis();
-                        std::string gameName = to_string(GameDetails["data"][0]["name"]);
-            if (!gameName.empty() && gameName.front() == '"' && gameName.back() == '"') {
-                gameName = gameName.substr(1, gameName.size() - 2);
-            }
-            auto it = std::find_if(buttonPairs.begin(), buttonPairs.end(),
-                [](const std::pair<std::string, std::string>& pair) {
-                    return pair.first == "Join Server";
-                });
-            auto it2 = std::find_if(buttonPairs.begin(), buttonPairs.end(),
-                [](const std::pair<std::string, std::string>& pair) {
-                    return pair.first == "See game page";
-                });
-            if (!doesAppExist("/Applications/Discord.app"))
-            {
-                NSLog(@"[INFO] Discord not found in /Applications/Discord.app");
-                return;
-            }
-            if (!isAppRunning("Discord"))
-            {
-                NSLog(@"[INFO] Discord not running");
-                return;
-            }
-            if (!isDiscordFound) {
-                NSLog(@"[ERROR] Discord is not found. Please make sure Discord is running and the Discord");
-                return;
-            }
-            if (it != buttonPairs.end())
-            {
-                UpdDiscordActivity("Playing " + gameName, status, TimeStartedUniverse, 0, -1, gameName, "Roblox", it->first, it2->first, it->second, it2->second, 0);
-            }
-            else
-            {
-                it = std::find_if(buttonPairs.begin(), buttonPairs.end(),
+
+                // Initialize button pairs
+                std::vector<std::pair<std::string, std::string>> buttonPairs;
+                if (Current != CurrentTypes::Reserved && Current != CurrentTypes::Private) {
+                    std::string URL = GetGameURL(placeId, true);
+                    buttonPairs.emplace_back("Join Server (Macblox)", URL);
+                    URL = GetGameURL(placeId, false);
+                    buttonPairs.emplace_back("Join Server (Other)", URL);
+                } else {
+                    std::string URL = "https://www.roblox.com/home";
+                    buttonPairs.emplace_back("Roblox", URL);
+                    std::string page = "https://www.roblox.com/games/" + std::to_string(placeId);
+                    buttonPairs.emplace_back("See game page", page);
+                }
+
+                // Get game data from the server
+                json GameDetails = GetGameData(placeId);
+                std::string status = "";
+
+                // Determine status based on server type
+                if (Current == CurrentTypes::Private) {
+                    status = "In a private server";
+                } else if (Current == CurrentTypes::Reserved) {
+                    status = "In a reserved server";
+                } else {
+                    status = "by " + to_string(GameDetails["data"][0]["creator"]["name"]);
+                    status.erase(std::remove(status.begin(), status.end(), '"'), status.end());
+                    if (GameDetails["data"][0]["creator"]["hasVerifiedBadge"]) {
+                        status += " ☑️";
+                    }
+                }
+
+                // Store the time when the universe started
+                TimeStartedUniverse = getCurrentTimeMillis();
+
+                // Get and clean up the game name
+                std::string gameName = to_string(GameDetails["data"][0]["name"]);
+                if (!gameName.empty() && gameName.front() == '"' && gameName.back() == '"') {
+                    gameName = gameName.substr(1, gameName.size() - 2);
+                }
+
+                // Find the relevant buttons for the Discord activity
+                auto it = std::find_if(buttonPairs.begin(), buttonPairs.end(),
                     [](const std::pair<std::string, std::string>& pair) {
-                        return pair.first == "Roblox";
+                        return pair.first == "Join Server (Macblox)";
                     });
-                UpdDiscordActivity("Playing " + gameName, status, TimeStartedUniverse, 0, -1, gameName, "Roblox", it->first, it2->first, it->second, it2->second, 0);
+                auto it2 = std::find_if(buttonPairs.begin(), buttonPairs.end(),
+                    [](const std::pair<std::string, std::string>& pair) {
+                        return pair.first == "Join Server (Other)";
+                    });
+
+                // Check if Discord is installed and running
+                if (!doesAppExist("/Applications/Discord.app")) {
+                    NSLog(@"[INFO] Discord not found in /Applications/Discord.app");
+                    return;
+                }
+                if (!isAppRunning("Discord")) {
+                    NSLog(@"[INFO] Discord not running");
+                    return;
+                }
+                if (!isDiscordFound) {
+                    NSLog(@"[ERROR] Discord is not found. Please make sure Discord is running and the Discord RPC library is correctly integrated.");
+                    return;
+                }
+
+                // Update Discord activity
+                if (it != buttonPairs.end() && it2 != buttonPairs.end()) {
+                    UpdDiscordActivity("Playing " + gameName, status, TimeStartedUniverse, 0, -1, gameName, "Roblox", it->first, it2->first, it->second, it2->second, 0);
+                } else {
+                    it = std::find_if(buttonPairs.begin(), buttonPairs.end(),
+                        [](const std::pair<std::string, std::string>& pair) {
+                            return pair.first == "Roblox";
+                        });
+                    it2 = std::find_if(buttonPairs.begin(), buttonPairs.end(),
+                        [](const std::pair<std::string, std::string>& pair) {
+                            return pair.first == "See game page";
+                        });
+                    if (it != buttonPairs.end() && it2 != buttonPairs.end()) {
+                        UpdDiscordActivity("Playing " + gameName, status, TimeStartedUniverse, 0, -1, gameName, "Roblox", it->first, it2->first, it->second, it2->second, 0);
+                    }
+                }
+            } catch (const std::bad_alloc& e) {
+                // Handle memory allocation failure
+                NSLog(@"[ERROR] Memory allocation failed: %s", e.what());
+            } catch (const std::exception& e) {
+                // Handle any other exceptions
+                NSLog(@"[ERROR] Exception: %s", e.what());
+            } catch (...) {
+                // Catch any unexpected exceptions
+                NSLog(@"[ERROR] An unknown error occurred");
             }
         }
     } 
@@ -1376,6 +1432,7 @@ int main_loop(NSArray *arguments, std::string supercoolvar, bool dis) {
             SBackground = false;
         }
     }
+    NSLog(@"[INFO] supercoolvar is: %s",supercoolvar.c_str());
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         //while (true) {
 
@@ -1525,10 +1582,7 @@ int main_loop(NSArray *arguments, std::string supercoolvar, bool dis) {
                 }
                 std::condition_variable logUpdatedEvent;
                 std::ifstream logFile(logFilePath);
-                std::thread DiscordLookerThread([]() {
-                    isDiscordFound = foundDiscord();
-                    std::this_thread::sleep_for(std::chrono::seconds(1));
-                });
+                bool lastDiscord = false;
                 while (true) {
                     if (!isRobloxRunning()) {
                         break;
@@ -1548,16 +1602,9 @@ int main_loop(NSArray *arguments, std::string supercoolvar, bool dis) {
                 discordThread = std::thread([&]() {
                     NSLog(@"[INFO] Stopping discord thread");
                 });
-                DiscordLookerThread = std::thread([&]() {
-                    NSLog(@"[INFO] Stopping thread");
-                });
                 if (discordThread.joinable())
                 {
                     discordThread.join();
-                }
-                if (DiscordLookerThread.joinable())
-                {
-                    DiscordLookerThread.join();
                 }
             }
             std::string filename = GetResourcesFolderPath() + "/kill.txt";
