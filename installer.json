@@ -1,0 +1,7 @@
+{
+    "title" : "Install Macblox",
+    "contents" : [
+        { "x": 448, "y": 225, "type": "file", "path": "Installer.pkg" },
+        { "x": 192, "y": 225, "type": "file", "path": "Installer_Testing.pkg" } 
+    ]
+}

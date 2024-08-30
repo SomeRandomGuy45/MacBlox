@@ -31,6 +31,11 @@ Just run the following command
 ``
 make
 ``
+### Building installer:
+Just install NPM and run this command
+```
+npm install -g appdmg
+```
 
 # Credits
 * Bloxstrap for some code and inspiration [Github](https://github.com/pizzaboxer/bloxstrap)
