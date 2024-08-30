@@ -539,7 +539,10 @@ static void UpdDiscordActivity(
     int64_t endTimestamp
     )
 {
-
+    if (!isDiscordFound) {
+        NSLog(@"[ERROR] Discord is not found. Please make sure Discord is running and the Discord RPC library is correctly integrated.");
+        return;
+    }
     // Set default timestamps if not provided
     startTimestamp = startTimestamp != 0 ? startTimestamp : time(0);
 
@@ -1583,6 +1586,18 @@ int main_loop(NSArray *arguments, std::string supercoolvar, bool dis) {
                 std::condition_variable logUpdatedEvent;
                 std::ifstream logFile(logFilePath);
                 bool lastDiscord = false;
+                std::thread DiscordLookerThread([&lastDiscord]() {
+                    while (true)
+                    {
+                        isDiscordFound = foundDiscord();
+                        if (lastDiscord != isDiscordFound)
+                        {
+                            NSLog(@"[INFO] Discord option changed %s", isDiscordFound == true ? "true" : "false");
+                        }
+                        lastDiscord = isDiscordFound;
+                        std::this_thread::sleep_for(std::chrono::milliseconds(250));
+                    }
+                });
                 while (true) {
                     if (!isRobloxRunning()) {
                         break;
@@ -1601,6 +1616,9 @@ int main_loop(NSArray *arguments, std::string supercoolvar, bool dis) {
                 }
                 discordThread = std::thread([&]() {
                     NSLog(@"[INFO] Stopping discord thread");
+                });
+                DiscordLookerThread = std::thread([&]() {
+                    NSLog(@"[INFO] Stopping thread");
                 });
                 if (discordThread.joinable())
                 {

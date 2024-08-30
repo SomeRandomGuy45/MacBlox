@@ -31,12 +31,12 @@ bool isDiscordFound_ = false;
     if (isDiscordFound_ == false) {
         [sender setState:NSControlStateValueOn];
         // Handle the option being turned off
-        NSLog(@"Option is now ON");
+        NSLog(@"[INFO] Option is now ON");
         isDiscordFound_ = true;
     } else {
         [sender setState:NSControlStateValueOff];
         // Handle the option being turned on
-        NSLog(@"Option is now OFF");
+        NSLog(@"[INFO] Option is now OFF");
         isDiscordFound_ = false;
     }
 }
@@ -382,6 +382,20 @@ bool CanAccessFolder(const std::string& path) {
 
 void createStatusBarIcon(const std::string &imagePath)
 {
+    if (!doesAppExist("/Applications/Discord.app"))
+    {
+        NSLog(@"[INFO] Discord not found in /Applications/Discord.app");
+        isDiscordFound_ = false;
+    }
+    if (!isAppRunning("Discord"))
+    {
+        NSLog(@"[INFO] Discord not running");
+        isDiscordFound_ = false;
+    }
+    else
+    {
+        isDiscordFound_ = true;
+    }
     NSStatusBar *statusBar = [NSStatusBar systemStatusBar];
     NSStatusItem *statusItem = [statusBar statusItemWithLength:NSVariableStatusItemLength];
 
@@ -405,6 +419,34 @@ void createStatusBarIcon(const std::string &imagePath)
 
     // Create and set up a menu for the status item
     NSMenu *menu = [[NSMenu alloc] init];
+
+    // Create an instance of HelperClass
+    HelperClass *helper = [[HelperClass alloc] init];
+
+    // Create a custom view for the menu item with a checkbox
+    NSView *menuItemView = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, 150, 22)];
+
+    NSButton *checkbox = [[NSButton alloc] initWithFrame:NSMakeRect(0, 0, 150, 22)];
+    [checkbox setButtonType:NSSwitchButton]; // Set the button type to a checkbox
+    [checkbox setTitle:@"Toggle Discord RPC"];
+    if (isDiscordFound_) {
+        [checkbox setState:NSControlStateValueOn]; // Initial state is off
+    }
+    else {
+        [checkbox setState:NSControlStateValueOff]; // Initial state is off
+    }
+    [checkbox setTarget:helper];
+    [checkbox setAction:@selector(toggleOption:)];
+
+    [menuItemView addSubview:checkbox];
+
+    // Create the menu item with the custom view
+    NSMenuItem *boolMenuItem = [[NSMenuItem alloc] init];
+    [boolMenuItem setView:menuItemView];
+
+    [menu addItem:boolMenuItem];
+
+    [menu addItem:[NSMenuItem separatorItem]];
 
     // Add the Quit menu item
     NSMenuItem *quitMenuItem = [[NSMenuItem alloc] initWithTitle:@"Quit" 
