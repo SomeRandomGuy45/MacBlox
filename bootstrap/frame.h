@@ -21,6 +21,7 @@
 #include <thread>
 #include <chrono>
 #include <filesystem>
+#include <fstream>
 #include <dispatch/dispatch.h>
 #include <sstream>
 #include <thread>
@@ -718,11 +719,24 @@ void BootstrapperFrame::DoLogic()
         if (!bootstrapDataFileData.empty())
         {
             bootstrapData = json::parse(bootstrapDataFileData);
-            CustomChannel = bootstrapData["channel"].get<std::string>();
-            std::string ShouldReinstall = bootstrapData["force_reinstall"].get<std::string>();
-            if (ShouldReinstall == "true")
+            if (bootstrapData.contains("channel"))
             {
-                NeedToReinstall = true;
+                CustomChannel = bootstrapData["channel"].get<std::string>();
+            }
+            if (bootstrapData.contains("Force Reinstall"))
+            {
+                std::string ShouldReinstall = bootstrapData["Force Reinstall"].get<std::string>();
+                if (ShouldReinstall == "true")
+                {
+                    NeedToReinstall = true;
+                }
+                bootstrapData["Force Reinstall"] = "false";
+                std::ofstream bootstrapDataFile(GetBasePath + "/bootstrap_data.json");
+                if (bootstrapDataFile.is_open())
+                {
+                    bootstrapDataFile << bootstrapData.dump(4);
+                    bootstrapDataFile.close();
+                }
             }
         }
         if (RobloxApplicationPath != "/Applications/Roblox.app/Contents/MacOS")

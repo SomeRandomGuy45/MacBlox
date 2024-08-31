@@ -8,6 +8,7 @@
 #include <map>
 #include <iostream>
 #include <libgen.h>
+#include <fstream>
 #include <libproc.h>
 #include <string>
 #include "EditableListBox.h"
@@ -60,11 +61,14 @@ private:
     void OnLaunchButtonClick(wxCommandEvent& event);
     void SetBootstrapIcon(std::string selectedIcon);
     void OnModSelection(wxCommandEvent& event);
+    void OnBootstrapSelection(wxCommandEvent& event);
     void OpenPages(wxCommandEvent& event);
     void DestroyPanel();
     void ReinitializePanels();
     void LoadModsJson(const std::string& filepath);
     void SaveModsJson(const std::string& filepath);
+    void LoadBootstrapJson(const std::string& filepath);
+    void SaveBootstrapJson(const std::string& filepath);
     void CreateModsFolder();
     wxPanel* panel = nullptr;
     wxButton* button = nullptr;
@@ -86,11 +90,15 @@ private:
         {"2019 Bootstrap icon", false},
         {"2022 Bootstrap icon", false},
     };
+    std::map<std::string, bool> BootstrapEnable = {
+        {"Force Reinstall", false},
+    };
     int lastX = 250;
     enum IDS {
         LaunchID = 2,
         BtnID_START = 3  // Start button IDs from a different base
     };
+    json bootstrapJson;
 };
 
 void MainFrame::SetBootstrapIcon(std::string selectedIcon) {
@@ -133,6 +141,33 @@ void MainFrame::CreateModsFolder()
 	}
 }
 
+void MainFrame::SaveBootstrapJson(const std::string& filepath) {
+    std::cout << "[INFO] Saving to file " << filepath << std::endl;
+
+    json jsonData;
+
+    for (const auto& item : BootstrapEnable)
+    {
+        jsonData[item.first] = item.second == true ? "true" : "false";
+    }
+
+    std::cout << "[INFO] Saving with json data " << jsonData.dump(4) << std::endl;
+    std::ofstream file(filepath);
+    if (file.is_open())
+    {
+        if (jsonData.dump(4) == "null")
+        {
+            std::cout << "[WARN] json data is null" << std::endl;
+            file << "{}";
+        }
+        else
+        {
+            file << jsonData.dump(4);
+        }
+        file.close();
+    }
+}
+
 void MainFrame::SaveModsJson(const std::string& filepath)
 {
     std::cout << "[INFO] Saving to file " << filepath << std::endl;
@@ -161,6 +196,56 @@ void MainFrame::SaveModsJson(const std::string& filepath)
     }
 }
 
+void MainFrame::LoadBootstrapJson(const std::string& filepath)
+{
+    std::ifstream file(filepath);
+    if (!file.is_open()) {
+        std::cerr << "[ERROR] Could not open file " << filepath << std::endl;
+        return;
+    }
+    try 
+    {
+        json jsonData;
+        file >> jsonData;
+        file.close();
+        if (jsonData.contains("Force Reinstall"))
+        {
+            jsonData["Force Reinstall"] = "false";
+            std::ofstream file_of(filepath);
+            if (file_of.is_open())
+            {
+                file_of << jsonData.dump(4);
+                file_of.close();
+            }
+        }
+        for (const auto& el : jsonData.items()) {
+            std::string name = el.key();
+            std::string value = "";
+            if (el.value().is_boolean())
+            {
+                bool val = el.value().get<bool>();
+                value = val == true ? "true" : "false";
+            }
+            else if (el.value().is_string()) 
+            {
+                value = el.value().get<std::string>();
+            }
+            else 
+            {
+                value = el.value().dump();
+            }
+            if (BootstrapEnable.find(name) != BootstrapEnable.end())
+            {
+                BootstrapEnable[name] = value == "true" ? true : false;
+            }
+        }
+    } catch (const nlohmann::json::parse_error& e) {
+        std::cerr << "[ERROR] JSON parse error: " << e.what() << std::endl;
+    } catch (const std::exception& e) {
+        std::cerr << "[ERROR] Exception: " << e.what() << std::endl;
+    }
+}
+
 void MainFrame::LoadModsJson(const std::string& filepath)
 {
     std::ifstream file(filepath);
@@ -170,7 +255,7 @@ void MainFrame::LoadModsJson(const std::string& filepath)
     }
     try 
     {
-        nlohmann::json jsonData;
+        json jsonData;
         file >> jsonData;
         file.close();
         for (const auto& el : jsonData.items()) {
@@ -235,6 +320,7 @@ void MainFrame::ReinitializePanels()
     buttons = {
         {"Config", nullptr},
         {"Mods", nullptr},
+        {"Bootstrap", nullptr},
         {"Test Button", nullptr},
     };
 
@@ -254,6 +340,35 @@ void MainFrame::ReinitializePanels()
     mainSizer->Add(gridSizer, 1, wxEXPAND | wxALL, 5);
     panel->SetSizer(mainSizer);  // Ensure that the sizer is set for the panel
     panel->Layout();
+}
+
+void MainFrame::OnBootstrapSelection(wxCommandEvent& event)
+{
+    int selectionIndex = event.GetInt();
+    wxString nameWx = EditBox->GetString(selectionIndex);
+    std::string name = nameWx.ToStdString();
+
+    // Toggle the mod's enabled state
+    if (BootstrapEnable.find(name) != BootstrapEnable.end())
+    {
+        BootstrapEnable[name] = EditBox->IsChecked(selectionIndex);
+    }
+    EditBox->Clear();
+    // Loop through the modsEnabled map and print the status
+    std::cout << "[INFO] Current mod statuses:" << std::endl;
+    for (const auto& [mod, isEnabled] : BootstrapEnable)
+    {
+        std::cout << "[INFO] name: " << mod << " is " << (isEnabled ? "enabled" : "disabled") << std::endl;
+    }
+    SaveBootstrapJson(GetBasePath() + "/bootstrap_data.json");
+    for (const auto& [Name, isEnabled] : BootstrapEnable)
+    {
+        int index = EditBox->Append(Name);
+        if (isEnabled == true)
+        {
+            EditBox->Check(index, true);
+        }
+    }
 }
 
 void MainFrame::OnModSelection(wxCommandEvent& event)
@@ -341,6 +456,27 @@ void MainFrame::OpenPages(wxCommandEvent& event)
 
             // Bind the checklist box event
             EditBox->Bind(wxEVT_CHECKLISTBOX, &MainFrame::OnModSelection, this);
+        }
+        else if (buttonName == "Bootstrap")
+        {
+            LoadBootstrapJson(GetBasePath() + "/bootstrap_data.json");
+            wxArrayString items;
+
+            for (const auto& [Name, isEnabled] : BootstrapEnable)
+            {
+                items.Add(Name);  // Add mod name to wxArrayString
+            }
+            
+            // Initialize the checklist box
+            EditBox = new wxCheckListBox(panel, wxID_ANY, wxPoint(170, 15), wxSize(425, 300), items);
+
+            int index = 0;
+            for (const auto& [Name, isEnabled] : BootstrapEnable)
+            {
+                EditBox->Check(index, isEnabled);
+                index++;
+            }
+            EditBox->Bind(wxEVT_CHECKLISTBOX, &MainFrame::OnBootstrapSelection, this);
         }
     }
 }
