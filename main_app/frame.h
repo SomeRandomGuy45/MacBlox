@@ -92,6 +92,7 @@ private:
     };
     std::map<std::string, bool> BootstrapEnable = {
         {"Force Reinstall", false},
+        {"Allow Multiple Instance", false},
     };
     int lastX = 250;
     enum IDS {
@@ -487,7 +488,7 @@ void MainFrame::OnLaunchButtonClick(wxCommandEvent& event)
     std::string basePath = GetBasePath();
     std::string robloxInstallAppPath = basePath +"/RobloxPlayerInstaller.app";
     std::string robloxZip = basePath + "/Roblox.zip";
-    if (!fs::exists("/Applications/Roblox.app")) 
+    if (!fs::exists("/tmp/Roblox.app")) 
     {
         /*
         

@@ -20,6 +20,7 @@
 #include <cstdlib>
 #include <iomanip>
 #include <Cocoa/Cocoa.h>
+#import "Logger.h"
 #import "helper.h"
 
 
@@ -220,35 +221,6 @@ json GetModData()
 json Mod_Data = GetModData();
 json bootstrapData;
 
-std::string currentDateTime() {
-    time_t now = time(0);
-    struct tm tstruct;
-    char buf[80];
-    if (localtime_r(&now, &tstruct) == nullptr) {
-        return "[ERROR] Failed to get local time";
-    }
-    if (strftime(buf, sizeof(buf), "%Y-%m-%d-%H-%M-%S", &tstruct) == 0) {
-        return "[ERROR] Failed to format time";
-    }
-    return buf;
-}
-
-std::string getLogPath() {
-    std::string currentDate = currentDateTime();
-    std::string path = "/Users/" + localuser + "/Library/Logs/Macblox";
-    if (std::filesystem::exists(path)) {
-        NSLog(@"[INFO] Folder already exists.");
-    } else {
-        if (std::filesystem::create_directory(path)) {
-            NSLog(@"[INFO] Folder created successfully.");
-        } else {
-            NSLog(@"[ERROR] Failed to create folder.");
-            return "";
-        }
-    }
-    return path + "/" + currentDate + "_runner_log.log";
-}
-
 
 std::string urlEncode(const std::string& value) {
     std::ostringstream encoded;
@@ -268,62 +240,6 @@ std::string urlEncode(const std::string& value) {
 
     return encoded.str();
 }
-
-std::string filePath = getLogPath();
-
-void CustomNSLog(NSString *format, ...) {
-    // Open the file in append mode
-    FILE *logFile = fopen(filePath.c_str(), "a");
-
-    if (logFile != nullptr) {
-        va_list args;
-        va_start(args, format);
-
-        // Create an NSString with the formatted message
-        NSString *formattedMessage = [[NSString alloc] initWithFormat:format arguments:args];
-
-        // Get the current time with microseconds
-        struct timeval tv;
-        gettimeofday(&tv, NULL);
-
-        // Format the time
-        struct tm *timeinfo;
-        char timeBuffer[80];
-        timeinfo = localtime(&tv.tv_sec);
-        strftime(timeBuffer, sizeof(timeBuffer), "%Y-%m-%d %H:%M:%S", timeinfo);
-
-        // Calculate milliseconds
-        int milliseconds = tv.tv_usec / 1000;
-
-        // Get the current process ID and process name
-        pid_t pid = [[NSProcessInfo processInfo] processIdentifier];
-        NSString *processName = [[NSProcessInfo processInfo] processName];
-
-        // Format the log message to match the NSLog style
-        NSString *logEntry = [NSString stringWithFormat:@"%s.%03d %s[%d:%x] %s\n",
-                              timeBuffer,
-                              milliseconds,
-                              [processName UTF8String],
-                              pid,
-                              (unsigned int)pthread_mach_thread_np(pthread_self()),
-                              [formattedMessage UTF8String]];
-
-        // Print to the console
-        fprintf(stdout, "%s", [logEntry UTF8String]);
-
-        // Print to the file
-        fprintf(logFile, "%s", [logEntry UTF8String]);
-
-        va_end(args);
-
-        // Close the file
-        fclose(logFile);
-    } else {
-        NSLog(@"[ERROR] Failed to open file for logging: %s", filePath.c_str());
-    }
-}
-
-#define NSLog(format, ...) CustomNSLog(format, ##__VA_ARGS__)
 
 NSString* toNSString(const std::string& value) {
     return [NSString stringWithUTF8String:value.c_str()];
@@ -921,16 +837,14 @@ void doFunc(const std::string& logtxt) {
                 // Initialize button pairs
                 std::vector<std::pair<std::string, std::string>> buttonPairs;
                 if (Current != CurrentTypes::Reserved && Current != CurrentTypes::Private) {
-                    std::string URL = GetGameURL(placeId, true);
-                    buttonPairs.emplace_back("Join Server (Macblox)", URL);
-                    URL = GetGameURL(placeId, false);
-                    buttonPairs.emplace_back("Join Server (Other)", URL);
+                    std::string URL = GetGameURL(placeId, false);
+                    buttonPairs.emplace_back("Join Server", URL);
                 } else {
                     std::string URL = "https://www.roblox.com/home";
                     buttonPairs.emplace_back("Roblox", URL);
-                    std::string page = "https://www.roblox.com/games/" + std::to_string(placeId);
-                    buttonPairs.emplace_back("See game page", page);
                 }
+                std::string page = "https://www.roblox.com/games/" + std::to_string(placeId);
+                buttonPairs.emplace_back("See game page", page);
 
                 // Get game data from the server
                 json GameDetails = GetGameData(placeId);
@@ -961,11 +875,11 @@ void doFunc(const std::string& logtxt) {
                 // Find the relevant buttons for the Discord activity
                 auto it = std::find_if(buttonPairs.begin(), buttonPairs.end(),
                     [](const std::pair<std::string, std::string>& pair) {
-                        return pair.first == "Join Server (Macblox)";
+                        return pair.first == "Join Server";
                     });
                 auto it2 = std::find_if(buttonPairs.begin(), buttonPairs.end(),
                     [](const std::pair<std::string, std::string>& pair) {
-                        return pair.first == "Join Server (Other)";
+                        return pair.first == "See game page";
                     });
 
                 // Check if Discord is installed and running
@@ -989,10 +903,6 @@ void doFunc(const std::string& logtxt) {
                     it = std::find_if(buttonPairs.begin(), buttonPairs.end(),
                         [](const std::pair<std::string, std::string>& pair) {
                             return pair.first == "Roblox";
-                        });
-                    it2 = std::find_if(buttonPairs.begin(), buttonPairs.end(),
-                        [](const std::pair<std::string, std::string>& pair) {
-                            return pair.first == "See game page";
                         });
                     if (it != buttonPairs.end() && it2 != buttonPairs.end()) {
                         UpdDiscordActivity("Playing " + gameName, status, TimeStartedUniverse, 0, -1, gameName, "Roblox", it->first, it2->first, it->second, it2->second, 0);
@@ -1075,18 +985,16 @@ void doFunc(const std::string& logtxt) {
 
                 if (Current != CurrentTypes::Reserved && Current != CurrentTypes::Private)
                 {
-                    std::string URL = GetGameURL(placeId, true);
-                    buttonPairs.emplace_back("Join Server (Macblox)", URL);
-                    URL = GetGameURL(placeId, false);
-                    buttonPairs.emplace_back("Join Server (Other)", URL);
+                    std::string URL = GetGameURL(placeId, false);
+                    buttonPairs.emplace_back("Join Server", URL);
                 }
                 else
                 {
                     std::string URL = "https://www.roblox.com/home";
                     buttonPairs.emplace_back("Roblox", URL);
-                    std::string page = "https://www.roblox.com/games/" + std::to_string(placeId);
-                    buttonPairs.emplace_back("See game page", page);
                 }
+                std::string page = "https://www.roblox.com/games/" + std::to_string(placeId);
+                buttonPairs.emplace_back("See game page", page);
 
                 json GameDetails = GetGameData(placeId);
                 std::string status = "";
@@ -1475,11 +1383,11 @@ int main_loop(NSArray *arguments, std::string supercoolvar, bool dis) {
                     do {} while (isBootstrapRunning());
                     if (supercoolvar.empty())
                     {
-                        runApp("/Applications/Roblox.app", false);
+                        runApp("/tmp/Roblox.app", false);
                     }
                     else
                     {
-                        std::string run_to_open_lol = "open \"" + supercoolvar + "\"";
+                        std::string run_to_open_lol = "open -a /tmp/Roblox.app \"" + supercoolvar + "\"";
                         NSLog(@"[INFO] Ok got it running this command %s", run_to_open_lol.c_str());
                         system(run_to_open_lol.c_str());
                     }
@@ -1531,8 +1439,8 @@ int main_loop(NSArray *arguments, std::string supercoolvar, bool dis) {
                         NSLog(@"[INFO] Updating roblox!");
                         //std::cout << "[WARN] Couldn't find roblox_version.json after downloading, assuming the client is not up to date." << std::endl;
                     }
-                    if (!doesAppExist("/Applications/Roblox.app")) {
-                        NSLog(@"Couldn't find /Applications/Roblox.app");
+                    if (!doesAppExist("/tmp/Roblox.app")) {
+                        NSLog(@"Couldn't find /tmp/Roblox.app");
                         current_version = "";
                     }
                     if (current_version_from_file != current_version || JsonCount != currentCount) {

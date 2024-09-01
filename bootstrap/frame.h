@@ -28,6 +28,7 @@
 #include <exception>
 #include "tinyxml2.h"
 #include "helper.h"
+#include "multi.h"
 #include "json.hpp"
 
 #import <Foundation/Foundation.h>
@@ -207,21 +208,21 @@ bool ModifyPlist(const std::string& path) {
     // Load the XML document
     XMLDocument doc;
     if (doc.LoadFile(path.c_str()) != XML_SUCCESS) {
-        std::cerr << "Failed to load file: " << path << std::endl;
+        std::cerr << "[ERROR] Failed to load file: " << path << std::endl;
         return false;
     }
 
     // Access the root element <plist>
     XMLElement* root = doc.RootElement();
     if (!root || std::string(root->Name()) != "plist") {
-        std::cerr << "Invalid plist file: " << path << std::endl;
+        std::cerr << "[ERROR] Invalid plist file: " << path << std::endl;
         return false;
     }
 
     // Navigate to the <dict> element
     XMLElement* dictElement = root->FirstChildElement("dict");
     if (!dictElement) {
-        std::cerr << "No <dict> element found in plist file." << std::endl;
+        std::cerr << "[ERROR] No <dict> element found in plist file." << std::endl;
         return false;
     }
 
@@ -242,9 +243,12 @@ bool ModifyPlist(const std::string& path) {
                                     if (value) {
                                         std::string newValue(value);
                                         if (newValue == "roblox-player") {
-                                            newValue = "roblox";
+                                            newValue = "roblox-test";
                                         } else if (newValue == "roblox") {
-                                            newValue = "roblox";
+                                            newValue = "roblox-test";
+                                        } else if (newValue == "Roblox Player URL")
+                                        {
+                                            newValue = "Test URL";
                                         }
                                         stringElement->SetText(newValue.c_str());
                                     }
@@ -588,7 +592,7 @@ std::string modifyPath(const std::string& path) {
 void searchFolders(const std::string& rootPath, bool returnFullPath) {
     std::map<std::string, std::string> filePaths = findFilesInFolder(rootPath);
     for (const auto& [key, value] : filePaths) {
-        std::string valueCopy = "/Applications/Roblox.app/Contents/Resources/" + modifyPath(value);
+        std::string valueCopy = "/tmp/Roblox.app/Contents/Resources/" + modifyPath(value);
         //std::cout << "[INFO] Key info: " << key << ": " << value << " value copy: " << valueCopy << std::endl;
         copyFile(value, valueCopy);
     }
@@ -663,6 +667,18 @@ int countCurrentMods(std::string& directoryPath)
     return folderCount;
 }
 
+std::string convertToLowercase(const std::string& str) 
+{ 
+    std::string result = ""; 
+  
+    for (char ch : str) { 
+        // Convert each character to lowercase using tolower 
+        result += tolower(ch); 
+    } 
+  
+    return result; 
+} 
+
 void BootstrapperFrame::DoLogic()
 {
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
@@ -672,21 +688,21 @@ void BootstrapperFrame::DoLogic()
         {
             NeedToReinstall = true;
         }
-        if (FolderExists("/Applications/Roblox.app/Contents/"))
+        if (FolderExists("/tmp/Roblox.app/Contents/"))
         {
-            RobloxApplicationPath = "/Applications/Roblox.app/Contents/MacOS";
+            RobloxApplicationPath = "/tmp/Roblox.app/Contents/MacOS";
             if (!CanAccessFolder(RobloxApplicationPath))
             {
                 RobloxApplicationPath = ShowOpenFileDialog("file://localhost"+RobloxApplicationPath);
             }
-            if (!FolderExists("/Applications/Roblox.app/Contents/MacOS/ClientSettings"))
+            if (!FolderExists("/tmp/Roblox.app/Contents/MacOS/ClientSettings"))
             {
-                CreateFolder("/Applications/Roblox.app/Contents/MacOS/ClientSettings");
+                CreateFolder("/tmp/Roblox.app/Contents/MacOS/ClientSettings");
             }
         }
         else
         {
-            RobloxApplicationPath = "/Applications/Roblox.app/Contents/MacOS";
+            RobloxApplicationPath = "/tmp/Roblox.app/Contents/MacOS";
             NeedToReinstall = true;
         }
         json Mod_Data = GetModData();
@@ -716,6 +732,7 @@ void BootstrapperFrame::DoLogic()
         UpdateProgress(0.1);
         std::cout << "[INFO] Path: " << RobloxApplicationPath << "\n";
         std::string bootstrapDataFileData = FileChecker(GetBasePath + "/bootstrap_data.json");
+        bool shouldAllow = true;
         if (!bootstrapDataFileData.empty())
         {
             bootstrapData = json::parse(bootstrapDataFileData);
@@ -726,7 +743,8 @@ void BootstrapperFrame::DoLogic()
             if (bootstrapData.contains("Force Reinstall"))
             {
                 std::string ShouldReinstall = bootstrapData["Force Reinstall"].get<std::string>();
-                if (ShouldReinstall == "true")
+                ShouldReinstall = convertToLowercase(ShouldReinstall);
+                if (ShouldReinstall.find("true") != std::string::npos)
                 {
                     NeedToReinstall = true;
                 }
@@ -738,13 +756,25 @@ void BootstrapperFrame::DoLogic()
                     bootstrapDataFile.close();
                 }
             }
+            if (bootstrapData.contains("Allow Multiple Instance"))
+            {
+                std::string AllowMultiple = convertToLowercase(bootstrapData["Allow Multiple Instance"].get<std::string>());
+                if (AllowMultiple.find("true") != std::string::npos)
+                {
+                    shouldAllow = false;
+                }
+                else
+                {
+                    shouldAllow = true;
+                }
+            }
         }
-        if (RobloxApplicationPath != "/Applications/Roblox.app/Contents/MacOS")
+        if (RobloxApplicationPath != "/tmp/Roblox.app/Contents/MacOS")
         {
             dispatch_async(dispatch_get_main_queue(), ^{
                 std::cerr << "[ERROR] Thats not the right path!" << std::endl;
             });
-            std::string path = "The location of the Roblox MacOS folder isn't correct. The location of is /Applications/Roblox.app/Contents/MacOS";
+            std::string path = "The location of the Roblox MacOS folder isn't correct. The location of is /tmp/Roblox.app/Contents/MacOS";
             wxString toWxString(path.c_str(), wxConvUTF8);
             wxMessageBox(toWxString, "Error", wxOK | wxICON_ERROR);
             Close(true);
@@ -827,18 +857,18 @@ void BootstrapperFrame::DoLogic()
             wxString toWxString_warn(warn_todo.c_str(), wxConvUTF8);
             wxMessageBox(toWxString_warn, "Info", wxOK | wxICON_INFORMATION);
             do {
-                if (doesAppExist("/Applications/Roblox.app"))
+                if (doesAppExist("/tmp/Roblox.app"))
                 {
                     isDone = true;
                     break;
                 }
             } while (!isDone);
-            std::string defaultPath = "/Applications/Roblox.app/Contents/MacOS";
+            std::string defaultPath = "/tmp/Roblox.app/Contents/MacOS";
             RobloxApplicationPath = ShowOpenFileDialog("file://localhost"+defaultPath);
-            if (RobloxApplicationPath != "/Applications/Roblox.app/Contents/MacOS")
+            if (RobloxApplicationPath != "/tmp/Roblox.app/Contents/MacOS")
             {
                 std::cerr << "[ERROR] Thats not the right path!" << std::endl;
-                std::string path = "The location of the Roblox MacOS folder isn't correct. The location of is /Applications/Roblox.app/Contents/MacOS";
+                std::string path = "The location of the Roblox MacOS folder isn't correct. The location of is /tmp/Roblox.app/Contents/MacOS";
                 wxString toWxString(path.c_str(), wxConvUTF8);
                 wxMessageBox(toWxString, "Error", wxOK | wxICON_ERROR);
                 Close(true);
@@ -854,15 +884,16 @@ void BootstrapperFrame::DoLogic()
                 return;
             }
             ModifyPlist(Download + "/RobloxPlayer.app/Contents/Info.plist");
+            ChangeMultiInstance(Download + "/RobloxPlayer.app/Contents/Info.plist", shouldAllow);
             fixInstall(Download + "/RobloxPlayer.app");
             removeQuarantineAttribute(Download + "/RobloxPlayer.app");
             std::string pa_th  = Download + "/RobloxPlayer.app";
-            RenameFile(pa_th.c_str(), "/Applications/Roblox.app");
+            RenameFile(pa_th.c_str(), "/tmp/Roblox.app");
             std::this_thread::sleep_for(std::chrono::seconds(1));
-            std::string command1 = "chmod +x /Applications/Roblox.app/Contents/MacOS/RobloxPlayer";
-            std::string command2 = "chmod +x /Applications/Roblox.app/Contents/MacOS/RobloxCrashHandler";
-            std::string command3 = "chmod +x /Applications/Roblox.app/Contents/MacOS/Roblox.app/Contents/MacOS/Roblox";
-            std::string command4 = "chmod +x /Applications/Roblox.app/Contents/MacOS/RobloxPlayerInstaller.app/Contents/MacOS/RobloxPlayerInstaller";
+            std::string command1 = "chmod +x /tmp/Roblox.app/Contents/MacOS/RobloxPlayer";
+            std::string command2 = "chmod +x /tmp/Roblox.app/Contents/MacOS/RobloxCrashHandler";
+            std::string command3 = "chmod +x /tmp/Roblox.app/Contents/MacOS/Roblox.app/Contents/MacOS/Roblox";
+            std::string command4 = "chmod +x /tmp/Roblox.app/Contents/MacOS/RobloxPlayerInstaller.app/Contents/MacOS/RobloxPlayerInstaller";
             std::string fixCommand = ResourcePath + "/helper.sh";
             int result = system(command1.c_str());
             Check(result);
@@ -872,16 +903,17 @@ void BootstrapperFrame::DoLogic()
             Check(result);
             result = system(command4.c_str());
             Check(result);
-            std::string spam = "/Applications/Roblox.app";
+            std::string spam = "/tmp/Roblox.app";
             fixInstall(spam);
-            ModifyPlist("/Applications/Roblox.app/Contents/Info.plist");
-            std::string redo = "codesign --sign - --entitlements " + GetResourcesFolderPath() + "/Macblox.plist /Applications/Roblox.app --force --deep";
+            ChangeMultiInstance("/tmp/Roblox.app/Contents/Info.plist", shouldAllow);
+            ModifyPlist("/tmp/Roblox.app/Contents/Info.plist");
+            std::string redo = "codesign --sign - --entitlements " + GetResourcesFolderPath() + "/Macblox.plist /tmp/Roblox.app --force --deep";
             std::cout << "[INFO] Resigning command is: " << redo << std::endl;
             system(redo.c_str());
             removeQuarantineAttribute(spam);
-            if (!FolderExists("/Applications/Roblox.app/Contents/MacOS/ClientSettings"))
+            if (!FolderExists("/tmp/Roblox.app/Contents/MacOS/ClientSettings"))
             {
-                CreateFolder("/Applications/Roblox.app/Contents/MacOS/ClientSettings");
+                CreateFolder("/tmp/Roblox.app/Contents/MacOS/ClientSettings");
             }
         }
         else
@@ -895,17 +927,17 @@ void BootstrapperFrame::DoLogic()
         std::string ResourcePath = GetBasePath + "/Resources";
         std::string cursorVersion = "Current";  // Default version
         std::map<std::string, std::string> paths = {
-            {"ArrowCursor", "/Applications/Roblox.app/Contents/Resources/content/textures/Cursors/KeyboardMouse/ArrowCursor.png"},
-            {"ArrowFarCursor", "/Applications/Roblox.app/Contents/Resources/content/textures/Cursors/KeyboardMouse/ArrowFarCursor.png"},
-            {"OldWalk", "/Applications/Roblox.app/Contents/Resources/content/sounds/action_footsteps_plastic.mp3"},
-            {"OldJump", "/Applications/Roblox.app/Contents/Resources/content/sounds/action_jump.mp3"},
-            {"OldUp", "/Applications/Roblox.app/Contents/Resources/content/sounds/action_get_up.mp3"},
-            {"OldFall", "/Applications/Roblox.app/Contents/Resources/content/sounds/action_falling.mp3"},
-            {"OldLand", "/Applications/Roblox.app/Contents/Resources/content/sounds/action_jump_land.mp3"},
-            {"OldSwim", "/Applications/Roblox.app/Contents/Resources/content/sounds/action_swim.mp3"},
-            {"OldImpact","/Applications/Roblox.app/Contents/Resources/content/sounds/impact_water.mp3"},
-            {"OOF_Path", "/Applications/Roblox.app/Contents/Resources/content/sounds/ouch.ogg"},
-            {"Mobile_Path", "/Applications/Roblox.app/Contents/Resources/ExtraContent/places/Mobile.rbxl"}
+            {"ArrowCursor", "/tmp/Roblox.app/Contents/Resources/content/textures/Cursors/KeyboardMouse/ArrowCursor.png"},
+            {"ArrowFarCursor", "/tmp/Roblox.app/Contents/Resources/content/textures/Cursors/KeyboardMouse/ArrowFarCursor.png"},
+            {"OldWalk", "/tmp/Roblox.app/Contents/Resources/content/sounds/action_footsteps_plastic.mp3"},
+            {"OldJump", "/tmp/Roblox.app/Contents/Resources/content/sounds/action_jump.mp3"},
+            {"OldUp", "/tmp/Roblox.app/Contents/Resources/content/sounds/action_get_up.mp3"},
+            {"OldFall", "/tmp/Roblox.app/Contents/Resources/content/sounds/action_falling.mp3"},
+            {"OldLand", "/tmp/Roblox.app/Contents/Resources/content/sounds/action_jump_land.mp3"},
+            {"OldSwim", "/tmp/Roblox.app/Contents/Resources/content/sounds/action_swim.mp3"},
+            {"OldImpact","/tmp/Roblox.app/Contents/Resources/content/sounds/impact_water.mp3"},
+            {"OOF_Path", "/tmp/Roblox.app/Contents/Resources/content/sounds/ouch.ogg"},
+            {"Mobile_Path", "/tmp/Roblox.app/Contents/Resources/ExtraContent/places/Mobile.rbxl"}
         };
         if (Mod_Data["2006 Cursor"] == "true") {
             cursorVersion = "From2006";
@@ -935,7 +967,7 @@ void BootstrapperFrame::DoLogic()
         {
             std::string BaseCopyPath = ResourcePath + "/Mods/CurrentSounds";
             bool shouldDelete = Mod_Data["Old Death sound"] == "true" ? false : true;
-            copyFolderContents(BaseCopyPath, "/Applications/Roblox.app/Contents/Resources/content/sounds/", shouldDelete);
+            copyFolderContents(BaseCopyPath, "/tmp/Roblox.app/Contents/Resources/content/sounds/", shouldDelete);
         }
 
         if (Mod_Data["Old Avatar Background"] == "true")
@@ -955,7 +987,7 @@ void BootstrapperFrame::DoLogic()
         // Copy both the ArrowCursor and ArrowFarCursor files
         RenameFile(ArrowCursor.c_str(), paths["ArrowCursor"].c_str());
         RenameFile(ArrowFarCursor.c_str(), paths["ArrowFarCursor"].c_str());
-        copyFile(GetBasePath + "/data.json", "/Applications/Roblox.app/Contents/MacOS/ClientSettings/ClientAppSettings.json");
+        copyFile(GetBasePath + "/data.json", "/tmp/Roblox.app/Contents/MacOS/ClientSettings/ClientAppSettings.json");
         searchFolders(ModFolder, false);
         GetCurrentCountOfModFolder(ModFolder, GetBasePath);
         std::this_thread::sleep_for(std::chrono::seconds(2));

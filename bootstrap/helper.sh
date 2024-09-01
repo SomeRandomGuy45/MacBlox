@@ -4,4 +4,4 @@
     does stuff
 
 '
-xattr -c /Applications/Roblox.app
+xattr -c /tmp/Roblox.app

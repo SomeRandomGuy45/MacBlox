@@ -1,5 +1,6 @@
 #import "AppDelegate.h"
 #import "helper.h"
+#import "Logger.h"
 #import <Foundation/Foundation.h>
 
 std::string finalURLString = "";
@@ -93,91 +94,6 @@ void checkAndCloseRoblox() {
     terminateApplicationByName("Roblox");
 }
 
-std::string currentDateTime_() {
-    time_t now = time(0);
-    struct tm tstruct;
-    char buf[80];
-    if (localtime_r(&now, &tstruct) == nullptr) {
-        return "[ERROR] Failed to get local time";
-    }
-    if (strftime(buf, sizeof(buf), "%Y-%m-%d-%H-%M-%S", &tstruct) == 0) {
-        return "[ERROR] Failed to format time";
-    }
-    return buf;
-}
-
-std::string getLogPath_() {
-    std::string currentDate = currentDateTime_();
-    std::string path = "/Users/" + std::string(getenv("USER")) + "/Library/Logs/Macblox";
-    if (std::filesystem::exists(path)) {
-        NSLog(@"[INFO] Folder already exists.");
-    } else {
-        if (std::filesystem::create_directory(path)) {
-            NSLog(@"[INFO] Folder created successfully.");
-        } else {
-            NSLog(@"[ERROR] Failed to create folder.");
-            return "";
-        }
-    }
-    return path + "/" + currentDate + "_runner_ad_task_log.log";
-}
-
-std::string filePath_ = getLogPath_();
-
-void CustomNSLog_(NSString *format, ...) {
-    // Open the file in append mode
-    FILE *logFile = fopen(filePath_.c_str(), "a");
-
-    if (logFile != nullptr) {
-        va_list args;
-        va_start(args, format);
-
-        // Create an NSString with the formatted message
-        NSString *formattedMessage = [[NSString alloc] initWithFormat:format arguments:args];
-
-        // Get the current time with microseconds
-        struct timeval tv;
-        gettimeofday(&tv, NULL);
-
-        // Format the time
-        struct tm *timeinfo;
-        char timeBuffer[80];
-        timeinfo = localtime(&tv.tv_sec);
-        strftime(timeBuffer, sizeof(timeBuffer), "%Y-%m-%d %H:%M:%S", timeinfo);
-
-        // Calculate milliseconds
-        int milliseconds = tv.tv_usec / 1000;
-
-        // Get the current process ID and process name
-        pid_t pid = [[NSProcessInfo processInfo] processIdentifier];
-        NSString *processName = [[NSProcessInfo processInfo] processName];
-
-        // Format the log message to match the NSLog style
-        NSString *logEntry = [NSString stringWithFormat:@"%s.%03d %s[%d:%x] %s\n",
-                              timeBuffer,
-                              milliseconds,
-                              [processName UTF8String],
-                              pid,
-                              (unsigned int)pthread_mach_thread_np(pthread_self()),
-                              [formattedMessage UTF8String]];
-
-        // Print to the console
-        fprintf(stdout, "%s", [logEntry UTF8String]);
-
-        // Print to the file
-        fprintf(logFile, "%s", [logEntry UTF8String]);
-
-        va_end(args);
-
-        // Close the file
-        fclose(logFile);
-    } else {
-        NSLog(@"[ERROR] Failed to open file for logging: %s", filePath_.c_str());
-    }
-}
-
-#define NSLog(format, ...) CustomNSLog_(format, ##__VA_ARGS__)
-
 @implementation AppDelegate
 
 - (instancetype)initWithArguments:(NSArray *)arguments {
@@ -206,54 +122,12 @@ void CustomNSLog_(NSString *format, ...) {
         NSLog(@"[INFO] Decoded URL: %@", decodedURLString);
         NSLog(@"[INFO] URL scheme: %@", [url scheme]);
 
-        // Check if the scheme is "roblox-player"
-        if ([[url scheme] isEqualToString:@"roblox-player"] || [urlString containsString:@"roblox-player://"]) {
-            // Manually parse the query items
-            NSString *queryString = [[decodedURLString componentsSeparatedByString:@"?"] lastObject];
-            NSArray<NSString *> *queryItems = [queryString componentsSeparatedByString:@"&"];
-            
-            NSString *newScheme = @"roblox";
-            NSString *newPath = @"//experiences/start";
-            NSString *placeIdValue = nil;
-            NSString *accessCodeValue = nil;
-            
-            for (NSString *queryItem in queryItems) {
-                NSArray<NSString *> *pair = [queryItem componentsSeparatedByString:@"="];
-                if ([pair count] == 2) {
-                    NSString *key = pair[0];
-                    NSString *value = pair[1];
-                    NSLog(@"[INFO] Found item: %@ = %@", key, value);
-
-                    if ([key isEqualToString:@"placeId"] || [key isEqualToString:@"roblox-player://placeId"]) {
-                        placeIdValue = value;
-                    } else if ([key isEqualToString:@"gameId"]) {
-                        accessCodeValue = value;
-                    }
-                }
-            }
-            
-            if (placeIdValue) {
-                // Construct the new URL
-                NSMutableString *newURLString = [NSMutableString stringWithFormat:@"%@:%@?placeId=%@", newScheme, newPath, placeIdValue];
-                
-                // Add accessCode as gameInstanceId if it exists
-                if (accessCodeValue) {
-                    [newURLString appendFormat:@"&gameInstanceId=%@", accessCodeValue];
-                }
-                
-                finalURLString = std::string([newURLString UTF8String]);
-                if (runAppleScriptAndGetOutput(checkIfRobloxIsRunning) == "true")
-                {
-                    std::string run_to_open_lol = "open \"" + finalURLString + "\"";
-                    NSLog(@"[INFO] Ok got it running this command %s", run_to_open_lol.c_str());
-                    system(run_to_open_lol.c_str());
-                }
-
-                // Log the final URL
-                NSLog(@"[INFO] Modified URL: %s", finalURLString.c_str());
-            } else {
-                NSLog(@"[WARN] placeId not found in the URL");
-            }
+        finalURLString = std::string([decodedURLString UTF8String]);
+        if (runAppleScriptAndGetOutput(checkIfRobloxIsRunning) == "true")
+        {
+            std::string run_to_open_lol = "open -a /tmp/Roblox.app \"" + finalURLString + "\"";
+            NSLog(@"[INFO] Ok got it running this command %s", run_to_open_lol.c_str());
+            system(run_to_open_lol.c_str());
         }
     }
 }

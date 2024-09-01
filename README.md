@@ -39,6 +39,7 @@ npm install -g appdmg
 
 # Credits
 * Bloxstrap for some code and inspiration [Github](https://github.com/pizzaboxer/bloxstrap)
+* multi-roblox-macos (for multi launcher and opening a new window) [Github](https://github.com/Insadem/multi-roblox-macos/)
 * Roblox Studio Mod Manager [Github](https://github.com/MaximumADHD/Roblox-Studio-Mod-Manager)
 * appify.sh [Github](https://gist.github.com/advorak/1403124)
 * nlohmann json [Github](https://github.com/nlohmann/json)
