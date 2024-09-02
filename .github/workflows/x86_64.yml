@@ -46,4 +46,4 @@ jobs:
       with:
           name: Macblox
           path: |
-                Build.zip
+                ./Build.zip
