@@ -37,13 +37,11 @@ jobs:
           SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
           SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
 
-      - name: Enter build dir
+      - name: Clean build directory
         run: |
-            cd "Smart Join"
-            echo "$PWD"
+          rm -rf ~/work/MacBlox/MacBlox/Smart\ Join/Build
 
       - name: Build
         run: |
-          cd ~/work/MacBlox/MacBlox/Smart\ Join  # Adjust the path if needed
-          xcodebuild -project "Smart Join.xcodeproj" -scheme "Smart Join" -configuration Release -derivedDataPath ~/work/MacBlox/MacBlox/Smart\ Join
-          echo "$PWD"
+          cd ~/work/MacBlox/MacBlox/Smart\ Join
+          xcodebuild -project "Smart Join.xcodeproj" -scheme "Smart Join" -configuration Release -derivedDataPath Build/DerivedData
