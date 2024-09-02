@@ -17,7 +17,8 @@ jobs:
       - name : Enter build dir
         run : |
             cd "Smart Join"
+            echo "$PWD"
       - name: Build
         run: |
-          xcodebuild -project ~/work/MacBlox/MacBlox/MacBlox/"Smart Join"/"Smart Join.xcodeproj" -scheme "Smart Join" -configuration Release -derivedDataPath ~/work/MacBlox/MacBlox/MacBlox/"Smart Join"
+          xcodebuild -project ~/work/MacBlox/MacBlox/"Smart Join"/"Smart Join.xcodeproj" -scheme "Smart Join" -configuration Release -derivedDataPath ~/work/MacBlox/MacBlox/"Smart Join"
           echo "$PWD"
