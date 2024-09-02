@@ -2,3 +2,7 @@
 xcuserdata
 *.dSYM
 build
+*.app
+Logs
+*.noindex
+info.plist
