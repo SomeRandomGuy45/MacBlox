@@ -38,11 +38,12 @@ jobs:
         git clone https://github.com/SomeRandomGuy45/MacBlox.git
         cd MacBlox
         make
+        make create_smart_app
         echo "[INFO] Finished building MacBlox"
-        ls ~/work/MacBlox/MacBlox/MacBlox/build
+        tar -cvf Build.tar build/ --exclude='*.DS_Store'
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
           name: Build
-          path: ~/work/MacBlox/MacBlox/MacBlox/build
+          path: ~/work/MacBlox/MacBlox/MacBlox/Build.tar
