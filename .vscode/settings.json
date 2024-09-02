@@ -105,7 +105,10 @@
         "text_encoding": "cpp",
         "cinttypes": "cpp",
         "hash_map": "cpp",
-        "__memory": "cpp"
+        "__memory": "cpp",
+        "*.defs": "cpp",
+        "*.x": "cpp",
+        "*.mm": "c"
     },
     "java.project.sourcePaths": [
         ""

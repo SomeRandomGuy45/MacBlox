@@ -219,6 +219,33 @@ bool isAppRunning(const std::string &appName) {
     return false; // Application is not running
 }
 
+std::string PromptUserForRobloxID() {
+    // Create and configure the alert
+    NSAlert *alert = [[NSAlert alloc] init];
+    [alert setMessageText:@"Enter Roblox User ID"];
+    [alert setInformativeText:@"Please enter the Roblox User ID:"];
+    [alert addButtonWithTitle:@"OK"];
+    [alert addButtonWithTitle:@"Cancel"];
+    
+    // Create a text field for user input
+    NSTextField *inputField = [[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 300, 24)];
+    [inputField setPlaceholderString:@"Roblox User ID"];
+    
+    // Set up the dialog's accessory view
+    [alert setAccessoryView:inputField];
+    
+    // Run the alert and check the user's response
+    NSInteger button = [alert runModal];
+    if (button == NSAlertFirstButtonReturn) {
+        // User pressed OK, get the text from the input field
+        std::string userID = [[inputField stringValue] UTF8String];
+        return userID;
+    } else {
+        // User pressed Cancel or closed the dialog
+        return "";
+    }
+}
+
 std::string downloadFile_WITHOUT_DESTINATION(const char* urlString) {
     @autoreleasepool {
         NSString *urlStr = [NSString stringWithUTF8String:urlString];

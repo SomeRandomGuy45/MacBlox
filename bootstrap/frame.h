@@ -93,6 +93,8 @@ public:
     void LoadBootstrapData(json BootStrapData);
 private:
     void BootstrapData1(json BootStrapData);
+    void DoFontLogic();
+    void DoEmojiLogic();
     std::string GetModFolder();
     bool isDone = false;
     bool NeedToReinstall = false;
@@ -107,6 +109,14 @@ private:
     wxPanel* panel = nullptr;
     wxStaticText* statusText = nullptr;
     wxGauge* progressGauge = nullptr;
+    std::unordered_map<std::string, std::string> EmojiDownloads = {
+        {"Catmoji", "https://github.com/bloxstraplabs/rbxcustom-fontemojis/releases/download/my-phone-is-78-percent/Catmoji.ttf"},
+        {"Windows 10", "https://github.com/bloxstraplabs/rbxcustom-fontemojis/releases/download/my-phone-is-78-percent/Win10April2018SegoeUIEmoji.ttf"},
+        {"Windows 11", "https://github.com/bloxstraplabs/rbxcustom-fontemojis/releases/download/my-phone-is-78-percent/Win1122H2SegoeUIEmoji.ttf"},
+        {"Windows 8.1", "https://github.com/bloxstraplabs/rbxcustom-fontemojis/releases/download/my-phone-is-78-percent/Win8.1SegoeUIEmoji.ttf"},
+        {"Default", "https://github.com/SomeRandomGuy45/resources/releases/download/t/TwemojiMozilla.ttf"},
+    };
+    json Mod_Data;
     //Fix all of this
     int bootStrapVersion = 0;
     int statusText_X = 227;
@@ -534,58 +544,12 @@ std::string modifyPath(const std::string& path) {
 
     // Remove everything before and including "ModFolder"
     std::string newPath = path.substr(pos + std::string("ModFolder").length());
-
-    // Map with specific values to check in the path
-    std::map<std::string, std::string> cool_stuff = {
-        {"value1", "PlatformContent"},
-        {"value2", "ExtraContent"},
-        {"value3", "Content"},
-    };
-
-    // Split the path into segments by '/'
-    std::istringstream stream(newPath);
-    std::string segment;
-    std::vector<std::string> segments;
-    
-    while (std::getline(stream, segment, '/')) {
-        segments.push_back(segment);
+    std::cout << "[INFO] Path is: " << newPath << std::endl;
+    if (newPath.substr(0, 5) == "fonts")
+    {
+        newPath = "content/" + newPath;
     }
-
-    if (segments.size() < 2) {
-        return newPath;  // If there are fewer than two segments, return the original newPath
-    }
-
-    // Check if the second segment matches any value in cool_stuff
-    bool shouldContinue = false;
-    std::string secondSegment = segments[1];
-    for (const auto& [key, value] : cool_stuff) {
-        if (secondSegment == value) {
-            shouldContinue = true;
-            break;
-        }
-    }
-
-    std::cout << "[INFO] Checking: " << (shouldContinue ? "yes" : "no") << std::endl;
-
-    if (!shouldContinue) {
-        // Remove two segments from the path
-        segments.erase(segments.begin(), segments.begin() + 2);
-
-        // Reassemble the path from remaining segments
-        std::ostringstream newPathStream;
-        for (size_t i = 0; i < segments.size(); ++i) {
-            if (i > 0) {
-                newPathStream << '/';
-            }
-            newPathStream << segments[i];
-        }
-
-        std::cout << "[INFO] Path is: " << newPathStream.str() << std::endl;
-        return newPathStream.str();
-    } else {
-        std::cout << "[INFO] Path is: " << newPath << std::endl;
-        return newPath;
-    }
+    return newPath;
 }
 
 
@@ -667,6 +631,87 @@ int countCurrentMods(std::string& directoryPath)
     return folderCount;
 }
 
+void BootstrapperFrame::DoEmojiLogic() {
+    std::string DownloadPath = "/tmp/Roblox.app/Contents/Resources/content/fonts/TwemojiMozilla.ttf";
+    std::string TypeOfDownload = "Default";  // Default type
+
+    // Mapping Mod_Data keys to their corresponding download types
+    static const std::unordered_map<std::string, std::string> emojiTypes = {
+        {"Use Windows 11 Emoji", "Windows 11"},
+        {"Use Windows 10 Emoji", "Windows 10"},
+        {"Use Windows 8.1 Emoji", "Windows 8.1"},
+        {"Use Catmoji Emoji", "Catmoji"},
+        {"Use Default Emoji", "Default"}
+    };
+
+    // Iterate over the map to find the first matching key with value "true"
+    for (const auto& [key, downloadType] : emojiTypes) {
+        if (Mod_Data[key] == "true") {
+            TypeOfDownload = downloadType;
+            break;
+        }
+    }
+
+    std::cout << "[INFO] Downloading file to " << DownloadPath << ". With URL: " << EmojiDownloads[TypeOfDownload] << "\n";
+
+    downloadFile(EmojiDownloads[TypeOfDownload].c_str(), DownloadPath.c_str());
+
+}
+
+void BootstrapperFrame::DoFontLogic()
+{
+    //https://github.com/pizzaboxer/bloxstrap/blob/6d8d4824498853952d133650ab165fd89f3ef0e8/Bloxstrap/Bootstrapper.cs#L886
+    std::string modFamilyFolder = fs::path(ModFolder) / "content/fonts/families";
+    if (fs::exists(modFamilyFolder))
+    {
+        fs::remove_all(modFamilyFolder);
+    }
+    if (fs::exists(ModFolder + "/content/fonts/CustomFont.ttf")) {
+        fs::create_directories(modFamilyFolder);
+        for (const auto& jsonFilePath : fs::directory_iterator("/tmp/Roblox.app/Contents/Resources/content/fonts/families"))
+        {
+            std::string jsonFilename = jsonFilePath.path().filename().string();
+            std::string modFilepath = fs::path(modFamilyFolder) / jsonFilename;
+            if (fs::exists(modFilepath))
+                continue;
+            std::cout << "[INFO] Setting font for " << modFilepath << "\n";
+            //std::ifstream inputFile(jsonFilePath.path());
+            std::string inputFile = FileChecker(jsonFilePath.path());
+            if (inputFile.empty())
+            {
+                std::cout << "[ERROR] Couldn't open font file\n";
+                continue;
+            }
+            std::cout << "[INFO] Font Data is: " << inputFile << "\n";
+            json fontFamilyData = json::parse(inputFile);
+
+            if (!fontFamilyData.contains("faces"))
+            {
+                std::cout << "[ERROR] Couldn't find faces\n";
+                continue;
+            }
+
+            for (auto& fontFace : fontFamilyData["faces"]) {
+                fontFace["assetId"] = "rbxasset://fonts/CustomFont.ttf";
+            }
+
+            std::ofstream outputFile(modFilepath);
+            if (!outputFile.is_open())
+            {
+                std::cout << "[ERROR] Couldn't open output font file\n";
+                continue;
+            }
+
+            outputFile << fontFamilyData.dump(4);
+            outputFile.close();
+        }
+    }
+    else if (fs::exists(modFamilyFolder))
+    {
+        fs::remove_all(modFamilyFolder);
+    }
+}
+
 std::string convertToLowercase(const std::string& str) 
 { 
     std::string result = ""; 
@@ -705,7 +750,7 @@ void BootstrapperFrame::DoLogic()
             RobloxApplicationPath = "/tmp/Roblox.app/Contents/MacOS";
             NeedToReinstall = true;
         }
-        json Mod_Data = GetModData();
+        Mod_Data = GetModData();
         std::cout << "[INFO] Mod data is: " << Mod_Data.dump(4) << "\n";
         if (FolderExists(GetBasePath + "/Resources"))
         {
@@ -924,6 +969,8 @@ void BootstrapperFrame::DoLogic()
         }
         std::this_thread::sleep_for(std::chrono::seconds(2));
         SetStatusText("Adding Modifications");
+        DoFontLogic();
+        DoEmojiLogic();
         std::string ResourcePath = GetBasePath + "/Resources";
         std::string cursorVersion = "Current";  // Default version
         std::map<std::string, std::string> paths = {

@@ -17,6 +17,7 @@
 @synthesize gameId;
 @synthesize customInstallPath;
 @synthesize useLowPing;
+@synthesize JoinFriend;
 @synthesize serverArrayFPS;
 @synthesize serverArrayPING;
 
@@ -25,6 +26,7 @@
     self.serverArrayFPS = [NSMutableArray array];
     self.serverArrayPING = [NSMutableArray array];
     self.useLowPing = YES;
+    self.JoinFriend = NO;
     self.main_helper = [Main_Helper alloc];
     if ([self.main_helper CheckIfRobloxIsRunning] == YES)
     {
@@ -85,7 +87,15 @@
         FoundRobloxApp = YES;
     }
     NSString *url = @"https://games.roblox.com/v1/games/";
-    NSString *Server = @"/servers/0?sortOrder=2&excludeFullGames=true&limit=25";
+    NSString *Server;
+    if (self.JoinFriend)
+    {
+        Server  = @"/servers/1?sortOrder=2&excludeFullGames=true&limit=25";
+    }
+    else
+    {
+        Server  = @"/servers/0?sortOrder=2&excludeFullGames=true&limit=25";
+    }
     NSString *full_url = [NSString stringWithFormat:@"%@%@%@", url, self.gameId, Server];
     NSLog(@"[INFO] Full URL is %@", full_url);
     NSString* downloadData = [self.main_helper downloadFileWithoutDestination:full_url];
@@ -160,6 +170,11 @@
     NSString *robloxOpen = @"\"roblox://experiences/start?placeId=";
     NSString *robloxEndCommand = @"&gameInstanceId=";
     NSString *FullOpenURL = [NSString stringWithFormat:@"%@%@%@%@%@\"", openCommand, robloxOpen, self.gameId, robloxEndCommand, serverId];
+    if ([self.customInstallPath isEqualTo:@"/tmp/Roblox.app"] == NO)
+    {
+        openCommand = @"open -a ";
+        FullOpenURL = [NSString stringWithFormat:@"%@%@%@%@%@%@\"", openCommand, self.customInstallPath, robloxOpen, self.gameId, robloxEndCommand, serverId];
+    }
     NSLog(@"[INFO] Command going to run is: %@", FullOpenURL);
     [self.main_helper RunScript:FullOpenURL];
     //[NSApp terminate:self];

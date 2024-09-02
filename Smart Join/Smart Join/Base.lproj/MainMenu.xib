@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="32700.99.1234" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
+        <deployment identifier="macosx"/>
         <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="22690"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
@@ -17,10 +18,16 @@
                 <outlet property="closeButton" destination="tFg-Xf-zsg" id="SIR-km-n2C"/>
                 <outlet property="gameIdText" destination="BJ0-td-6cC" id="uYD-FB-Fv9"/>
                 <outlet property="installPathText" destination="1CY-Vs-qw5" id="Fbk-Bs-tow"/>
+                <outlet property="joinButton" destination="tFg-Xf-zsg" id="fGE-yE-DXK"/>
                 <outlet property="window" destination="QvC-M9-y7g" id="gIp-Ho-8D9"/>
             </connections>
         </customObject>
         <customObject id="YLy-65-1bz" customClass="NSFontManager"/>
+        <textFieldCell lineBreakMode="clipping" title="Label" id="l69-kt-28M">
+            <font key="font" usesAppearanceFont="YES"/>
+            <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+        </textFieldCell>
         <menu title="Main Menu" systemMenu="main" id="AYu-sK-qS6">
             <items>
                 <menuItem title="Smart Join" id="1Xt-HY-uBw">
@@ -73,14 +80,14 @@
         <window title="Smart Join" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" animationBehavior="default" id="QvC-M9-y7g">
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
-            <rect key="contentRect" x="335" y="390" width="480" height="217"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1920" height="1080"/>
+            <rect key="contentRect" x="335" y="390" width="480" height="180"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="1920" height="1055"/>
             <view key="contentView" id="EiT-Mj-1SZ">
-                <rect key="frame" x="0.0" y="0.0" width="480" height="217"/>
+                <rect key="frame" x="0.0" y="0.0" width="480" height="180"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="BJ0-td-6cC">
-                        <rect key="frame" x="92" y="165" width="374" height="21"/>
+                        <rect key="frame" x="92" y="128" width="374" height="21"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" drawsBackground="YES" id="t4d-N8-MCG">
                             <font key="font" metaFont="system"/>
@@ -92,7 +99,7 @@
                         </connections>
                     </textField>
                     <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="vXB-gv-u7m">
-                        <rect key="frame" x="14" y="168" width="76" height="16"/>
+                        <rect key="frame" x="14" y="131" width="76" height="16"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <textFieldCell key="cell" lineBreakMode="clipping" alignment="center" title="Game URL:" id="rLa-4v-MAe">
                             <font key="font" metaFont="system"/>
@@ -103,19 +110,8 @@
                             <action selector="gameIdText:" target="Voe-Tx-rLC" id="wBN-ub-3aR"/>
                         </connections>
                     </textField>
-                    <button verticalHuggingPriority="750" id="tFg-Xf-zsg">
-                        <rect key="frame" x="117" y="20" width="246" height="32"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <buttonCell key="cell" type="push" title="Open Roblox" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="7YP-bS-GFV">
-                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                            <font key="font" metaFont="system"/>
-                        </buttonCell>
-                        <connections>
-                            <action selector="Close:" target="Voe-Tx-rLC" id="sDC-nd-LRY"/>
-                        </connections>
-                    </button>
                     <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="PPe-dh-a2u">
-                        <rect key="frame" x="14" y="126" width="166" height="16"/>
+                        <rect key="frame" x="14" y="89" width="166" height="16"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <textFieldCell key="cell" lineBreakMode="clipping" title="Custom Roblox Install Path" id="ocH-yB-Upj">
                             <font key="font" metaFont="system"/>
@@ -124,7 +120,7 @@
                         </textFieldCell>
                     </textField>
                     <textField focusRingType="none" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="1CY-Vs-qw5">
-                        <rect key="frame" x="192" y="123" width="274" height="21"/>
+                        <rect key="frame" x="192" y="86" width="274" height="21"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" drawsBackground="YES" id="6gQ-Z0-kMG">
                             <font key="font" metaFont="system"/>
@@ -136,7 +132,7 @@
                         </connections>
                     </textField>
                     <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="02Q-5n-HmV">
-                        <rect key="frame" x="54" y="68" width="131" height="32"/>
+                        <rect key="frame" x="54" y="31" width="131" height="32"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <buttonCell key="cell" type="push" title="High FPS" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="JTY-GE-XrZ">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -147,7 +143,7 @@
                         </connections>
                     </button>
                     <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="kwm-2H-rBg">
-                        <rect key="frame" x="297" y="68" width="131" height="32"/>
+                        <rect key="frame" x="297" y="31" width="131" height="32"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <buttonCell key="cell" type="push" title="Low Ping" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="aNn-sc-xih">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -157,12 +153,23 @@
                             <action selector="lowping:" target="Voe-Tx-rLC" id="aRe-Yu-7Lt"/>
                         </connections>
                     </button>
+                    <button verticalHuggingPriority="750" id="tFg-Xf-zsg">
+                        <rect key="frame" x="117" y="-1" width="246" height="32"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <buttonCell key="cell" type="push" title="Open Roblox" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="7YP-bS-GFV">
+                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                            <font key="font" metaFont="system"/>
+                        </buttonCell>
+                        <connections>
+                            <action selector="Close:" target="Voe-Tx-rLC" id="sDC-nd-LRY"/>
+                        </connections>
+                    </button>
                 </subviews>
             </view>
             <connections>
                 <outlet property="delegate" destination="Voe-Tx-rLC" id="top-28-M4D"/>
             </connections>
-            <point key="canvasLocation" x="200" y="328.5"/>
+            <point key="canvasLocation" x="200" y="310"/>
         </window>
     </objects>
 </document>

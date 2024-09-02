@@ -82,7 +82,7 @@ void addAppToDock() {
 
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
-    addAppToDock();
+    //addAppToDock();
     std::string command__ = "open " + getParentFolderOfApp() + "/Play.app --args --supercoolhackthing";
     std::cout << "[INFO] Command is: " << command__ << "\n";
     system(command__.c_str());

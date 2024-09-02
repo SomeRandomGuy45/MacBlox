@@ -13,6 +13,7 @@
     @property (nonatomic, strong) NSString* gameId;
     @property (nonatomic, strong) NSString* customInstallPath;
     @property (nonatomic) BOOL useLowPing;
+    @property (nonatomic) BOOL JoinFriend;
     @property (nonatomic, strong) Main_Helper *main_helper;
     @property (weak) IBOutlet NSTextField* gameIdText;
     - (IBAction)gameId:(id)sender;

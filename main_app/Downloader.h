@@ -14,7 +14,7 @@ void runApp(const std::string &launchPath, bool Check);
 bool unzipFile(const char* zipFilePath, const char* destinationPath);
 bool isAppRunning(const std::string &appName);
 std::string downloadFile_WITHOUT_DESTINATION(const char* urlString);
-
+std::string PromptUserForRobloxID();
 std::string GetMacOSAppearance();
 std::string FileChecker(std::string path);
 std::string GetResourcesFolderPath();

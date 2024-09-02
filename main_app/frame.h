@@ -10,7 +10,9 @@
 #include <libgen.h>
 #include <fstream>
 #include <libproc.h>
+#include <unordered_map>
 #include <string>
+#include <functional>
 #include "EditableListBox.h"
 #include "Downloader.h"
 #include "json.hpp"
@@ -74,6 +76,8 @@ private:
     void OnRightClickDisable(wxMouseEvent& event);
     void SetSlider(std::string selected);
     void SetLight(std::string selected);
+    void SetEmoji(std::string selected);
+    void ProcessModName(const std::string& modName);
     wxPanel* panel = nullptr;
     wxButton* button = nullptr;
     wxGridSizer* gridSizer = nullptr; 
@@ -103,6 +107,11 @@ private:
         {"Use Shadowmap Lighting", false},
         {"Use Future Lighting", false},
         {"Use Game Lighting", false},
+        {"Use Catmoji Emoji", false},
+        {"Use Windows 11 Emoji", false},
+        {"Use Windows 10 Emoji", false},
+        {"Use Windows 8.1 Emoji", false},
+        {"Use Default Emoji", false},
     };
     std::map<std::string, bool> BootstrapEnable = {
         {"Force Reinstall", false},
@@ -114,7 +123,25 @@ private:
         BtnID_START = 3  // Start button IDs from a different base
     };
     json bootstrapJson;
+private:
+    std::unordered_map<std::string, std::function<void(const std::string&)>> actions = {
+        {"Bootstrap icon", std::bind(&MainFrame::SetBootstrapIcon, this, std::placeholders::_1)},
+        {"Menu", std::bind(&MainFrame::SetMenu, this, std::placeholders::_1)},
+        {"Slider", std::bind(&MainFrame::SetSlider, this, std::placeholders::_1)},
+        {"Lighting", std::bind(&MainFrame::SetLight, this, std::placeholders::_1)},
+        {"Emoji", std::bind(&MainFrame::SetEmoji, this, std::placeholders::_1)}
+    };
 };
+
+void MainFrame::SetEmoji(std::string selected)
+{
+    for (auto& mod : modsEnabled) {
+        if (mod.first.find("Emoji") != std::string::npos && mod.first != selected) {
+            mod.second = false;
+        }
+    }
+    modsEnabled[selected] = true;
+}
 
 void MainFrame::SetLight(std::string selected)
 {
@@ -249,6 +276,10 @@ void MainFrame::SetMenu(std::string selected)
             ClientAppSettings["FFlagEnableMenuControlsABTest"] = "False";
             ClientAppSettings["FFlagEnableV3MenuABTest3"] = "False";
             ClientAppSettings["FFlagEnableInGameMenuChromeABTest3"] = "False";
+            if (ClientAppSettings.contains("FStringNewInGameMenuForcedUserIds"))
+            {
+                ClientAppSettings.erase("FStringNewInGameMenuForcedUserIds");
+            }
         }
         else if (selected == "V2 Menu")
         {
@@ -256,9 +287,14 @@ void MainFrame::SetMenu(std::string selected)
             ClientAppSettings["FFlagEnableInGameMenuControls"] = "False";
             ClientAppSettings["FFlagEnableInGameMenuModernization"] = "False";
             ClientAppSettings["FFlagEnableInGameMenuChrome"] = "False";
-            ClientAppSettings["FFlagEnableMenuControlsABTest"] = "False";
-            ClientAppSettings["FFlagEnableV3MenuABTest3"] = "False";
-            ClientAppSettings["FFlagEnableInGameMenuChromeABTest3"] = "False";
+            ClientAppSettings["FFlagEnableMenuControlsABTest"] = "True";
+            ClientAppSettings["FFlagEnableV3MenuABTest3"] = "True";
+            ClientAppSettings["FFlagEnableInGameMenuChromeABTest3"] = "True";
+            if (!ClientAppSettings.contains("FStringNewInGameMenuForcedUserIds"))
+            {
+                std::string USER_ID = PromptUserForRobloxID();
+                ClientAppSettings["FStringNewInGameMenuForcedUserIds"] = USER_ID;
+            }
         }
         else if (selected == "V4 Menu")
         {
@@ -269,6 +305,10 @@ void MainFrame::SetMenu(std::string selected)
             ClientAppSettings["FFlagEnableMenuControlsABTest"] = "False";
             ClientAppSettings["FFlagEnableV3MenuABTest3"] = "False";
             ClientAppSettings["FFlagEnableInGameMenuChromeABTest3"] = "False";
+            if (ClientAppSettings.contains("FStringNewInGameMenuForcedUserIds"))
+            {
+                ClientAppSettings.erase("FStringNewInGameMenuForcedUserIds");
+            }
         }
         else if (selected == "Chrome Menu")
         {
@@ -279,6 +319,10 @@ void MainFrame::SetMenu(std::string selected)
             ClientAppSettings["FFlagEnableMenuControlsABTest"] = "False";
             ClientAppSettings["FFlagEnableV3MenuABTest3"] = "False";
             ClientAppSettings["FFlagEnableInGameMenuChromeABTest3"] = "False";
+            if (ClientAppSettings.contains("FStringNewInGameMenuForcedUserIds"))
+            {
+                ClientAppSettings.erase("FStringNewInGameMenuForcedUserIds");
+            }
         }
         std::ofstream ClientJSONDump(GetBasePath() + "/data.json");
         if (ClientJSONDump.is_open())
@@ -529,6 +573,16 @@ void MainFrame::ReinitializePanels()
     panel->Layout();
 }
 
+void MainFrame::ProcessModName(const std::string& modName) {
+    // Iterate through the map to find and execute the corresponding function
+    for (const auto& [key, action] : actions) {
+        if (modName.find(key) != std::string::npos) {
+            action(modName);
+            return; // Exit after the first match
+        }
+    }
+}
+
 void MainFrame::OnBootstrapSelection(wxCommandEvent& event)
 {
     int selectionIndex = event.GetInt();
@@ -579,22 +633,7 @@ void MainFrame::OnModSelection(wxCommandEvent& event)
         }
         modsEnabled[modName] = EditBox->IsChecked(selectionIndex);
     }
-    if (modName.find("Bootstrap icon") != std::string::npos)
-    {
-        SetBootstrapIcon(modName);
-    }
-    else if (modName.find("Menu") != std::string::npos)
-    {
-        SetMenu(modName);
-    }
-    else if (modName.find("Slider") != std::string::npos)
-    {
-        SetSlider(modName);
-    }
-    else if (modName.find("Lighting") != std::string::npos)
-    {
-        SetLight(modName);
-    }
+    ProcessModName(modName);
     EditBox->Clear();
     // Loop through the modsEnabled map and print the status
     std::cout << "[INFO] Current mod statuses:" << std::endl;
