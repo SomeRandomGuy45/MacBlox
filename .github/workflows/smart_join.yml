@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    name: Build using xcodebuild command
+    name: Build and analyse default scheme using xcodebuild command
     runs-on: macos-latest
 
     steps:
@@ -20,15 +20,21 @@ jobs:
             echo "$SIGNING_CERTIFICATE" | base64 --decode > macos_development.cer
             security import macos_development.cer -k ~/Library/Keychains/login.keychain -T /usr/bin/codesign
             echo "$SIGNING_KEY" | base64 --decode > macos_development.p12
-            security import macos_development.p12 -P "$SIGNING_KEY_PASSWORD" -k ~/Library/Keychains/login.keychain
+            
+            # Decode the password and use it without printing it
+            echo "$SIGNING_KEY_PASSWORD" | base64 --decode > signing_key_password.txt
+            security import macos_development.p12 -P "$(cat signing_key_password.txt)" -k ~/Library/Keychains/login.keychain
             security set-key-partition-list -S apple-tool:,apple: -s -k build_password ~/Library/Keychains/login.keychain
+
+            # Clean up sensitive files
+            rm macos_development.cer macos_development.p12 signing_key_password.txt
         env:
           SIGNING_CERTIFICATE: ${{ secrets.SIGNING_CERTIFICATE }}
           SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
           SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
 
-      - name : Enter build dir
-        run : |
+      - name: Enter build dir
+        run: |
             cd "Smart Join"
             echo "$PWD"
 
