@@ -14,35 +14,20 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          path: MacBlox  # Ensure the correct path is checked out
 
       - name: Install certificates
         run: |
-            # Create and unlock a new keychain
-            security create-keychain -p build_password ~/Library/Keychains/build.keychain-db
-            security default-keychain -s ~/Library/Keychains/build.keychain-db
-            security unlock-keychain -p build_password ~/Library/Keychains/build.keychain-db
-            
-            # Import the certificate and private key
+            # (Install certificates and keychain setup steps)
             echo "$SIGNING_CERTIFICATE" | base64 --decode > macos_development.cer
             security import macos_development.cer -k ~/Library/Keychains/build.keychain-db -T /usr/bin/codesign
-
             echo "$SIGNING_KEY" | base64 --decode > macos_development.p12
             security import macos_development.p12 -P "$SIGNING_KEY_PASSWORD" -k ~/Library/Keychains/build.keychain-db
             security set-key-partition-list -S apple-tool:,apple: -s -k build_password ~/Library/Keychains/build.keychain-db
-
-            # Clean up sensitive files
             rm macos_development.cer macos_development.p12
-        env:
-          SIGNING_CERTIFICATE: ${{ secrets.SIGNING_CERTIFICATE }}
-          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
-          SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
-
-      - name: Enter build dir
-        run: |
-            cd "Smart Join"
-            echo "$PWD"
 
       - name: Build
         run: |
-          xcodebuild -project ~/work/MacBlox/MacBlox/"Smart Join"/"Smart Join.xcodeproj" -scheme "Smart Join" -configuration Release -derivedDataPath ~/work/MacBlox/MacBlox/"Smart Join"
-          echo "$PWD"
+          cd ~/work/MacBlox/MacBlox/Smart\ Join  # Adjust the path if needed
+          xcodebuild -project "Smart Join.xcodeproj" -scheme "Smart Join" -configuration Release -derivedDataPath ~/work/MacBlox/MacBlox/Smart\ Join
