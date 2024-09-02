@@ -39,10 +39,10 @@ jobs:
         cd MacBlox
         make
         echo "[INFO] Finished building MacBlox"
-        ls ~/work/MacBlox/MacBlox/build
+        ls ~/work/MacBlox/MacBlox/MacBlox/build
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
           name: Build
-          path: ~/work/MacBlox/MacBlox/build
+          path: ~/work/MacBlox/MacBlox/MacBlox/build
