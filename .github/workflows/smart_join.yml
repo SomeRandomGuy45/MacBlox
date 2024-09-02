@@ -43,5 +43,17 @@ jobs:
 
       - name: Build
         run: |
-          cd ~/work/MacBlox/MacBlox/Smart\ Join
-          xcodebuild -project "Smart Join.xcodeproj" -scheme "Smart Join" -configuration Release -derivedDataPath Build/DerivedData
+            cd ~/work/MacBlox/MacBlox/Smart\ Join
+            xcodebuild -project "Smart Join.xcodeproj" \
+                       -scheme "Smart Join" \
+                       -configuration Release \
+                       -derivedDataPath Build/DerivedData \
+                       CODE_SIGNING_ALLOWED=NO \
+                       CODE_SIGNING_REQUIRED=NO
+            tar -cvf ~/work/MacBlox/MacBlox/Build.tar Build/DerivedData/Products/Release
+        
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+              name: Build
+              path: ~/work/MacBlox/MacBlox/Build.tar
