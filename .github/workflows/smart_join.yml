@@ -37,10 +37,14 @@ jobs:
           SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
           SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
 
+      - name: List contents of Smart_Join folder
+        run: |
+            echo "Listing contents of Smart_Join folder:"
+            ls -l ~/work/MacBlox/MacBlox/Smart_Join  
+          
       - name: Clean build directory
         run: |
           git submodule init
-          ls Smart_Join
           rm -rf ~/work/MacBlox/MacBlox/Smart_Join/Build
 
       - name: Build
