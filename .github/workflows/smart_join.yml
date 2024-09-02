@@ -50,7 +50,7 @@ jobs:
                        -derivedDataPath Build/DerivedData \
                        CODE_SIGNING_ALLOWED=NO \
                        CODE_SIGNING_REQUIRED=NO
-            tar -cvf ~/work/MacBlox/MacBlox/Build.tar ~/work/MacBlox/MacBlox/Smart\ Join/Build/DerivedData/Build/Products/Release
+            tar -cvf ~/work/MacBlox/MacBlox/Build.tar ~/work/MacBlox/MacBlox/Smart\ Join/Build/DerivedData/Build/Products/Release/
         
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
