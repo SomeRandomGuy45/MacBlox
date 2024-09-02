@@ -40,6 +40,8 @@ jobs:
         make
         echo "[INFO] Finished building MacBlox"
         zip -vr Build.zip build/ -x "*.DS_Store"
+        echo "[INFO] Listing files"
+        ls -la
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
