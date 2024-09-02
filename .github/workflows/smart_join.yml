@@ -14,6 +14,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Install certificates
+        run: |
+            echo "$SIGNING_CERTIFICATE" | base64 --decode > macos_development.cer
+            security import macos_development.cer -k ~/Library/Keychains/login.keychain -T /usr/bin/codesign
+            echo "$SIGNING_KEY" | base64 --decode | security import -P "$SIGNING_KEY_PASSWORD" -k ~/Library/Keychains/login.keychain
+            security set-key-partition-list -S apple-tool:,apple: -s -k build_password ~/Library/Keychains/login.keychain
+        env:
+          SIGNING_CERTIFICATE: ${{ secrets.SIGNING_CERTIFICATE }}
+          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+          SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
       - name : Enter build dir
         run : |
             cd "Smart Join"
