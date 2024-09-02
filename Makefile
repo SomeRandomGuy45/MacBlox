@@ -19,6 +19,11 @@ LDFLAGS = $(ARCH_FLAGS) $(WX_CONFIG) $(CPATH) $(CURLPP_CONFIG_CFLAGS) $(CURLPP_C
 # Default target
 all: create_runner_app create_main_app create_background_app
 
+create_smart_app:
+	@xcodebuild -project $(CURDIR)/"Smart Join"/"Smart Join.xcodeproj" -scheme "Smart Join" -configuration Release -derivedDataPath $(CURDIR)/"Smart Join"
+	@mv -f $(CURDIR)/"Smart Join"/Build/Products/Release/"Smart Join.app" $(BUILDPATH)/Macblox/"Smart Join.app"
+	@mv -f $(CURDIR)/"Smart Join"/Build/Products/Release/"Smart Join.app.dSYM" $(BUILDPATH)/Macblox/"Smart Join.app.dSYM"
+
 # Create the main app
 create_runner_app:
 	@if [ -d $(BUILDPATH) ]; then \

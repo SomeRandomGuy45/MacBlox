@@ -349,7 +349,6 @@ bool killAppByPID(pid_t pid) {
                     std::string OpenCommand = "open -a " + robloxCopy.Path() + " \"" + finalURLString + "\"";
                     NSLog(@"[INFO] Open command: %s", OpenCommand.c_str());
                     robloxCopy.PID = openAppAndGetPID(robloxCopy.Path(), finalURLString);
-                    system(OpenCommand.c_str());
                     ChangeMultiInstance(robloxCopy.Path() + "/Contents/Info.plist", false); // wouldn't you have to like resign?
                     BreakSemaphore();
                     //robloxCopy.Close();

@@ -2,7 +2,6 @@
 //  Smart_JoinTests.m
 //  Smart JoinTests
 //
-//  Created by edward on 9/1/24.
 //
 
 #import <XCTest/XCTest.h>

@@ -2,7 +2,6 @@
 //  Smart_JoinUITestsLaunchTests.m
 //  Smart JoinUITests
 //
-//  Created by edward on 9/1/24.
 //
 
 #import <XCTest/XCTest.h>

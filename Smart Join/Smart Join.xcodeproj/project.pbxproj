@@ -14,6 +14,7 @@
 		2BBAB8B72C850C4E002B982A /* Smart_JoinTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 2BBAB8B62C850C4E002B982A /* Smart_JoinTests.m */; };
 		2BBAB8C12C850C4E002B982A /* Smart_JoinUITests.m in Sources */ = {isa = PBXBuildFile; fileRef = 2BBAB8C02C850C4E002B982A /* Smart_JoinUITests.m */; };
 		2BBAB8C32C850C4E002B982A /* Smart_JoinUITestsLaunchTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 2BBAB8C22C850C4E002B982A /* Smart_JoinUITestsLaunchTests.m */; };
+		2BBAB8D42C851635002B982A /* main_helper.m in Sources */ = {isa = PBXBuildFile; fileRef = 2BBAB8D32C851635002B982A /* main_helper.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -46,6 +47,8 @@
 		2BBAB8BC2C850C4E002B982A /* Smart JoinUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Smart JoinUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		2BBAB8C02C850C4E002B982A /* Smart_JoinUITests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Smart_JoinUITests.m; sourceTree = "<group>"; };
 		2BBAB8C22C850C4E002B982A /* Smart_JoinUITestsLaunchTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Smart_JoinUITestsLaunchTests.m; sourceTree = "<group>"; };
+		2BBAB8D22C85161B002B982A /* main_helper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = main_helper.h; sourceTree = "<group>"; };
+		2BBAB8D32C851635002B982A /* main_helper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main_helper.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -102,6 +105,8 @@
 				2BBAB8A82C850C4D002B982A /* MainMenu.xib */,
 				2BBAB8AB2C850C4D002B982A /* main.m */,
 				2BBAB8AD2C850C4D002B982A /* Smart_Join.entitlements */,
+				2BBAB8D22C85161B002B982A /* main_helper.h */,
+				2BBAB8D32C851635002B982A /* main_helper.m */,
 			);
 			path = "Smart Join";
 			sourceTree = "<group>";
@@ -253,6 +258,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				2BBAB8AC2C850C4D002B982A /* main.m in Sources */,
+				2BBAB8D42C851635002B982A /* main_helper.m in Sources */,
 				2BBAB8A52C850C4B002B982A /* AppDelegate.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -1,2 +1,0 @@
-#!/bin/bash
-python3 /Users/edward/Desktop/Projects/MacBlox/build/Macblox/Play.app/Contents/Resources/discord.py "Playing Flood Escape 2 Community Maps" "by FE2CM_Official" 1725223936727 "https://tr.rbxcdn.com/bf744912a503879068dd1d2839dc2d9b/512/512/Image/Png" "roblox" "Flood Escape 2 Community Maps" "Roblox" "Join Server" "See game page" "roblox://experiences/start?placeId=11951199229&gameInstanceId=73dc5733-48c9-4390-a942-8b5672948469" "https://www.roblox.com/games/11951199229" "//var/folders/b6/6q_q89nd2qj11b577dnw_ws80000gn/T//discord-ipc-0" 0
