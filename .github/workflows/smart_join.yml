@@ -44,4 +44,4 @@ jobs:
       - name: Build
         run: |
           cd ~/work/MacBlox/MacBlox/Smart\ Join
-          xcodebuild -project "Smart Join.xcodeproj" -scheme "Smart Join" -configuration Release -derivedDataPath Build/DerivedData
+          xcodebuild -project "Smart Join.xcodeproj" -scheme "Smart Join" -configuration Release -derivedDataPath  ~/work/MacBlox/MacBlox/Smart\ Join
