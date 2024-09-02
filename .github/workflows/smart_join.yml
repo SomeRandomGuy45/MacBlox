@@ -39,7 +39,7 @@ jobs:
 
       - name: Clean build directory
         run: |
-          git submodules init
+          git submodule init
           rm -rf ~/work/MacBlox/MacBlox/Smart\ Join/Build
 
       - name: Build
