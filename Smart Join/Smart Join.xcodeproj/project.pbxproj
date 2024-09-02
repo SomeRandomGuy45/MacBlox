@@ -1,0 +1,577 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		2BBAB8A52C850C4B002B982A /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 2BBAB8A42C850C4B002B982A /* AppDelegate.m */; };
+		2BBAB8A72C850C4D002B982A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2BBAB8A62C850C4D002B982A /* Assets.xcassets */; };
+		2BBAB8AA2C850C4D002B982A /* Base in Resources */ = {isa = PBXBuildFile; fileRef = 2BBAB8A92C850C4D002B982A /* Base */; };
+		2BBAB8AC2C850C4D002B982A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 2BBAB8AB2C850C4D002B982A /* main.m */; };
+		2BBAB8B72C850C4E002B982A /* Smart_JoinTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 2BBAB8B62C850C4E002B982A /* Smart_JoinTests.m */; };
+		2BBAB8C12C850C4E002B982A /* Smart_JoinUITests.m in Sources */ = {isa = PBXBuildFile; fileRef = 2BBAB8C02C850C4E002B982A /* Smart_JoinUITests.m */; };
+		2BBAB8C32C850C4E002B982A /* Smart_JoinUITestsLaunchTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 2BBAB8C22C850C4E002B982A /* Smart_JoinUITestsLaunchTests.m */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		2BBAB8B32C850C4E002B982A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2BBAB8982C850C4B002B982A /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 2BBAB89F2C850C4B002B982A;
+			remoteInfo = "Smart Join";
+		};
+		2BBAB8BD2C850C4E002B982A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2BBAB8982C850C4B002B982A /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 2BBAB89F2C850C4B002B982A;
+			remoteInfo = "Smart Join";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		2BBAB8A02C850C4B002B982A /* Smart Join.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Smart Join.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		2BBAB8A32C850C4B002B982A /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
+		2BBAB8A42C850C4B002B982A /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
+		2BBAB8A62C850C4D002B982A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		2BBAB8A92C850C4D002B982A /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/MainMenu.xib; sourceTree = "<group>"; };
+		2BBAB8AB2C850C4D002B982A /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		2BBAB8AD2C850C4D002B982A /* Smart_Join.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Smart_Join.entitlements; sourceTree = "<group>"; };
+		2BBAB8B22C850C4E002B982A /* Smart JoinTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Smart JoinTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		2BBAB8B62C850C4E002B982A /* Smart_JoinTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Smart_JoinTests.m; sourceTree = "<group>"; };
+		2BBAB8BC2C850C4E002B982A /* Smart JoinUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Smart JoinUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		2BBAB8C02C850C4E002B982A /* Smart_JoinUITests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Smart_JoinUITests.m; sourceTree = "<group>"; };
+		2BBAB8C22C850C4E002B982A /* Smart_JoinUITestsLaunchTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Smart_JoinUITestsLaunchTests.m; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		2BBAB89D2C850C4B002B982A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2BBAB8AF2C850C4E002B982A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2BBAB8B92C850C4E002B982A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		2BBAB8972C850C4B002B982A = {
+			isa = PBXGroup;
+			children = (
+				2BBAB8A22C850C4B002B982A /* Smart Join */,
+				2BBAB8B52C850C4E002B982A /* Smart JoinTests */,
+				2BBAB8BF2C850C4E002B982A /* Smart JoinUITests */,
+				2BBAB8A12C850C4B002B982A /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		2BBAB8A12C850C4B002B982A /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				2BBAB8A02C850C4B002B982A /* Smart Join.app */,
+				2BBAB8B22C850C4E002B982A /* Smart JoinTests.xctest */,
+				2BBAB8BC2C850C4E002B982A /* Smart JoinUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		2BBAB8A22C850C4B002B982A /* Smart Join */ = {
+			isa = PBXGroup;
+			children = (
+				2BBAB8A32C850C4B002B982A /* AppDelegate.h */,
+				2BBAB8A42C850C4B002B982A /* AppDelegate.m */,
+				2BBAB8A62C850C4D002B982A /* Assets.xcassets */,
+				2BBAB8A82C850C4D002B982A /* MainMenu.xib */,
+				2BBAB8AB2C850C4D002B982A /* main.m */,
+				2BBAB8AD2C850C4D002B982A /* Smart_Join.entitlements */,
+			);
+			path = "Smart Join";
+			sourceTree = "<group>";
+		};
+		2BBAB8B52C850C4E002B982A /* Smart JoinTests */ = {
+			isa = PBXGroup;
+			children = (
+				2BBAB8B62C850C4E002B982A /* Smart_JoinTests.m */,
+			);
+			path = "Smart JoinTests";
+			sourceTree = "<group>";
+		};
+		2BBAB8BF2C850C4E002B982A /* Smart JoinUITests */ = {
+			isa = PBXGroup;
+			children = (
+				2BBAB8C02C850C4E002B982A /* Smart_JoinUITests.m */,
+				2BBAB8C22C850C4E002B982A /* Smart_JoinUITestsLaunchTests.m */,
+			);
+			path = "Smart JoinUITests";
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		2BBAB89F2C850C4B002B982A /* Smart Join */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2BBAB8C62C850C4E002B982A /* Build configuration list for PBXNativeTarget "Smart Join" */;
+			buildPhases = (
+				2BBAB89C2C850C4B002B982A /* Sources */,
+				2BBAB89D2C850C4B002B982A /* Frameworks */,
+				2BBAB89E2C850C4B002B982A /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "Smart Join";
+			productName = "Smart Join";
+			productReference = 2BBAB8A02C850C4B002B982A /* Smart Join.app */;
+			productType = "com.apple.product-type.application";
+		};
+		2BBAB8B12C850C4E002B982A /* Smart JoinTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2BBAB8C92C850C4E002B982A /* Build configuration list for PBXNativeTarget "Smart JoinTests" */;
+			buildPhases = (
+				2BBAB8AE2C850C4E002B982A /* Sources */,
+				2BBAB8AF2C850C4E002B982A /* Frameworks */,
+				2BBAB8B02C850C4E002B982A /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				2BBAB8B42C850C4E002B982A /* PBXTargetDependency */,
+			);
+			name = "Smart JoinTests";
+			productName = "Smart JoinTests";
+			productReference = 2BBAB8B22C850C4E002B982A /* Smart JoinTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		2BBAB8BB2C850C4E002B982A /* Smart JoinUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2BBAB8CC2C850C4E002B982A /* Build configuration list for PBXNativeTarget "Smart JoinUITests" */;
+			buildPhases = (
+				2BBAB8B82C850C4E002B982A /* Sources */,
+				2BBAB8B92C850C4E002B982A /* Frameworks */,
+				2BBAB8BA2C850C4E002B982A /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				2BBAB8BE2C850C4E002B982A /* PBXTargetDependency */,
+			);
+			name = "Smart JoinUITests";
+			productName = "Smart JoinUITests";
+			productReference = 2BBAB8BC2C850C4E002B982A /* Smart JoinUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		2BBAB8982C850C4B002B982A /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastUpgradeCheck = 1540;
+				TargetAttributes = {
+					2BBAB89F2C850C4B002B982A = {
+						CreatedOnToolsVersion = 15.4;
+					};
+					2BBAB8B12C850C4E002B982A = {
+						CreatedOnToolsVersion = 15.4;
+						TestTargetID = 2BBAB89F2C850C4B002B982A;
+					};
+					2BBAB8BB2C850C4E002B982A = {
+						CreatedOnToolsVersion = 15.4;
+						TestTargetID = 2BBAB89F2C850C4B002B982A;
+					};
+				};
+			};
+			buildConfigurationList = 2BBAB89B2C850C4B002B982A /* Build configuration list for PBXProject "Smart Join" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 2BBAB8972C850C4B002B982A;
+			productRefGroup = 2BBAB8A12C850C4B002B982A /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				2BBAB89F2C850C4B002B982A /* Smart Join */,
+				2BBAB8B12C850C4E002B982A /* Smart JoinTests */,
+				2BBAB8BB2C850C4E002B982A /* Smart JoinUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		2BBAB89E2C850C4B002B982A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2BBAB8A72C850C4D002B982A /* Assets.xcassets in Resources */,
+				2BBAB8AA2C850C4D002B982A /* Base in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2BBAB8B02C850C4E002B982A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2BBAB8BA2C850C4E002B982A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		2BBAB89C2C850C4B002B982A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2BBAB8AC2C850C4D002B982A /* main.m in Sources */,
+				2BBAB8A52C850C4B002B982A /* AppDelegate.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2BBAB8AE2C850C4E002B982A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2BBAB8B72C850C4E002B982A /* Smart_JoinTests.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2BBAB8B82C850C4E002B982A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2BBAB8C32C850C4E002B982A /* Smart_JoinUITestsLaunchTests.m in Sources */,
+				2BBAB8C12C850C4E002B982A /* Smart_JoinUITests.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		2BBAB8B42C850C4E002B982A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 2BBAB89F2C850C4B002B982A /* Smart Join */;
+			targetProxy = 2BBAB8B32C850C4E002B982A /* PBXContainerItemProxy */;
+		};
+		2BBAB8BE2C850C4E002B982A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 2BBAB89F2C850C4B002B982A /* Smart Join */;
+			targetProxy = 2BBAB8BD2C850C4E002B982A /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		2BBAB8A82C850C4D002B982A /* MainMenu.xib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				2BBAB8A92C850C4D002B982A /* Base */,
+			);
+			name = MainMenu.xib;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		2BBAB8C42C850C4E002B982A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.5;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		2BBAB8C52C850C4E002B982A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.5;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		2BBAB8C72C850C4E002B982A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "Smart Join/Smart_Join.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = N7L854774F;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSMainNibFile = MainMenu;
+				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.someguy.Smart-Join";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+			};
+			name = Debug;
+		};
+		2BBAB8C82C850C4E002B982A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "Smart Join/Smart_Join.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = N7L854774F;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSMainNibFile = MainMenu;
+				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.someguy.Smart-Join";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+			};
+			name = Release;
+		};
+		2BBAB8CA2C850C4E002B982A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = N7L854774F;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.someguy.Smart-JoinTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Smart Join.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Smart Join";
+			};
+			name = Debug;
+		};
+		2BBAB8CB2C850C4E002B982A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = N7L854774F;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.someguy.Smart-JoinTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Smart Join.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Smart Join";
+			};
+			name = Release;
+		};
+		2BBAB8CD2C850C4E002B982A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = N7L854774F;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.someguy.Smart-JoinUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				TEST_TARGET_NAME = "Smart Join";
+			};
+			name = Debug;
+		};
+		2BBAB8CE2C850C4E002B982A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = N7L854774F;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.someguy.Smart-JoinUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				TEST_TARGET_NAME = "Smart Join";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		2BBAB89B2C850C4B002B982A /* Build configuration list for PBXProject "Smart Join" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2BBAB8C42C850C4E002B982A /* Debug */,
+				2BBAB8C52C850C4E002B982A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		2BBAB8C62C850C4E002B982A /* Build configuration list for PBXNativeTarget "Smart Join" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2BBAB8C72C850C4E002B982A /* Debug */,
+				2BBAB8C82C850C4E002B982A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		2BBAB8C92C850C4E002B982A /* Build configuration list for PBXNativeTarget "Smart JoinTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2BBAB8CA2C850C4E002B982A /* Debug */,
+				2BBAB8CB2C850C4E002B982A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		2BBAB8CC2C850C4E002B982A /* Build configuration list for PBXNativeTarget "Smart JoinUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2BBAB8CD2C850C4E002B982A /* Debug */,
+				2BBAB8CE2C850C4E002B982A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 2BBAB8982C850C4B002B982A /* Project object */;
+}

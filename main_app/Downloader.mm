@@ -4,6 +4,8 @@
 #import <OSAKit/OSAKit.h>
 #import "Downloader.h"
 
+#include <fstream>
+
 std::string GetMacOSAppearance()
 {
     std::string appearance = "Light";
@@ -117,6 +119,41 @@ void downloadFile(const char* urlString, const char* destinationPath) {
         
         // Wait for the completion handler to finish
         dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
+    }
+}
+
+std::string FileChecker(const std::string path) {
+    // Convert std::string to NSString
+    NSString *nsPath = [NSString stringWithUTF8String:path.c_str()];
+    
+    // Create an NSFileManager instance
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    
+    // Check if the file exists
+    if ([fileManager fileExistsAtPath:nsPath]) {
+        std::ifstream file(path);
+        
+        if (file.is_open()) {
+            std::string line;
+            std::string fileContent;
+            
+            // Read file contents
+            while (std::getline(file, line)) {
+                fileContent += line + "\n";
+            }
+            file.close();
+            
+            // Log the content for demonstration
+            NSLog(@"[INFO] File contents:\n%@", [NSString stringWithUTF8String:fileContent.c_str()]);
+            
+            return fileContent;
+        } else {
+            NSLog(@"[ERROR] Failed to open file: %@", nsPath);
+            return "";
+        }
+    } else {
+        NSLog(@"[ERROR] File does not exist: %@", nsPath);
+        return "";
     }
 }
 

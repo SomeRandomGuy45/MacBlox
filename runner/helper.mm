@@ -63,65 +63,9 @@ bool isAppRunning(const std::string &appName) {
 }
 
 std::string getTemp() {
-    NSString *basePath = @"/var/folders";
-    NSFileManager *fileManager = [NSFileManager defaultManager];
-    
-    NSError *error = nil;
-    NSArray *subfolders = [fileManager contentsOfDirectoryAtPath:basePath error:&error];
-    
-    if (error) {
-        std::cerr << "[ERROR] Unable accessing directory: " << [[error localizedDescription] UTF8String] << std::endl;
-        return "";
-    }
-    
-    // Loop through the subfolders
-    for (NSString *subfolder in subfolders) {
-        if ([subfolder isEqualToString:@"zz"]) {
-            // Skip processing this subfolder if its name is "zz"
-            continue;
-        }
-
-        NSString *subfolderPath = [basePath stringByAppendingPathComponent:subfolder];
-        
-        BOOL isDirectory;
-        if (![fileManager fileExistsAtPath:subfolderPath isDirectory:&isDirectory] || !isDirectory) {
-            // Skip if it's not a directory
-            continue;
-        }
-
-        NSArray *innerFolders = [fileManager contentsOfDirectoryAtPath:subfolderPath error:&error];
-        
-        if (error) {
-            std::cerr << "[ERROR] accessing subdirectory: " << [[error localizedDescription] UTF8String] << std::endl;
-            continue;
-        }
-        
-        // Loop through the innerFolders and check if each one is a directory
-        for (NSString *innerFolder in innerFolders) {
-            NSString *innerFolderPath = [subfolderPath stringByAppendingPathComponent:innerFolder];
-            BOOL isInnerDirectory;
-            if ([fileManager fileExistsAtPath:innerFolderPath isDirectory:&isInnerDirectory] && isInnerDirectory) {
-                // Print contents of innerFolder if it is a directory
-                std::cout << "[INFO] Contents of " << [innerFolderPath UTF8String] << ":" << std::endl;
-                NSArray *innerInnerFolders = [fileManager contentsOfDirectoryAtPath:innerFolderPath error:&error];
-                
-                if (error) {
-                    std::cerr << "[ERROR] accessing inner subdirectory: " << [[error localizedDescription] UTF8String] << std::endl;
-                    continue;
-                }
-                
-                for (NSString *innerInnerFolder in innerInnerFolders) {
-                    std::cout << "  " << [innerInnerFolder UTF8String] << std::endl;
-                    if ([innerInnerFolder isEqualToString:@"T"]) {
-                        NSString *resultPath = [innerFolderPath stringByAppendingPathComponent:innerInnerFolder];
-                        return [resultPath UTF8String];
-                    }
-                }
-            }
-        }
-    }
-    
-    return "";
+    std::string tempDir = fs::temp_directory_path().string();
+    NSLog(@"[INFO] temp path is %s", tempDir.c_str());
+    return tempDir;
 }
 
 void terminateApplicationByName(const std::string& appName) {

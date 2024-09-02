@@ -16,6 +16,6 @@ bool isAppRunning(const std::string &appName);
 std::string downloadFile_WITHOUT_DESTINATION(const char* urlString);
 
 std::string GetMacOSAppearance();
-
+std::string FileChecker(std::string path);
 std::string GetResourcesFolderPath();
 #endif // DOWNLOADER_H

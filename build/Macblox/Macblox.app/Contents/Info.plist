@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+   <key>BreakpadReportInterval</key>
+	<string>0</string>
+	<key>BreakpadSendAndExit</key>
+	<string>NO</string>
+	<key>BreakpadSkipConfirm</key>
+	<string>YES</string>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>English</string>
+   <key>CFBundleExecutable</key>
+   <string>Macblox</string>
+   <key>CFBundleGetInfoString</key>
+   <string>Macblox</string>
+   <key>CFBundleVersion</key>
+	<string>1</string>
+   <key>CFBundleIconFile</key>
+   <string>Macblox</string>
+   <key>CFBundleName</key>
+   <string>Macblox</string>
+   <key>CFBundlePackageType</key>
+   <string>APPL</string>
+   <key>CFBundleIdentifier</key>
+   <string>com.someguy.macblox</string>
+   <key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+   <key>BreakpadVendor</key>
+	<string>Macblox</string>
+   <key>LSUIElement</key>
+   <false/>
+   <key>CFBundleName</key>
+	<string>MacBlox</string>
+   <key>CFBundleSignature</key>
+   <string>????</string>
+   <key>NSAppTransportSecurity</key>
+   <dict>
+      <key>NSAllowsArbitraryLoads</key>
+      <true/>
+   </dict>
+   <key>NSMicrophoneUsageDescription</key>
+   <string>We need access to the microphone for notifications.</string>
+   <key>NSCameraUsageDescription</key>
+   <string>We need access to the camera for notifications.</string>
+   <key>NSAppleMusicUsageDescription</key>
+   <string>We need access to Apple Music for notifications.</string>
+   <key>NSUserNotificationAlertStyle</key>
+   <string>alert</string>
+   <key>NSAppleEventsUsageDescription</key>
+   <string>We need to control System Events for roblox!</string> 
+</dict>
+</plist>

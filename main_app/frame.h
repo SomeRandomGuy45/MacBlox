@@ -60,6 +60,7 @@ public:
 private:
     void OnLaunchButtonClick(wxCommandEvent& event);
     void SetBootstrapIcon(std::string selectedIcon);
+    void SetMenu(std::string selected);
     void OnModSelection(wxCommandEvent& event);
     void OnBootstrapSelection(wxCommandEvent& event);
     void OpenPages(wxCommandEvent& event);
@@ -70,6 +71,9 @@ private:
     void LoadBootstrapJson(const std::string& filepath);
     void SaveBootstrapJson(const std::string& filepath);
     void CreateModsFolder();
+    void OnRightClickDisable(wxMouseEvent& event);
+    void SetSlider(std::string selected);
+    void SetLight(std::string selected);
     wxPanel* panel = nullptr;
     wxButton* button = nullptr;
     wxGridSizer* gridSizer = nullptr; 
@@ -89,6 +93,16 @@ private:
         {"2017 Bootstrap icon", false},
         {"2019 Bootstrap icon", false},
         {"2022 Bootstrap icon", false},
+        {"V1 Menu", false},
+        {"V2 Menu", false},
+        {"V4 Menu", false},
+        {"Chrome Menu", false},
+        {"Use 21 Slider", false},
+        {"Use 10 Slider", false},
+        {"Use Voxel Lighting", false},
+        {"Use Shadowmap Lighting", false},
+        {"Use Future Lighting", false},
+        {"Use Game Lighting", false},
     };
     std::map<std::string, bool> BootstrapEnable = {
         {"Force Reinstall", false},
@@ -102,6 +116,178 @@ private:
     json bootstrapJson;
 };
 
+void MainFrame::SetLight(std::string selected)
+{
+    for (auto& mod : modsEnabled) {
+        if (mod.first.find("Lighting") != std::string::npos && mod.first != selected) {
+            mod.second = false;
+        }
+    }
+    modsEnabled[selected] = true;
+    if (selected.find("Lighting") != std::string::npos)
+    {
+        std::string ClientAppSettingsJson = FileChecker(GetBasePath() + "/data.json");
+        json ClientAppSettings = json::parse(ClientAppSettingsJson);
+        if (selected == "Use Voxel Lighting")
+        {
+            ClientAppSettings["DFFlagDebugRenderForceTechnologyVoxel"] = "True";
+            ClientAppSettings["FFlagDebugForceFutureIsBrightPhase2"] = "False";
+            ClientAppSettings["FFlagDebugForceFutureIsBrightPhase3"] = "False";
+        }
+        else if (selected == "Use Shadowmap Lighting")
+        {
+            ClientAppSettings["DFFlagDebugRenderForceTechnologyVoxel"] = "False";
+            ClientAppSettings["FFlagDebugForceFutureIsBrightPhase2"] = "True";
+            ClientAppSettings["FFlagDebugForceFutureIsBrightPhase3"] = "False";
+        }
+        else if (selected == "Use Future Lighting")
+        {
+            ClientAppSettings["DFFlagDebugRenderForceTechnologyVoxel"] = "False";
+            ClientAppSettings["FFlagDebugForceFutureIsBrightPhase2"] = "False";
+            ClientAppSettings["FFlagDebugForceFutureIsBrightPhase3"] = "True";
+        }
+        else
+        {
+            ClientAppSettings["DFFlagDebugRenderForceTechnologyVoxel"] = "False";
+            ClientAppSettings["FFlagDebugForceFutureIsBrightPhase2"] = "False";
+            ClientAppSettings["FFlagDebugForceFutureIsBrightPhase3"] = "False";
+        }
+        std::ofstream ClientJSONDump(GetBasePath() + "/data.json");
+        if (ClientJSONDump.is_open())
+        {
+            ClientJSONDump << ClientAppSettings.dump(4);
+            ClientJSONDump.close();
+        }
+    }
+}
+
+void MainFrame::SetSlider(std::string selected)
+{
+    for (auto& mod : modsEnabled) {
+        if (mod.first.find("Slider") != std::string::npos && mod.first != selected) {
+            mod.second = false;
+        }
+    }
+    modsEnabled[selected] = true;
+    if (selected.find("Slider") != std::string::npos)
+    {
+        std::string ClientAppSettingsJson = FileChecker(GetBasePath() + "/data.json");
+        json ClientAppSettings = json::parse(ClientAppSettingsJson);
+        if (selected == "Use 21 Slider")
+        {
+            ClientAppSettings["FFlagCommitToGraphicsQualityFix"] = "True";
+            ClientAppSettings["FFlagFixGraphicsQuality"] = "True";
+        }
+        else
+        {
+            ClientAppSettings["FFlagCommitToGraphicsQualityFix"] = "False";
+            ClientAppSettings["FFlagFixGraphicsQuality"] = "False";
+        }
+        std::ofstream ClientJSONDump(GetBasePath() + "/data.json");
+        if (ClientJSONDump.is_open())
+        {
+            ClientJSONDump << ClientAppSettings.dump(4);
+            ClientJSONDump.close();
+        }
+    }
+}
+
+void MainFrame::OnRightClickDisable(wxMouseEvent& event)
+{
+    // Get the mouse position relative to the checklist box
+    wxPoint pos = event.GetPosition();
+    
+    // Get the index of the item at that position
+    int selectionIndex = EditBox->HitTest(pos);
+    
+    if (selectionIndex != wxNOT_FOUND) // If a valid item was right-clicked
+    {
+        wxString itemWx = EditBox->GetString(selectionIndex);
+        std::string itemName = itemWx.ToStdString();
+
+        // Disable (uncheck) the item
+        EditBox->Check(selectionIndex, false);
+
+        // Update the corresponding map (either modsEnabled or BootstrapEnable)
+        if (modsEnabled.find(itemName) != modsEnabled.end())
+        {
+            modsEnabled[itemName] = false;
+            SaveModsJson(GetBasePath() + "/config_data.json");
+        }
+        else if (BootstrapEnable.find(itemName) != BootstrapEnable.end())
+        {
+            BootstrapEnable[itemName] = false;
+            SaveBootstrapJson(GetBasePath() + "/bootstrap_data.json");
+        }
+
+        std::cout << "[INFO] Item " << itemName << " has been disabled via right-click." << std::endl;
+    }
+
+    // Skip event to allow other handlers to process it if needed
+    event.Skip();
+}
+
+void MainFrame::SetMenu(std::string selected)
+{
+    for (auto& mod : modsEnabled) {
+        if (mod.first.find("Menu") != std::string::npos && mod.first != selected) {
+            mod.second = false;
+        }
+    }
+    modsEnabled[selected] = true;
+
+    if (selected.find("Menu") != std::string::npos)
+    {
+        std::string ClientAppSettingsJson = FileChecker(GetBasePath() + "/data.json");
+        json ClientAppSettings = json::parse(ClientAppSettingsJson);
+        if (selected == "V1 Menu")
+        {
+            ClientAppSettings["FFlagDisableNewIGMinDUA"] = "True";
+            ClientAppSettings["FFlagEnableInGameMenuControls"] = "False";
+            ClientAppSettings["FFlagEnableInGameMenuModernization"] = "False";
+            ClientAppSettings["FFlagEnableInGameMenuChrome"] = "False";
+            ClientAppSettings["FFlagEnableMenuControlsABTest"] = "False";
+            ClientAppSettings["FFlagEnableV3MenuABTest3"] = "False";
+            ClientAppSettings["FFlagEnableInGameMenuChromeABTest3"] = "False";
+        }
+        else if (selected == "V2 Menu")
+        {
+            ClientAppSettings["FFlagDisableNewIGMinDUA"] = "False";
+            ClientAppSettings["FFlagEnableInGameMenuControls"] = "False";
+            ClientAppSettings["FFlagEnableInGameMenuModernization"] = "False";
+            ClientAppSettings["FFlagEnableInGameMenuChrome"] = "False";
+            ClientAppSettings["FFlagEnableMenuControlsABTest"] = "False";
+            ClientAppSettings["FFlagEnableV3MenuABTest3"] = "False";
+            ClientAppSettings["FFlagEnableInGameMenuChromeABTest3"] = "False";
+        }
+        else if (selected == "V4 Menu")
+        {
+            ClientAppSettings["FFlagDisableNewIGMinDUA"] = "True";
+            ClientAppSettings["FFlagEnableInGameMenuControls"] = "True";
+            ClientAppSettings["FFlagEnableInGameMenuModernization"] = "True";
+            ClientAppSettings["FFlagEnableInGameMenuChrome"] = "False";
+            ClientAppSettings["FFlagEnableMenuControlsABTest"] = "False";
+            ClientAppSettings["FFlagEnableV3MenuABTest3"] = "False";
+            ClientAppSettings["FFlagEnableInGameMenuChromeABTest3"] = "False";
+        }
+        else if (selected == "Chrome Menu")
+        {
+            ClientAppSettings["FFlagDisableNewIGMinDUA"] = "True";
+            ClientAppSettings["FFlagEnableInGameMenuControls"] = "True";
+            ClientAppSettings["FFlagEnableInGameMenuModernization"] = "True";
+            ClientAppSettings["FFlagEnableInGameMenuChrome"] = "True";
+            ClientAppSettings["FFlagEnableMenuControlsABTest"] = "False";
+            ClientAppSettings["FFlagEnableV3MenuABTest3"] = "False";
+            ClientAppSettings["FFlagEnableInGameMenuChromeABTest3"] = "False";
+        }
+        std::ofstream ClientJSONDump(GetBasePath() + "/data.json");
+        if (ClientJSONDump.is_open())
+        {
+            ClientJSONDump << ClientAppSettings.dump(4);
+            ClientJSONDump.close();
+        }
+    }
+}
 void MainFrame::SetBootstrapIcon(std::string selectedIcon) {
     // Iterate through the map and disable all Bootstrap icons
     for (auto& mod : modsEnabled) {
@@ -375,6 +561,7 @@ void MainFrame::OnBootstrapSelection(wxCommandEvent& event)
 void MainFrame::OnModSelection(wxCommandEvent& event)
 {
     int selectionIndex = event.GetInt();
+    
     wxString modNameWx = EditBox->GetString(selectionIndex);
     std::string modName = modNameWx.ToStdString();
 
@@ -395,6 +582,18 @@ void MainFrame::OnModSelection(wxCommandEvent& event)
     if (modName.find("Bootstrap icon") != std::string::npos)
     {
         SetBootstrapIcon(modName);
+    }
+    else if (modName.find("Menu") != std::string::npos)
+    {
+        SetMenu(modName);
+    }
+    else if (modName.find("Slider") != std::string::npos)
+    {
+        SetSlider(modName);
+    }
+    else if (modName.find("Lighting") != std::string::npos)
+    {
+        SetLight(modName);
     }
     EditBox->Clear();
     // Loop through the modsEnabled map and print the status
@@ -456,6 +655,7 @@ void MainFrame::OpenPages(wxCommandEvent& event)
             }
 
             // Bind the checklist box event
+            EditBox->Bind(wxEVT_RIGHT_DOWN, &MainFrame::OnRightClickDisable, this);
             EditBox->Bind(wxEVT_CHECKLISTBOX, &MainFrame::OnModSelection, this);
         }
         else if (buttonName == "Bootstrap")
@@ -477,6 +677,7 @@ void MainFrame::OpenPages(wxCommandEvent& event)
                 EditBox->Check(index, isEnabled);
                 index++;
             }
+            EditBox->Bind(wxEVT_RIGHT_DOWN, &MainFrame::OnRightClickDisable, this);
             EditBox->Bind(wxEVT_CHECKLISTBOX, &MainFrame::OnBootstrapSelection, this);
         }
     }
