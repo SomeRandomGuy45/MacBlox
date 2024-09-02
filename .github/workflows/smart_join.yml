@@ -44,6 +44,7 @@ jobs:
 
       - name: Build
         run: |
+            ls ~/work/MacBlox/MacBlox/Smart_Join
             cd ~/work/MacBlox/MacBlox/Smart_Join
             xcodebuild -project "Smart Join.xcodeproj" \
                        -scheme "Smart Join" \
