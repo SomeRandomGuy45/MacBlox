@@ -40,7 +40,7 @@ jobs:
       - name: Clean build directory
         run: |
           git submodule init
-          ls ~/work/MacBlox/MacBlox/Smart_Join
+          ls Smart_Join
           rm -rf ~/work/MacBlox/MacBlox/Smart_Join/Build
 
       - name: Build
