@@ -23,7 +23,7 @@ jobs:
             
             # Decode the password and use it without printing it
             echo "$SIGNING_KEY_PASSWORD" | base64 --decode > signing_key_password.txt
-            security import macos_development.p12 -P "$(cat signing_key_password.txt)" -k ~/Library/Keychains/login.keychain
+            security import macos_development.p12 -P \"$(cat signing_key_password.txt)" -k ~/Library/Keychains/login.keychain
             security set-key-partition-list -S apple-tool:,apple: -s -k build_password ~/Library/Keychains/login.keychain
 
             # Clean up sensitive files
