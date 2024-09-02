@@ -1,0 +1,60 @@
+name: Xcode - Build
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    name: Build and analyse default scheme using xcodebuild command
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install certificates
+        run: |
+            # Create and unlock a new keychain
+            security create-keychain -p build_password ~/Library/Keychains/build.keychain-db
+            security default-keychain -s ~/Library/Keychains/build.keychain-db
+            security unlock-keychain -p build_password ~/Library/Keychains/build.keychain-db
+            
+            # Import the certificate and private key
+            echo "$SIGNING_CERTIFICATE" | base64 --decode > macos_development.cer
+            security import macos_development.cer -k ~/Library/Keychains/build.keychain-db -T /usr/bin/codesign
+
+            echo "$SIGNING_KEY" | base64 --decode > macos_development.p12
+            security import macos_development.p12 -P "$SIGNING_KEY_PASSWORD" -k ~/Library/Keychains/build.keychain-db
+            security set-key-partition-list -S apple-tool:,apple: -s -k build_password ~/Library/Keychains/build.keychain-db
+
+            # Clean up sensitive files
+            rm macos_development.cer macos_development.p12
+        env:
+          SIGNING_CERTIFICATE: ${{ secrets.SIGNING_CERTIFICATE }}
+          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+          SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
+
+      - name: Clean build directory
+        run: |
+          git submodules init
+          rm -rf ~/work/MacBlox/MacBlox/Smart\ Join/Build
+
+      - name: Build
+        run: |
+            cd ~/work/MacBlox/MacBlox/Smart\ Join
+            xcodebuild -project "Smart Join.xcodeproj" \
+                       -scheme "Smart Join" \
+                       -configuration Release \
+                       -derivedDataPath Build/DerivedData \
+                       CODE_SIGNING_ALLOWED=NO \
+                       CODE_SIGNING_REQUIRED=NO
+            tar -cvf ~/work/MacBlox/MacBlox/Build.tar ~/work/MacBlox/MacBlox/Smart\ Join/Build/DerivedData/Build/Products/Release/
+        
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+              name: Build
+              path: ~/work/MacBlox/MacBlox/Build.tar
