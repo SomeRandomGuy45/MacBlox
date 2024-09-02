@@ -40,18 +40,18 @@ jobs:
       - name: Clean build directory
         run: |
           git submodule init
-          rm -rf ~/work/MacBlox/MacBlox/Smart\ Join/Build
+          rm -rf ~/work/MacBlox/MacBlox/Smart_Join/Build
 
       - name: Build
         run: |
-            cd ~/work/MacBlox/MacBlox/Smart\ Join
+            cd ~/work/MacBlox/MacBlox/Smart_Join
             xcodebuild -project "Smart Join.xcodeproj" \
                        -scheme "Smart Join" \
                        -configuration Release \
                        -derivedDataPath Build/DerivedData \
                        CODE_SIGNING_ALLOWED=NO \
                        CODE_SIGNING_REQUIRED=NO
-            tar -cvf ~/work/MacBlox/MacBlox/Build.tar ~/work/MacBlox/MacBlox/Smart\ Join/Build/DerivedData/Build/Products/Release/
+            tar -cvf ~/work/MacBlox/MacBlox/Build.tar ~/work/MacBlox/MacBlox/Smart_Join/Build/DerivedData/Build/Products/Release/
         
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
