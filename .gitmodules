@@ -1,3 +1,6 @@
 [submodule "CreateMacbloxInstaller"]
 	path = CreateMacbloxInstaller
 	url = https://github.com/SomeRandomGuy45/CreateMacbloxInstaller
+[submodule "Smart_Join"]
+	path = Smart_Join
+	url = https://github.com/SomeRandomGuy45/Smart_Join
