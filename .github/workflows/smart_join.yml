@@ -20,8 +20,8 @@ jobs:
             echo "$SIGNING_CERTIFICATE" | base64 --decode > macos_development.cer
             security import macos_development.cer -k ~/Library/Keychains/login.keychain -T /usr/bin/codesign
 
-            # Directly write the .p12 file content and import it
-            echo "$SIGNING_KEY" > macos_development.p12
+            # Decode the .p12 file
+            echo "$SIGNING_KEY" | base64 --decode > macos_development.p12
             security import macos_development.p12 -P "$SIGNING_KEY_PASSWORD" -k ~/Library/Keychains/login.keychain
             security set-key-partition-list -S apple-tool:,apple: -s -k build_password ~/Library/Keychains/login.keychain
 
