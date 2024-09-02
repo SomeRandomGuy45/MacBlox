@@ -39,13 +39,10 @@ jobs:
         cd MacBlox
         make
         echo "[INFO] Finished building MacBlox"
-        zip -vr Build.zip build/ -x "*.DS_Store"
-        echo "[INFO] Listing files"
-        ls -la
+        tar -cvf build.tar build/ --exclude='*.DS_Store'
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
-          name: Macblox
-          path: |
-                ./Build.zip
+          name: Build
+          path: /build.tar
