@@ -38,7 +38,6 @@ jobs:
         git clone https://github.com/SomeRandomGuy45/MacBlox.git
         cd MacBlox
         make
-        make create_smart_app
         echo "[INFO] Finished building MacBlox"
         tar -cvf Build.tar build/ --exclude='*.DS_Store'
 
