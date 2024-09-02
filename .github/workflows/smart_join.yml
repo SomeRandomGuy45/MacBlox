@@ -19,15 +19,14 @@ jobs:
         run: |
             echo "$SIGNING_CERTIFICATE" | base64 --decode > macos_development.cer
             security import macos_development.cer -k ~/Library/Keychains/login.keychain -T /usr/bin/codesign
-            echo "$SIGNING_KEY" | base64 --decode > macos_development.p12
-            
-            # Decode the password and use it without printing it
-            echo "$SIGNING_KEY_PASSWORD" | base64 --decode > signing_key_password.txt
-            security import macos_development.p12 -P "$(cat signing_key_password.txt)" -k ~/Library/Keychains/login.keychain
+
+            # Directly write the .p12 file content and import it
+            echo "$SIGNING_KEY" > macos_development.p12
+            security import macos_development.p12 -P "$SIGNING_KEY_PASSWORD" -k ~/Library/Keychains/login.keychain
             security set-key-partition-list -S apple-tool:,apple: -s -k build_password ~/Library/Keychains/login.keychain
 
             # Clean up sensitive files
-            rm macos_development.cer macos_development.p12 signing_key_password.txt
+            rm macos_development.cer macos_development.p12
         env:
           SIGNING_CERTIFICATE: ${{ secrets.SIGNING_CERTIFICATE }}
           SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
