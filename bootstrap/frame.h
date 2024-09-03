@@ -105,6 +105,7 @@ private:
     std::string ResourcePath = GetResourcesFolderPath();
     std::string Download = GetDownloadsFolderPath();
     std::string findFileInDirectory(const std::string& directoryPath, const std::string& fileName);
+    void CopyAndResignRoblox();
     json bootstrapData;
     wxPanel* panel = nullptr;
     wxStaticText* statusText = nullptr;
@@ -115,6 +116,16 @@ private:
         {"Windows 11", "https://github.com/bloxstraplabs/rbxcustom-fontemojis/releases/download/my-phone-is-78-percent/Win1122H2SegoeUIEmoji.ttf"},
         {"Windows 8.1", "https://github.com/bloxstraplabs/rbxcustom-fontemojis/releases/download/my-phone-is-78-percent/Win8.1SegoeUIEmoji.ttf"},
         {"Default", "https://github.com/SomeRandomGuy45/resources/releases/download/t/TwemojiMozilla.ttf"},
+    };
+    std::unordered_map<std::string, std::string> IconDownloads {
+        {"Default", "https://github.com/SomeRandomGuy45/ICNS_Roblox_Icons/releases/download/v1.0.0/Default.icns"},
+        {"2008", "https://github.com/SomeRandomGuy45/ICNS_Roblox_Icons/releases/download/v1.0.0/Icon2008.icns"},
+        {"2011", "https://github.com/SomeRandomGuy45/ICNS_Roblox_Icons/releases/download/v1.0.0/Icon2011.icns"},
+        {"2017", "https://github.com/SomeRandomGuy45/ICNS_Roblox_Icons/releases/download/v1.0.0/Icon2017.icns"},
+        {"2019", "https://github.com/SomeRandomGuy45/ICNS_Roblox_Icons/releases/download/v1.0.0/Icon2019.icns"},
+        {"2022", "https://github.com/SomeRandomGuy45/ICNS_Roblox_Icons/releases/download/v1.0.0/Icon2022.icns"},
+        {"Early2015", "https://github.com/SomeRandomGuy45/ICNS_Roblox_Icons/releases/download/v1.0.0/IconEarly2015.icns"},
+        {"Late2015", "https://github.com/SomeRandomGuy45/ICNS_Roblox_Icons/releases/download/v1.0.0/IconLate2015.icns"},
     };
     json Mod_Data;
     //Fix all of this
@@ -429,7 +440,6 @@ void BootstrapperFrame::UpdateProgress(double progress)
     while (std::abs(targetProgress - currentProgress) > 0)
     {
         currentProgress += step;
-        std::cout << "[INFO] Current progress: " << currentProgress << "%" << std::endl;
 
         // Update the gauge value using wxCallAfter to ensure it's done on the main thread
         wxTheApp->CallAfter([this, currentProgress]() {
@@ -631,6 +641,40 @@ int countCurrentMods(std::string& directoryPath)
     return folderCount;
 }
 
+void BootstrapperFrame::CopyAndResignRoblox()
+{
+    std::string DownloadPath = "/tmp/Roblox.app/Contents/Resources/AppIcon.icns";
+    std::string TypeOfDownload = "Default";
+    std::string CopyPath = "/tmp/Roblox.app/Contents/Info.plist";
+    std::string toPath = Download + "/Info.plist";
+    static const std::unordered_map<std::string, std::string> Types = {
+        {"2008 Bootstrap icon", "2008"},
+        {"2011 Bootstrap icon", "2011"},
+        {"Early2015 Bootstrap icon", "Early2015"},
+        {"Late2015 Bootstrap icon", "Late2015"},
+        {"2017 Bootstrap icon", "2017"},
+        {"2019 Bootstrap icon", "2019"},
+        {"2022 Bootstrap icon", "2022"},
+        {"Default Bootstrap icon", "Default"},
+    };
+    for (const auto& [key, downloadType] : Types) {
+        if (Mod_Data[key] == "true") {
+            TypeOfDownload = downloadType;
+            break;
+        }
+    }
+    std::cout << "[INFO] Downloading file to " << DownloadPath << ". With URL: " << IconDownloads[TypeOfDownload] << "\n";
+
+    downloadFile(IconDownloads[TypeOfDownload].c_str(), DownloadPath.c_str());
+    fs::rename(CopyPath, toPath);
+    std::cout << "[INFO] Successfully copied " << CopyPath << "\n";
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    fs::rename(toPath, CopyPath);
+    std::string redo = "codesign --sign - --entitlements " + GetResourcesFolderPath() + "/Macblox.plist /tmp/Roblox.app --force --deep";
+    std::cout << "[INFO] Resigning command is: " << redo << std::endl;
+    system(redo.c_str());
+}
+
 void BootstrapperFrame::DoEmojiLogic() {
     std::string DownloadPath = "/tmp/Roblox.app/Contents/Resources/content/fonts/TwemojiMozilla.ttf";
     std::string TypeOfDownload = "Default";  // Default type
@@ -674,7 +718,7 @@ void BootstrapperFrame::DoFontLogic()
             std::string modFilepath = fs::path(modFamilyFolder) / jsonFilename;
             if (fs::exists(modFilepath))
                 continue;
-            std::cout << "[INFO] Setting font for " << modFilepath << "\n";
+            //std::cout << "[INFO] Setting font for " << modFilepath << "\n";
             //std::ifstream inputFile(jsonFilePath.path());
             std::string inputFile = FileChecker(jsonFilePath.path());
             if (inputFile.empty())
@@ -682,7 +726,7 @@ void BootstrapperFrame::DoFontLogic()
                 std::cout << "[ERROR] Couldn't open font file\n";
                 continue;
             }
-            std::cout << "[INFO] Font Data is: " << inputFile << "\n";
+            //std::cout << "[INFO] Font Data is: " << inputFile << "\n";
             json fontFamilyData = json::parse(inputFile);
 
             if (!fontFamilyData.contains("faces"))
@@ -969,6 +1013,7 @@ void BootstrapperFrame::DoLogic()
         }
         std::this_thread::sleep_for(std::chrono::seconds(2));
         SetStatusText("Adding Modifications");
+        CopyAndResignRoblox();
         DoFontLogic();
         DoEmojiLogic();
         std::string ResourcePath = GetBasePath + "/Resources";

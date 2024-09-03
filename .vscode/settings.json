@@ -108,7 +108,6 @@
         "__memory": "cpp",
         "*.defs": "cpp",
         "*.x": "cpp",
-        "*.mm": "cpp",
         "barrier": "c",
         "cfenv": "c",
         "csetjmp": "c",
@@ -119,6 +118,7 @@
         "queue": "c",
         "scoped_allocator": "c",
         "strstream": "c",
-        "hash_set": "cpp"
+        "hash_set": "cpp",
+        "*.mm": "c"
     }
 }

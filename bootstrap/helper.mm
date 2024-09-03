@@ -548,9 +548,6 @@ std::string FileChecker(const std::string path) {
             }
             file.close();
             
-            // Log the content for demonstration
-            NSLog(@"[INFO] File contents:\n%@", [NSString stringWithUTF8String:fileContent.c_str()]);
-            
             return fileContent;
         } else {
             NSLog(@"[ERROR] Failed to open file: %@", nsPath);

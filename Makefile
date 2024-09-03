@@ -32,7 +32,7 @@ create_runner_app:
 	@mkdir $(BUILDPATH)
 	@mkdir $(BUILDPATH)/Macblox
 	$(CC) $(CXXFLAGS) $(LDFLAGS) -o $(BUILDPATH)/runner $(CURDIR)/runner/main.m $(CURDIR)/runner/helper.mm $(CURDIR)/runner/AppDelegate.mm $(CURDIR)/runner/main_helper.mm
-	@./appify_background -s build/runner -n play -i test
+	@./appify_background -s build/runner -n play -i Images/icon.icns
 	@codesign --sign - --entitlements Macblox.plist --deep play.app --force
 	@mv -f play.app $(BUILDPATH)/play.app
 	@mv $(BUILDPATH)/play.app $(BUILDPATH)/Macblox/"Play.app"
@@ -40,7 +40,7 @@ create_runner_app:
 	@cp -R $(CURDIR)/runner/test_icon.png $(BUILDPATH)/Macblox/"Play.app"/Contents/Resources/
 	@rm -f $(BUILDPATH)/runner
 	$(CC) $(CXXFLAGS) $(LDFLAGS) -o $(BUILDPATH)/bootstrap $(CURDIR)/bootstrap/app.mm $(CURDIR)/bootstrap/helper.mm $(CURDIR)/bootstrap/tinyxml2.cpp $(CURDIR)/bootstrap/multi.mm
-	@./appify -s build/bootstrap -n bootstrap -i test
+	@./appify -s build/bootstrap -n bootstrap -i Images/icon.icns
 	@codesign --sign - --entitlements Macblox.plist --deep bootstrap.app --force
 	@mv -f bootstrap.app $(BUILDPATH)/bootstrap.app
 	@mv $(BUILDPATH)/bootstrap.app $(BUILDPATH)/Macblox/"Bootstrap.app"
@@ -53,21 +53,27 @@ create_runner_app:
 	@rm -f $(BUILDPATH)/bootstrap
 	@mv $(BUILDPATH)/Macblox/"Bootstrap.app" $(BUILDPATH)/Macblox/"Play.app"/Contents/MacOS
 	$(CC) $(CXXFLAGS) $(LDFLAGS) -o $(BUILDPATH)/openRoblox $(CURDIR)/openRoblox/main.m $(CURDIR)/openRoblox/AppDelegate.mm
-	@./appify -s build/openRoblox -n openRoblox -i test
+	@./appify -s build/openRoblox -n openRoblox -i Images/icon.icns
 	@codesign --sign - --entitlements Macblox.plist --deep openRoblox.app --force
 	@mv -f openRoblox.app $(BUILDPATH)/Macblox/"Open Roblox.app"
 	@rm -f $(BUILDPATH)/openRoblox
 
 create_main_app:
 	$(CC) $(CXXFLAGS) $(LDFLAGS) -o $(BUILDPATH)/main $(CURDIR)/main_app/main.mm $(CURDIR)/main_app/Downloader.mm
-	@./appify -s build/main -n Macblox -i test
+	@./appify -s build/main -n Macblox -i Images/icon.icns
 	@codesign --sign - --entitlements Macblox.plist --deep Macblox.app --force
 	@mv -f Macblox.app $(BUILDPATH)/Macblox/Macblox.app
 	@rm -f $(BUILDPATH)/main
 
 create_installer_app:
-	@./appify -s Install.sh -n Install -i test  
+	@./appify -s Install.sh -n Install -i Images/icon.icns  
 	@codesign --sign - --entitlements Macblox.plist --deep Install.app --force
+
+resign:
+	@codesign --sign - --entitlements Macblox.plist --deep $(BUILDPATH)/Macblox/"Macblox.app" --force
+	@codesign --sign - --entitlements Macblox.plist --deep $(BUILDPATH)/Macblox/"Open Roblox.app" --force
+	@codesign --sign - --entitlements Macblox.plist --deep $(BUILDPATH)/Macblox/"Play.app" --force
+	@codesign --sign - --entitlements Macblox.plist --deep $(BUILDPATH)/Macblox/"Play.app"/Contents/MacOS/"Bootstrap.app" --force
 
 # Clean the build directory
 clean:
