@@ -108,9 +108,17 @@
         "__memory": "cpp",
         "*.defs": "cpp",
         "*.x": "cpp",
-        "*.mm": "c"
-    },
-    "java.project.sourcePaths": [
-        ""
-    ]
+        "*.mm": "cpp",
+        "barrier": "c",
+        "cfenv": "c",
+        "csetjmp": "c",
+        "cuchar": "c",
+        "propagate_const": "c",
+        "latch": "c",
+        "print": "c",
+        "queue": "c",
+        "scoped_allocator": "c",
+        "strstream": "c",
+        "hash_set": "cpp"
+    }
 }

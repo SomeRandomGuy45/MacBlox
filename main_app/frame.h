@@ -97,6 +97,7 @@ private:
         {"2017 Bootstrap icon", false},
         {"2019 Bootstrap icon", false},
         {"2022 Bootstrap icon", false},
+        {"Default Bootstrap icon", false},
         {"V1 Menu", false},
         {"V2 Menu", false},
         {"V4 Menu", false},
@@ -342,6 +343,12 @@ void MainFrame::SetBootstrapIcon(std::string selectedIcon) {
 
     // Enable the selected icon
     modsEnabled[selectedIcon] = true;
+
+    if (selectedIcon.find("Default Bootstrap icon") != std::string::npos) {
+        std::string copyPath = getParentFolderOfApp() + "/Play.app/Contents/MacOS/Bootstrap.app/Contents/Resources/bootstrap_icon.ico";
+        std::string Default = getParentFolderOfApp() + "/Play.app/Contents/MacOS/Bootstrap.app/Contents/Resources/128x128.ico";
+        copyFile(Default, copyPath);
+    }
 
     if (selectedIcon.find("Bootstrap icon") != std::string::npos) {
         std::string cutted_selected_icon = GetBasePath() + "/Resources/Icon" + selectedIcon.substr(0, selectedIcon.find("Bootstrap icon") - 1) + ".png";

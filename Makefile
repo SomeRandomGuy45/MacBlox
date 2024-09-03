@@ -46,6 +46,7 @@ create_runner_app:
 	@mv $(BUILDPATH)/bootstrap.app $(BUILDPATH)/Macblox/"Bootstrap.app"
 	@cp -R $(CURDIR)/bootstrap/bootstrap_data.json $(BUILDPATH)/Macblox/"Bootstrap.app"/Contents/Resources/
 	@cp -R $(CURDIR)/bootstrap/bootstrap_icon.ico $(BUILDPATH)/Macblox/"Bootstrap.app"/Contents/Resources/
+	@cp -R $(CURDIR)/bootstrap/128x128.ico $(BUILDPATH)/Macblox/"Bootstrap.app"/Contents/Resources/
 	@cp -R $(CURDIR)/bootstrap/helper.sh $(BUILDPATH)/Macblox/"Bootstrap.app"/Contents/Resources/
 	@cp -R $(CURDIR)/Macblox.plist $(BUILDPATH)/Macblox/"Bootstrap.app"/Contents/Resources/
 	@chmod +x $(BUILDPATH)/Macblox/"Bootstrap.app"/Contents/Resources/helper.sh
