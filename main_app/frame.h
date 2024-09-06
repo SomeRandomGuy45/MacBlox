@@ -735,7 +735,7 @@ void MainFrame::OnLaunchButtonClick(wxCommandEvent& event)
     std::string basePath = GetBasePath();
     std::string robloxInstallAppPath = basePath +"/RobloxPlayerInstaller.app";
     std::string robloxZip = basePath + "/Roblox.zip";
-    if (!fs::exists("/tmp/Roblox.app")) 
+    if (!fs::exists(basePath + "/Roblox.app")) 
     {
         /*
         

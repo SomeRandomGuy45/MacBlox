@@ -1383,11 +1383,11 @@ int main_loop(NSArray *arguments, std::string supercoolvar, bool dis) {
                     do {} while (isBootstrapRunning());
                     if (supercoolvar.empty())
                     {
-                        runApp("/tmp/Roblox.app", false);
+                        runApp(GetBasePath() + "/Roblox.app", false);
                     }
                     else
                     {
-                        std::string run_to_open_lol = "open -a /tmp/Roblox.app \"" + supercoolvar + "\"";
+                        std::string run_to_open_lol = "open -a \"" + GetBasePath() + "/Roblox.app\"" + "\"" + supercoolvar + "\"";
                         NSLog(@"[INFO] Ok got it running this command %s", run_to_open_lol.c_str());
                         system(run_to_open_lol.c_str());
                     }
@@ -1439,8 +1439,8 @@ int main_loop(NSArray *arguments, std::string supercoolvar, bool dis) {
                         NSLog(@"[INFO] Updating roblox!");
                         //std::cout << "[WARN] Couldn't find roblox_version.json after downloading, assuming the client is not up to date." << std::endl;
                     }
-                    if (!doesAppExist("/tmp/Roblox.app")) {
-                        NSLog(@"Couldn't find /tmp/Roblox.app");
+                    if (!doesAppExist(GetBasePath() + "/Roblox.app")) {
+                        NSLog(@"Couldn't find GetBasePath()/Roblox.app");
                         current_version = "";
                     }
                     if (current_version_from_file != current_version || JsonCount != currentCount) {

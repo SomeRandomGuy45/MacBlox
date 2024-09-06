@@ -94,6 +94,33 @@ bool BreakSemaphore()
     return destroy_semaphore() == 0;
 }
 
+std::string SupportPath() {
+    const char* homeDir = std::getenv("HOME");  // Get the user's home directory
+    if (!homeDir) {
+        throw std::runtime_error("Failed to get home directory");
+    }
+    return std::string(homeDir) + "/Library/Application Support/MacBlox_Data";
+}
+std::string GetPath() {
+    try {
+        std::string appSupportPath = SupportPath();
+        
+        // Create the directory and any necessary parent directories
+        if (fs::create_directories(appSupportPath)) {
+            //std::cout << "[INFO] Directory created successfully: " << appSupportPath << std::endl;
+        } else {
+            //std::cout << "[INFO] Directory already exists or failed to create: " << appSupportPath << std::endl;
+        }
+        return appSupportPath;
+    } catch (const fs::filesystem_error& e) {
+        std::cerr << "[ERORR] Filesystem error: " << e.what() << std::endl;
+        return "";
+    } catch (const std::exception& e) {
+        std::cerr << "[ERROR] " << e.what() << std::endl;
+        return "";
+    }
+}
+
 // Function to create a temporary directory
 std::string copyDestDir() {
     fs::path tempDir = fs::temp_directory_path();
@@ -112,7 +139,7 @@ std::string generateRandomName() {
 
 // Function to create a new copy of Roblox and rename it with a random name
 Copy NewCopy() {
-    std::string sourcePath = "/tmp/Roblox.app";
+    std::string sourcePath = GetPath() + "/Roblox.app";
     std::string destDir = copyDestDir();
 
     // Copy Roblox.app to the destination directory
@@ -239,33 +266,6 @@ void checkAndCloseRoblox() {
     terminateApplicationByName("Roblox");
 }
 
-std::string SupportPath() {
-    const char* homeDir = std::getenv("HOME");  // Get the user's home directory
-    if (!homeDir) {
-        throw std::runtime_error("Failed to get home directory");
-    }
-    return std::string(homeDir) + "/Library/Application Support/MacBlox_Data";
-}
-std::string GetPath() {
-    try {
-        std::string appSupportPath = SupportPath();
-        
-        // Create the directory and any necessary parent directories
-        if (fs::create_directories(appSupportPath)) {
-            //std::cout << "[INFO] Directory created successfully: " << appSupportPath << std::endl;
-        } else {
-            //std::cout << "[INFO] Directory already exists or failed to create: " << appSupportPath << std::endl;
-        }
-        return appSupportPath;
-    } catch (const fs::filesystem_error& e) {
-        std::cerr << "[ERORR] Filesystem error: " << e.what() << std::endl;
-        return "";
-    } catch (const std::exception& e) {
-        std::cerr << "[ERROR] " << e.what() << std::endl;
-        return "";
-    }
-}
-
 std::string convertToLowercase(const std::string& str) 
 { 
     std::string result = ""; 
@@ -346,7 +346,7 @@ bool killAppByPID(pid_t pid) {
                     NSLog(@"[INFO] New Copy at roblox %s", robloxCopy.Path().c_str());
                     copyPaths.push_back(robloxCopy);
                     BreakSemaphore();
-                    std::string OpenCommand = "open -a " + robloxCopy.Path() + " \"" + finalURLString + "\"";
+                    std::string OpenCommand = "open -a \"" + robloxCopy.Path() + "\" \"" + finalURLString + "\"";
                     NSLog(@"[INFO] Open command: %s", OpenCommand.c_str());
                     robloxCopy.PID = openAppAndGetPID(robloxCopy.Path(), finalURLString);
                     ChangeMultiInstance(robloxCopy.Path() + "/Contents/Info.plist", false); // wouldn't you have to like resign?
@@ -358,7 +358,7 @@ bool killAppByPID(pid_t pid) {
             }
             else
             {
-                std::string run_to_open_lol = "open -a /tmp/Roblox.app \"" + finalURLString + "\"";
+                std::string run_to_open_lol = "open -a \"" + GetPath() + "/Roblox.app\"" + "\"" + finalURLString + "\"";
                 NSLog(@"[INFO] Ok got it running this command %s", run_to_open_lol.c_str());
                 system(run_to_open_lol.c_str());
             }
