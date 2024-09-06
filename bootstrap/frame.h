@@ -983,8 +983,7 @@ void BootstrapperFrame::DoLogic()
             std::string command1 = "chmod +x \"" + GetBasePath + "/Roblox.app/Contents/MacOS/RobloxPlayer\"";
             std::string command2 = "chmod +x \"" + GetBasePath + "/Roblox.app/Contents/MacOS/RobloxCrashHandler\"";
             std::string command3 = "chmod +x \"" + GetBasePath + "/Roblox.app/Contents/MacOS/Roblox.app/Contents/MacOS/Roblox\"";
-            std::string command4 = "chmod +x \"" + GetBasePath + "/Roblox.app/Contents/MacOS/RobloxPlayerInstaller.app/Contents/MacOS/RobloxPlayerInstaller\"";
-            std::string fixCommand = ResourcePath + "/helper.sh";
+            std::string command4 = "chmod +x \"" + GetBasePath + "/Roblox.app/Contents/MacOS/RobloxPlayerInstaller.app/Contents/MacOS/RobloxPlayerInstaller\"";;
             int result = system(command1.c_str());
             Check(result);
             result = system(command2.c_str());
@@ -999,6 +998,7 @@ void BootstrapperFrame::DoLogic()
             ModifyPlist(GetBasePath + "/Roblox.app/Contents/Info.plist");
             std::string redo = "codesign --sign - --entitlements " + GetResourcesFolderPath() + "/Macblox.plist \"" + GetBasePath + "/Roblox.app\"" + " --force --deep";
             std::cout << "[INFO] Resigning command is: " << redo << std::endl;
+            std::filesystem::remove(GetBasePath + "/Roblox.app/Contents/Resources/Assets.car");
             system(redo.c_str());
             removeQuarantineAttribute(spam);
             if (!FolderExists(GetBasePath + "/Roblox.app/Contents/MacOS/ClientSettings"))
@@ -1082,6 +1082,8 @@ void BootstrapperFrame::DoLogic()
         RenameFile(ArrowFarCursor.c_str(), paths["ArrowFarCursor"].c_str());
         copyFile(GetBasePath + "/data.json", GetBasePath + "/Roblox.app/Contents/MacOS/ClientSettings/ClientAppSettings.json");
         searchFolders(ModFolder, false);
+        std::string fixCommand ="\"" + GetResourcesFolderPath() + "/helper.sh\"";
+        system(fixCommand.c_str());
         GetCurrentCountOfModFolder(ModFolder, GetBasePath);
         std::this_thread::sleep_for(std::chrono::seconds(2));
         UpdateProgress(1);
