@@ -152,6 +152,9 @@ CurrentTypes Current = Home;
 
 // std::map
 std::map<std::string, ArgHandler> argTable;
+std::map<std::string, std::string> startTime_ForGame;
+std::map<std::string, std::string> endTime_ForGame;
+std::map<std::string, std::string> deeplink_ForGame;
 
 // std::unordered_map
 std::unordered_map<std::string, std::string> GeolocationCache;
@@ -162,6 +165,24 @@ NSString* message;
 std::string getApplicationSupportPath() {
     return "/Users/" + localuser + "/Library/Application Support/MacBlox_Data";
 }
+
+std::string GetBashPath() {
+    char buffer[PATH_MAX];
+    uint32_t size = sizeof(buffer);
+    
+    if (_NSGetExecutablePath(buffer, &size) != 0) {
+        return ""; // Return empty string on failure
+    }
+    
+    // Ensure buffer is null-terminated
+    buffer[PATH_MAX - 1] = '\0';
+    
+    // Get the directory of the executable
+    char* dir = dirname(buffer);
+    
+    return std::string(dir);
+}
+
 
 std::string GetBasePath() {
     try {
@@ -727,6 +748,11 @@ void HideApp(const std::string& appPath) {
     system(command.c_str());
 }
 
+std::string removeSingleQuotes(std::string str) {
+    // Remove all single quotes from the string
+    str.erase(std::remove(str.begin(), str.end(), '\''), str.end());
+    return str;
+}
 
 int64_t getCurrentTimeMillis() {
     // Get the current time point
@@ -871,6 +897,9 @@ void doFunc(const std::string& logtxt) {
                 if (!gameName.empty() && gameName.front() == '"' && gameName.back() == '"') {
                     gameName = gameName.substr(1, gameName.size() - 2);
                 }
+                std::time_t t = std::time(0);
+                startTime_ForGame[gameName] = std::to_string(t);
+                endTime_ForGame[gameName] = "0";
 
                 // Find the relevant buttons for the Discord activity
                 auto it = std::find_if(buttonPairs.begin(), buttonPairs.end(),
@@ -898,8 +927,10 @@ void doFunc(const std::string& logtxt) {
 
                 // Update Discord activity
                 if (it != buttonPairs.end() && it2 != buttonPairs.end()) {
+                    deeplink_ForGame[gameName] = it->second;
                     UpdDiscordActivity("Playing " + gameName, status, TimeStartedUniverse, 0, -1, gameName, "Roblox", it->first, it2->first, it->second, it2->second, 0);
                 } else {
+                    deeplink_ForGame[gameName] = "roblox://experiences/start?placeId=" + std::to_string(placeId);
                     it = std::find_if(buttonPairs.begin(), buttonPairs.end(),
                         [](const std::pair<std::string, std::string>& pair) {
                             return pair.first == "Roblox";
@@ -930,7 +961,6 @@ void doFunc(const std::string& logtxt) {
         ActivityMachineUDMUX = false;
         ActivityIsTeleport = false;
         Current = Home;
-        GameIMG = "";
         TimeStartedUniverse = 0;
         std::string filename = GetResourcesFolderPath() + "/kill.txt";
 
@@ -949,6 +979,23 @@ void doFunc(const std::string& logtxt) {
         } catch (const std::filesystem::filesystem_error& e) {
             std::cerr << "[ERROR] Filesystem error: " << e.what() << std::endl;
         }
+
+        for (auto const& [key, val] : endTime_ForGame)
+        {
+            if (val != "0")
+            {
+                continue;
+            }
+            std::time_t t = std::time(0);
+            endTime_ForGame[key] = std::to_string(t);
+            std::cout << "[INFO] Data is: " << endTime_ForGame[key] << "\n";
+            std::string jsonData = "{'name' : '" + removeSingleQuotes(key) + "', 'img' : '" + GameIMG + "', 'deeplink' : '" + deeplink_ForGame[key] + "', 'startTime' : '" + startTime_ForGame[key] + "', 'endTime' : '" + endTime_ForGame[key] + "'}";
+            std::cout << "[INFO] JSON data is: " << jsonData << "\n";
+            std::string Command = GetBashPath() + "/GameWatcher.app/Contents/MacOS/GameWatcher -JsonData \"" + jsonData + "\" -updateJsonGameDataWithPathData";
+            std::cout << "[INFO] Command is: " << Command << "\n";
+            system(Command.c_str());
+        }
+        GameIMG = "";
     }
     else if (logtxt.find("[FLog::Network] UDMUX Address = ") != std::string::npos && !ActivityInGame && placeId != 0 && Current != Home) 
     {
@@ -1180,23 +1227,6 @@ void Update(DiscordState& state_)
 }
 */
 
-std::string GetBashPath() {
-    char buffer[PATH_MAX];
-    uint32_t size = sizeof(buffer);
-    
-    if (_NSGetExecutablePath(buffer, &size) != 0) {
-        return ""; // Return empty string on failure
-    }
-    
-    // Ensure buffer is null-terminated
-    buffer[PATH_MAX - 1] = '\0';
-    
-    // Get the directory of the executable
-    char* dir = dirname(buffer);
-    
-    return std::string(dir);
-}
-
 int loadFolderCount(const std::string& jsonFilePath) {
     std::ifstream inFile(jsonFilePath);
     if (!inFile.is_open()) {
@@ -1383,11 +1413,11 @@ int main_loop(NSArray *arguments, std::string supercoolvar, bool dis) {
                     do {} while (isBootstrapRunning());
                     if (supercoolvar.empty())
                     {
-                        runApp(GetBasePath() + "/Roblox.app", false);
+                        runApp("/tmp/Roblox.app", false);
                     }
                     else
                     {
-                        std::string run_to_open_lol = "open -a \"" + GetBasePath() + "/Roblox.app\"" + "\"" + supercoolvar + "\"";
+                        std::string run_to_open_lol = "open -a \"/tmp/Roblox.app\" \"" + supercoolvar + "\"";
                         NSLog(@"[INFO] Ok got it running this command %s", run_to_open_lol.c_str());
                         system(run_to_open_lol.c_str());
                     }
@@ -1439,8 +1469,8 @@ int main_loop(NSArray *arguments, std::string supercoolvar, bool dis) {
                         NSLog(@"[INFO] Updating roblox!");
                         //std::cout << "[WARN] Couldn't find roblox_version.json after downloading, assuming the client is not up to date." << std::endl;
                     }
-                    if (!doesAppExist(GetBasePath() + "/Roblox.app")) {
-                        NSLog(@"Couldn't find GetBasePath()/Roblox.app");
+                    if (!doesAppExist("/tmp/Roblox.app")) {
+                        NSLog(@"Couldn't find /tmp/Roblox.app");
                         current_version = "";
                     }
                     if (current_version_from_file != current_version || JsonCount != currentCount) {
@@ -1522,16 +1552,15 @@ int main_loop(NSArray *arguments, std::string supercoolvar, bool dis) {
                         break;
                     }
                 }
+                std::string Command = GetBashPath() + "/GameWatcher.app/Contents/MacOS/GameWatcher -clearJsonGameData";
+                std::cout << "[INFO] Command is: " << Command << "\n";
+                system(Command.c_str());
                 discordThread = std::thread([&]() {
                     NSLog(@"[INFO] Stopping discord thread");
                 });
                 DiscordLookerThread = std::thread([&]() {
                     NSLog(@"[INFO] Stopping thread");
                 });
-                if (discordThread.joinable())
-                {
-                    discordThread.join();
-                }
             }
             std::string filename = GetResourcesFolderPath() + "/kill.txt";
 

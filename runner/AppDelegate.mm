@@ -30,6 +30,23 @@ std::string checkIfRobloxIsRunning = R"(
 
 bool isFound = true;
 
+inline std::string GetBashPath() {
+    char buffer[PATH_MAX];
+    uint32_t size = sizeof(buffer);
+    
+    if (_NSGetExecutablePath(buffer, &size) != 0) {
+        return ""; // Return empty string on failure
+    }
+    
+    // Ensure buffer is null-terminated
+    buffer[PATH_MAX - 1] = '\0';
+    
+    // Get the directory of the executable
+    char* dir = dirname(buffer);
+    
+    return std::string(dir);
+}
+
 class Copy {
 public:
     explicit Copy(const std::string& dir) : dir_(dir) {}
@@ -139,7 +156,7 @@ std::string generateRandomName() {
 
 // Function to create a new copy of Roblox and rename it with a random name
 Copy NewCopy() {
-    std::string sourcePath = GetPath() + "/Roblox.app";
+    std::string sourcePath = "/tmp/Roblox.app";
     std::string destDir = copyDestDir();
 
     // Copy Roblox.app to the destination directory
@@ -358,7 +375,7 @@ bool killAppByPID(pid_t pid) {
             }
             else
             {
-                std::string run_to_open_lol = "open -a \"" + GetPath() + "/Roblox.app\"" + "\"" + finalURLString + "\"";
+                std::string run_to_open_lol = "open -a \"/tmp/Roblox.app\" \"" + finalURLString + "\"";
                 NSLog(@"[INFO] Ok got it running this command %s", run_to_open_lol.c_str());
                 system(run_to_open_lol.c_str());
             }
@@ -393,6 +410,9 @@ bool killAppByPID(pid_t pid) {
         app_copy.Close();
         killAppByPID(app_copy.PID);
     }
+    std::string Command = GetBashPath() + "/GameWatcher.app/Contents/MacOS/GameWatcher -clearJsonGameData";
+    std::cout << "[INFO] Command is: " << Command << "\n";
+    system(Command.c_str());
     NSLog(@"[INFO] App is about to terminate\n");
 }
 

@@ -24,10 +24,18 @@ create_smart_app:
 	@mv -f $(CURDIR)/"Smart Join"/Build/Products/Release/"Smart Join.app" $(BUILDPATH)/Macblox/"Smart Join.app"
 	@mv -f $(CURDIR)/"Smart Join"/Build/Products/Release/"Smart Join.app.dSYM" $(BUILDPATH)/Macblox/"Smart Join.app.dSYM"
 
+create_GameWatcher:
+	@xcodebuild -project $(CURDIR)/"GameWatcher"/"GameWatcher.xcodeproj" -scheme "GameWatcher" -configuration Release -derivedDataPath $(CURDIR)/"GameWatcher"
+	@mv -f $(CURDIR)/"GameWatcher"/Build/Products/Release/"GameWatcher.app" $(BUILDPATH)/Macblox/"Play.app"/Contents/MacOS/"GameWatcher.app"
+	@mv -f $(CURDIR)/"GameWatcher"/Build/Products/Release/"GameWatcher.app.dSYM" $(BUILDPATH)/Macblox/"GameWatcher.app.dSYM"
+
 # Create the main app
 create_runner_app:
 	@if [ -d $(BUILDPATH) ]; then \
 		rm -d -r $(BUILDPATH); \
+	fi
+	@if [ -d $(CURDIR)/GameWatcherApp ]; then \
+		rm -d -r $(CURDIR)/GameWatcherApp; \
 	fi
 	@mkdir $(BUILDPATH)
 	@mkdir $(BUILDPATH)/Macblox
@@ -57,6 +65,12 @@ create_runner_app:
 	@codesign --sign - --entitlements Macblox.plist --deep openRoblox.app --force
 	@mv -f openRoblox.app $(BUILDPATH)/Macblox/"Open Roblox.app"
 	@rm -f $(BUILDPATH)/openRoblox
+	@cd ~
+	@git clone https://github.com/SomeRandomGuy45/GameWatcherApp.git
+	@unzip $(CURDIR)/GameWatcherApp/GameWatcher.app.zip
+	@rm -rf $(CURDIR)/GameWatcherApp/.git
+	@chmod +x $(CURDIR)/GameWatcher.app/Contents/MacOS/GameWatcher
+	@mv $(CURDIR)/GameWatcher.app $(BUILDPATH)/Macblox/"Play.app"/Contents/MacOS
 
 create_main_app:
 	$(CC) $(CXXFLAGS) $(LDFLAGS) -o $(BUILDPATH)/main $(CURDIR)/main_app/main.mm $(CURDIR)/main_app/Downloader.mm
@@ -69,6 +83,7 @@ create_installer_app:
 	@./appify -s Install.sh -n Install -i Images/icon.icns  
 	@codesign --sign - --entitlements Macblox.plist --deep Install.app --force
 
+
 resign:
 	@codesign --sign - --entitlements Macblox.plist --deep $(BUILDPATH)/Macblox/"Macblox.app" --force
 	@codesign --sign - --entitlements Macblox.plist --deep $(BUILDPATH)/Macblox/"Open Roblox.app" --force
@@ -80,4 +95,4 @@ clean:
 	rm -rf $(BUILDPATH)
 
 # Phony targets
-.PHONY: all create_main_app create_background_app clean
+.PHONY: all create_main_app create_background_app clean resign

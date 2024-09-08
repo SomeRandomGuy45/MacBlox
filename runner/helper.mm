@@ -9,8 +9,19 @@
 namespace fs = std::filesystem;
 bool isDiscordFound_ = false;
 
+inline std::string GetBashPath() {
+    // Get the current process info
+    NSProcessInfo *processInfo = [NSProcessInfo processInfo];
+    
+    // Get the executable path
+    NSString *executablePath = [processInfo executablePath];
+    
+    return std::string([executablePath UTF8String]);
+}
+
 @interface HelperClass : NSObject
 - (void)toggleOption:(NSMenuItem *)sender;
+- (void)OpenMainHelper:(NSMenuItem *)sender;
 @end
 
 @implementation HelperClass
@@ -39,6 +50,13 @@ bool isDiscordFound_ = false;
         NSLog(@"[INFO] Option is now OFF");
         isDiscordFound_ = false;
     }
+}
+
+- (void)OpenMainHelper:(NSMenuItem *)sender
+{
+    std::string Command = "open -a " + GetBashPath() + "/GameWatcher.app/Contents/MacOS/GameWatcher";
+    std::cout << "[INFO] Command is: " << Command << "\n";
+    system(Command.c_str());
 }
 
 @end
@@ -390,13 +408,16 @@ void createStatusBarIcon(const std::string &imagePath)
 
     [menu addItem:boolMenuItem];
 
-    [menu addItem:[NSMenuItem separatorItem]];
+    NSMenuItem *openMenuItem = [[NSMenuItem alloc] initWithTitle:@"Open Game Watcher"
+                                                                action:@selector(OpenMainHelper:)
+                                                         keyEquivalent:@""];
+    [openMenuItem setTarget:helper];
+    [openMenuItem setAction:@selector(OpenMainHelper:)];
+    [openMenuItem setEnabled:YES];
 
-    // Add the Quit menu item
-    NSMenuItem *quitMenuItem = [[NSMenuItem alloc] initWithTitle:@"Quit" 
-                                                          action:@selector(terminate:) 
-                                                   keyEquivalent:@""];
-    [menu addItem:quitMenuItem];
+    [menu addItem:openMenuItem];
+
+    NSLog(@"[DEBUG] Menu item enabled state: %d", [openMenuItem isEnabled]);
     
     [statusItem setMenu:menu];
 }
