@@ -1,0 +1,577 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		2B28E6BC2C8C9936007281EA /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 2B28E6BB2C8C9936007281EA /* AppDelegate.m */; };
+		2B28E6BE2C8C9938007281EA /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2B28E6BD2C8C9938007281EA /* Assets.xcassets */; };
+		2B28E6C12C8C9938007281EA /* Base in Resources */ = {isa = PBXBuildFile; fileRef = 2B28E6C02C8C9938007281EA /* Base */; };
+		2B28E6C32C8C9938007281EA /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 2B28E6C22C8C9938007281EA /* main.m */; };
+		2B28E6CE2C8C9938007281EA /* GameWatcherTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 2B28E6CD2C8C9938007281EA /* GameWatcherTests.m */; };
+		2B28E6D82C8C9938007281EA /* GameWatcherUITests.m in Sources */ = {isa = PBXBuildFile; fileRef = 2B28E6D72C8C9938007281EA /* GameWatcherUITests.m */; };
+		2B28E6DA2C8C9938007281EA /* GameWatcherUITestsLaunchTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 2B28E6D92C8C9938007281EA /* GameWatcherUITestsLaunchTests.m */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		2B28E6CA2C8C9938007281EA /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2B28E6AF2C8C9936007281EA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 2B28E6B62C8C9936007281EA;
+			remoteInfo = GameWatcher;
+		};
+		2B28E6D42C8C9938007281EA /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2B28E6AF2C8C9936007281EA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 2B28E6B62C8C9936007281EA;
+			remoteInfo = GameWatcher;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		2B28E6B72C8C9936007281EA /* GameWatcher.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GameWatcher.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		2B28E6BA2C8C9936007281EA /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
+		2B28E6BB2C8C9936007281EA /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
+		2B28E6BD2C8C9938007281EA /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		2B28E6C02C8C9938007281EA /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/MainMenu.xib; sourceTree = "<group>"; };
+		2B28E6C22C8C9938007281EA /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		2B28E6C42C8C9938007281EA /* GameWatcher.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = GameWatcher.entitlements; sourceTree = "<group>"; };
+		2B28E6C92C8C9938007281EA /* GameWatcherTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = GameWatcherTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		2B28E6CD2C8C9938007281EA /* GameWatcherTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = GameWatcherTests.m; sourceTree = "<group>"; };
+		2B28E6D32C8C9938007281EA /* GameWatcherUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = GameWatcherUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		2B28E6D72C8C9938007281EA /* GameWatcherUITests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = GameWatcherUITests.m; sourceTree = "<group>"; };
+		2B28E6D92C8C9938007281EA /* GameWatcherUITestsLaunchTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = GameWatcherUITestsLaunchTests.m; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		2B28E6B42C8C9936007281EA /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2B28E6C62C8C9938007281EA /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2B28E6D02C8C9938007281EA /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		2B28E6AE2C8C9936007281EA = {
+			isa = PBXGroup;
+			children = (
+				2B28E6B92C8C9936007281EA /* GameWatcher */,
+				2B28E6CC2C8C9938007281EA /* GameWatcherTests */,
+				2B28E6D62C8C9938007281EA /* GameWatcherUITests */,
+				2B28E6B82C8C9936007281EA /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		2B28E6B82C8C9936007281EA /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				2B28E6B72C8C9936007281EA /* GameWatcher.app */,
+				2B28E6C92C8C9938007281EA /* GameWatcherTests.xctest */,
+				2B28E6D32C8C9938007281EA /* GameWatcherUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		2B28E6B92C8C9936007281EA /* GameWatcher */ = {
+			isa = PBXGroup;
+			children = (
+				2B28E6BA2C8C9936007281EA /* AppDelegate.h */,
+				2B28E6BB2C8C9936007281EA /* AppDelegate.m */,
+				2B28E6BD2C8C9938007281EA /* Assets.xcassets */,
+				2B28E6BF2C8C9938007281EA /* MainMenu.xib */,
+				2B28E6C22C8C9938007281EA /* main.m */,
+				2B28E6C42C8C9938007281EA /* GameWatcher.entitlements */,
+			);
+			path = GameWatcher;
+			sourceTree = "<group>";
+		};
+		2B28E6CC2C8C9938007281EA /* GameWatcherTests */ = {
+			isa = PBXGroup;
+			children = (
+				2B28E6CD2C8C9938007281EA /* GameWatcherTests.m */,
+			);
+			path = GameWatcherTests;
+			sourceTree = "<group>";
+		};
+		2B28E6D62C8C9938007281EA /* GameWatcherUITests */ = {
+			isa = PBXGroup;
+			children = (
+				2B28E6D72C8C9938007281EA /* GameWatcherUITests.m */,
+				2B28E6D92C8C9938007281EA /* GameWatcherUITestsLaunchTests.m */,
+			);
+			path = GameWatcherUITests;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		2B28E6B62C8C9936007281EA /* GameWatcher */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2B28E6DD2C8C9938007281EA /* Build configuration list for PBXNativeTarget "GameWatcher" */;
+			buildPhases = (
+				2B28E6B32C8C9936007281EA /* Sources */,
+				2B28E6B42C8C9936007281EA /* Frameworks */,
+				2B28E6B52C8C9936007281EA /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = GameWatcher;
+			productName = GameWatcher;
+			productReference = 2B28E6B72C8C9936007281EA /* GameWatcher.app */;
+			productType = "com.apple.product-type.application";
+		};
+		2B28E6C82C8C9938007281EA /* GameWatcherTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2B28E6E02C8C9938007281EA /* Build configuration list for PBXNativeTarget "GameWatcherTests" */;
+			buildPhases = (
+				2B28E6C52C8C9938007281EA /* Sources */,
+				2B28E6C62C8C9938007281EA /* Frameworks */,
+				2B28E6C72C8C9938007281EA /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				2B28E6CB2C8C9938007281EA /* PBXTargetDependency */,
+			);
+			name = GameWatcherTests;
+			productName = GameWatcherTests;
+			productReference = 2B28E6C92C8C9938007281EA /* GameWatcherTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		2B28E6D22C8C9938007281EA /* GameWatcherUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2B28E6E32C8C9938007281EA /* Build configuration list for PBXNativeTarget "GameWatcherUITests" */;
+			buildPhases = (
+				2B28E6CF2C8C9938007281EA /* Sources */,
+				2B28E6D02C8C9938007281EA /* Frameworks */,
+				2B28E6D12C8C9938007281EA /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				2B28E6D52C8C9938007281EA /* PBXTargetDependency */,
+			);
+			name = GameWatcherUITests;
+			productName = GameWatcherUITests;
+			productReference = 2B28E6D32C8C9938007281EA /* GameWatcherUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		2B28E6AF2C8C9936007281EA /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastUpgradeCheck = 1540;
+				TargetAttributes = {
+					2B28E6B62C8C9936007281EA = {
+						CreatedOnToolsVersion = 15.4;
+					};
+					2B28E6C82C8C9938007281EA = {
+						CreatedOnToolsVersion = 15.4;
+						TestTargetID = 2B28E6B62C8C9936007281EA;
+					};
+					2B28E6D22C8C9938007281EA = {
+						CreatedOnToolsVersion = 15.4;
+						TestTargetID = 2B28E6B62C8C9936007281EA;
+					};
+				};
+			};
+			buildConfigurationList = 2B28E6B22C8C9936007281EA /* Build configuration list for PBXProject "GameWatcher" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 2B28E6AE2C8C9936007281EA;
+			productRefGroup = 2B28E6B82C8C9936007281EA /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				2B28E6B62C8C9936007281EA /* GameWatcher */,
+				2B28E6C82C8C9938007281EA /* GameWatcherTests */,
+				2B28E6D22C8C9938007281EA /* GameWatcherUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		2B28E6B52C8C9936007281EA /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2B28E6BE2C8C9938007281EA /* Assets.xcassets in Resources */,
+				2B28E6C12C8C9938007281EA /* Base in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2B28E6C72C8C9938007281EA /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2B28E6D12C8C9938007281EA /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		2B28E6B32C8C9936007281EA /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2B28E6C32C8C9938007281EA /* main.m in Sources */,
+				2B28E6BC2C8C9936007281EA /* AppDelegate.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2B28E6C52C8C9938007281EA /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2B28E6CE2C8C9938007281EA /* GameWatcherTests.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2B28E6CF2C8C9938007281EA /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2B28E6D82C8C9938007281EA /* GameWatcherUITests.m in Sources */,
+				2B28E6DA2C8C9938007281EA /* GameWatcherUITestsLaunchTests.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		2B28E6CB2C8C9938007281EA /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 2B28E6B62C8C9936007281EA /* GameWatcher */;
+			targetProxy = 2B28E6CA2C8C9938007281EA /* PBXContainerItemProxy */;
+		};
+		2B28E6D52C8C9938007281EA /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 2B28E6B62C8C9936007281EA /* GameWatcher */;
+			targetProxy = 2B28E6D42C8C9938007281EA /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		2B28E6BF2C8C9938007281EA /* MainMenu.xib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				2B28E6C02C8C9938007281EA /* Base */,
+			);
+			name = MainMenu.xib;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		2B28E6DB2C8C9938007281EA /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.5;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		2B28E6DC2C8C9938007281EA /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.5;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		2B28E6DE2C8C9938007281EA /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = GameWatcher/GameWatcher.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = N7L854774F;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSMainNibFile = MainMenu;
+				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.someguy.GameWatcher;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+			};
+			name = Debug;
+		};
+		2B28E6DF2C8C9938007281EA /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = GameWatcher/GameWatcher.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = N7L854774F;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSMainNibFile = MainMenu;
+				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.someguy.GameWatcher;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+			};
+			name = Release;
+		};
+		2B28E6E12C8C9938007281EA /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = N7L854774F;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.someguy.GameWatcherTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/GameWatcher.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/GameWatcher";
+			};
+			name = Debug;
+		};
+		2B28E6E22C8C9938007281EA /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = N7L854774F;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.someguy.GameWatcherTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/GameWatcher.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/GameWatcher";
+			};
+			name = Release;
+		};
+		2B28E6E42C8C9938007281EA /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = N7L854774F;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.someguy.GameWatcherUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				TEST_TARGET_NAME = GameWatcher;
+			};
+			name = Debug;
+		};
+		2B28E6E52C8C9938007281EA /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = N7L854774F;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.someguy.GameWatcherUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				TEST_TARGET_NAME = GameWatcher;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		2B28E6B22C8C9936007281EA /* Build configuration list for PBXProject "GameWatcher" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2B28E6DB2C8C9938007281EA /* Debug */,
+				2B28E6DC2C8C9938007281EA /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		2B28E6DD2C8C9938007281EA /* Build configuration list for PBXNativeTarget "GameWatcher" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2B28E6DE2C8C9938007281EA /* Debug */,
+				2B28E6DF2C8C9938007281EA /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		2B28E6E02C8C9938007281EA /* Build configuration list for PBXNativeTarget "GameWatcherTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2B28E6E12C8C9938007281EA /* Debug */,
+				2B28E6E22C8C9938007281EA /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		2B28E6E32C8C9938007281EA /* Build configuration list for PBXNativeTarget "GameWatcherUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2B28E6E42C8C9938007281EA /* Debug */,
+				2B28E6E52C8C9938007281EA /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 2B28E6AF2C8C9936007281EA /* Project object */;
+}
