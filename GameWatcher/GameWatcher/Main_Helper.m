@@ -7,6 +7,7 @@
 #import <Foundation/Foundation.h>
 #import <objc/runtime.h>
 #import "Main_Helper.h"
+#import "Logger.h"
 
 @implementation Main_Helper
 
@@ -36,7 +37,7 @@
     [label setDrawsBackground:NO];
     [label setEditable:NO];
     [label setSelectable:NO];
-    
+    NSLog(@"[INFO] Times are: %@ %@", timeString_Start, timeString_End);
     NSTextField *label_StartTime = [[NSTextField alloc] initWithFrame:NSMakeRect(20, 90, 200, 40)];
     [label_StartTime setStringValue:[NSString stringWithFormat:@"%@ %@",@"Start Time: ",timeString_Start]];
     [label_StartTime setBezeled:NO];

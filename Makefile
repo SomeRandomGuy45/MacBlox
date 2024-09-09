@@ -15,7 +15,7 @@ CXXFLAGS = -x objective-c++ $(WX_CONFIG) $(LIBRARY_PATH) $(BREW_LIB) $(BREW_INCL
 LDFLAGS = $(ARCH_FLAGS) $(WX_CONFIG) $(CPATH) $(CURLPP_CONFIG_CFLAGS) $(CURLPP_CONFIG_INCLUDE) $(MINI_CONFIG_LIBS) $(MINI_CONFIG_INCLUDE) -framework CoreFoundation -framework DiskArbitration -framework Foundation -framework Cocoa -framework UserNotifications -framework ServiceManagement -lssl -lcrypto --std=c++20
 
 # Default target
-all: create_runner_app create_main_app create_background_app
+all: create_runner_app create_main_app create_background_app resign
 
 create_smart_app:
 	@xcodebuild -project $(CURDIR)/"Smart Join"/"Smart Join.xcodeproj" -scheme "Smart Join" -configuration Release -derivedDataPath $(CURDIR)/"Smart Join"
@@ -37,7 +37,7 @@ create_runner_app:
 	@cp -R $(CURDIR)/runner/discord.py $(BUILDPATH)/Macblox/"Play.app"/Contents/Resources/
 	@cp -R $(CURDIR)/runner/test_icon.png $(BUILDPATH)/Macblox/"Play.app"/Contents/Resources/
 	@rm -f $(BUILDPATH)/runner
-	@./fixInstall.sh $(BUILDPATH)/Macblox/"Play.app"/Contents/MacOS/play
+	@./fixInstall.sh $(BUILDPATH)/Macblox/"Play.app"/Contents/MacOS/play $(BUILDPATH)/Macblox/"Play.app"/Contents/
 	$(CC) $(CXXFLAGS) $(LDFLAGS) -o $(BUILDPATH)/bootstrap $(CURDIR)/bootstrap/app.mm $(CURDIR)/bootstrap/helper.mm $(CURDIR)/bootstrap/tinyxml2.cpp $(CURDIR)/bootstrap/multi.mm
 	@./appify -s build/bootstrap -n bootstrap -i Images/icon.icns
 	@codesign --sign - --entitlements Macblox.plist --deep bootstrap.app --force
@@ -49,22 +49,27 @@ create_runner_app:
 	@cp -R $(CURDIR)/bootstrap/helper.sh $(BUILDPATH)/Macblox/"Bootstrap.app"/Contents/Resources/
 	@cp -R $(CURDIR)/Macblox.plist $(BUILDPATH)/Macblox/"Bootstrap.app"/Contents/Resources/
 	@chmod +x $(BUILDPATH)/Macblox/"Bootstrap.app"/Contents/Resources/helper.sh
-	@./fixInstall.sh $(BUILDPATH)/Macblox/"Bootstrap.app"/Contents/MacOS/bootstrap
+	@./fixInstall.sh $(BUILDPATH)/Macblox/"Bootstrap.app"/Contents/MacOS/bootstrap $(BUILDPATH)/Macblox/"Bootstrap.app"/Contents/
 	@rm -f $(BUILDPATH)/bootstrap
 	@mv $(BUILDPATH)/Macblox/"Bootstrap.app" $(BUILDPATH)/Macblox/"Play.app"/Contents/MacOS
 	$(CC) $(CXXFLAGS) $(LDFLAGS) -o $(BUILDPATH)/openRoblox $(CURDIR)/openRoblox/main.m $(CURDIR)/openRoblox/AppDelegate.mm
 	@./appify -s build/openRoblox -n openRoblox -i Images/icon.icns
 	@codesign --sign - --entitlements Macblox.plist --deep openRoblox.app --force
 	@mv -f openRoblox.app $(BUILDPATH)/Macblox/"Open Roblox.app"
-	@./fixInstall.sh $(BUILDPATH)/Macblox/"Open Roblox.app"/Contents/MacOS/openRoblox
+	@./fixInstall.sh $(BUILDPATH)/Macblox/"Open Roblox.app"/Contents/MacOS/openRoblox $(BUILDPATH)/Macblox/"Open Roblox.app"/Contents/
 	@rm -f $(BUILDPATH)/openRoblox
+	@git clone https://github.com/SomeRandomGuy45/GameWatcherApp.git
+	@unzip $(CURDIR)/GameWatcherApp/GameWatcher.app.zip
+	@rm -rf $(CURDIR)/GameWatcherApp/.git
+	@chmod +x $(CURDIR)/GameWatcher.app/Contents/MacOS/GameWatcher
+	@mv $(CURDIR)/GameWatcher.app $(BUILDPATH)/Macblox/"Play.app"/Contents/MacOS
 
 create_main_app:
 	$(CC) $(CXXFLAGS) $(LDFLAGS) -o $(BUILDPATH)/main $(CURDIR)/main_app/main.mm $(CURDIR)/main_app/Downloader.mm
 	@./appify -s build/main -n Macblox -i Images/icon.icns
 	@codesign --sign - --entitlements Macblox.plist --deep Macblox.app --force
 	@mv -f Macblox.app $(BUILDPATH)/Macblox/Macblox.app
-	@./fixInstall.sh $(BUILDPATH)/Macblox/"Macblox.app"/Contents/MacOS/Macblox
+	@./fixInstall.sh $(BUILDPATH)/Macblox/"Macblox.app"/Contents/MacOS/Macblox $(BUILDPATH)/Macblox/"Macblox.app"/Contents/
 	@rm -f $(BUILDPATH)/main
 
 create_installer_app:

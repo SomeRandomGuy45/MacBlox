@@ -289,6 +289,10 @@ NSString* toNSString(const bool& value) {
     return [NSString stringWithFormat:@"%s", value ? "true" : "false"];
 }
 
+NSString* wxStringToNSString(const wxString& wxStr) {
+    return [NSString stringWithUTF8String:wxStr.ToUTF8().data()];
+}
+
 std::string GetDataFromURL(std::string urlString)
 {
     // Convert std::string to NSString
@@ -355,19 +359,26 @@ std::vector<uint8_t> get_temp_dir_bytes() {
     return std::vector<uint8_t>(temp_dir_str.begin(), temp_dir_str.end());
 }
 
-void CreateNotification(const wxString &title, const wxString &message, int Timeout)
-{
-    if (Timeout != 0 && Timeout != -1)
-    {
-        Timeout = -1;
+void CreateNotification(const wxString &title, const wxString &message, int timeout) {
+    if (timeout != 0 && timeout != -1) {
+        timeout = -1; // reset timeout to -1
     }
-    wxNotificationMessage notification(title, message);
-    if (!notification.Show(Timeout))
-    {
+
+    NSString *nsTitle = wxStringToNSString(title);
+    NSString *nsMessage = wxStringToNSString(message);
+    
+    NSUserNotification *notification = [[NSUserNotification alloc] init];
+    [notification setTitle:nsTitle];
+    [notification setInformativeText:nsMessage];
+    
+    NSUserNotificationCenter *center = [NSUserNotificationCenter defaultUserNotificationCenter];
+    
+    // Show the notification
+    [center deliverNotification:notification];
+    
+    if ([center deliveredNotifications].count == 0) {
         NSLog(@"[ERROR] Failed to show notification");
-    }
-    else
-    {
+    } else {
         NSLog(@"[INFO] Notification shown successfully");
     }
 }

@@ -1,4 +1,5 @@
 #import "AppDelegate.h"
+#import "Logger.h"
 
 NSString *convertToValidJSONString(NSString *inputString) {
     // Use a regular expression to add double quotes around keys

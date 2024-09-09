@@ -43,6 +43,7 @@
 		2B28E6D32C8C9938007281EA /* GameWatcherUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = GameWatcherUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		2B28E6E62C8CCF68007281EA /* Main_Helper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Main_Helper.h; sourceTree = "<group>"; };
 		2B28E6E72C8CCF9F007281EA /* Main_Helper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Main_Helper.m; sourceTree = "<group>"; };
+		2BD520622C8E8F02001DD8E3 /* Logger.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Logger.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -91,6 +92,7 @@
 		2B28E6B92C8C9936007281EA /* GameWatcher */ = {
 			isa = PBXGroup;
 			children = (
+				2BD520622C8E8F02001DD8E3 /* Logger.h */,
 				2B28E6E62C8CCF68007281EA /* Main_Helper.h */,
 				2B28E6BA2C8C9936007281EA /* AppDelegate.h */,
 				2B28E6BB2C8C9936007281EA /* AppDelegate.m */,
