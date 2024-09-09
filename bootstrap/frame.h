@@ -705,6 +705,10 @@ void BootstrapperFrame::DoEmojiLogic() {
 void BootstrapperFrame::DoFontLogic()
 {
     //https://github.com/pizzaboxer/bloxstrap/blob/6d8d4824498853952d133650ab165fd89f3ef0e8/Bloxstrap/Bootstrapper.cs#L886
+    if (!fs::exists("/tmp/Roblox.app/Contents/Resources/content/fonts/families"))
+    {
+        return;
+    }
     std::string modFamilyFolder = fs::path(ModFolder) / "content/fonts/families";
     if (fs::exists(ModFolder + "/content/fonts/CustomFont.ttf")) {
         fs::create_directories(modFamilyFolder);

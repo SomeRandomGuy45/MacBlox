@@ -6,15 +6,13 @@ ARCH_FLAGS = $(shell if [ "$(ARCH)" = "arm64" ]; then echo "-arch arm64"; fi)
 BREW_PREFIX = $(shell brew --prefix)
 BREW_INCLUDE = -I$(BREW_PREFIX)/include
 BREW_LIB = -L$(BREW_PREFIX)/lib
-CURLPP_CONFIG = $(shell brew --prefix curlpp)
-CURLPP_CONFIG_LIBS = -I$(CURLPP_CONFIG)/include
-CURLPP_CONFIG_INCLUDE = -L$(CURLPP_CONFIG)/lib
-MINI_CONFIG = $(shell brew --prefix minizip)
-MINI_CONFIG_LIBS = -I$(MINI_CONFIG)/include
-MINI_CONFIG_INCLUDE = -L$(MINI_CONFIG)/lib
+OPENSSL_PREFIX = $(shell brew --prefix openssl)
+OPENSSL_PREFIX_LIB = $(OPENSSL_PREFIX)/lib
+OPENSLL_lib1 = $(OPENSSL_PREFIX_LIB)/libssl.3.dylib
+OPENSLL_lib2 = $(OPENSSL_PREFIX_LIB)/libcrypto.3.dylib
 CC = clang++
 CXXFLAGS = -x objective-c++ $(WX_CONFIG) $(LIBRARY_PATH) $(BREW_LIB) $(BREW_INCLUDE)
-LDFLAGS = $(ARCH_FLAGS) $(WX_CONFIG) $(CPATH) $(CURLPP_CONFIG_CFLAGS) $(CURLPP_CONFIG_INCLUDE) $(MINI_CONFIG_LIBS) $(MINI_CONFIG_INCLUDE) -lcurl -lcurlpp -lz -lminizip -framework CoreFoundation -framework DiskArbitration -framework Foundation -framework Cocoa -framework UserNotifications -framework ServiceManagement -lssl -lcrypto --std=c++20
+LDFLAGS = $(ARCH_FLAGS) $(WX_CONFIG) $(CPATH) $(CURLPP_CONFIG_CFLAGS) $(CURLPP_CONFIG_INCLUDE) $(MINI_CONFIG_LIBS) $(MINI_CONFIG_INCLUDE) -framework CoreFoundation -framework DiskArbitration -framework Foundation -framework Cocoa -framework UserNotifications -framework ServiceManagement -lssl -lcrypto --std=c++20
 
 # Default target
 all: create_runner_app create_main_app create_background_app
@@ -24,18 +22,10 @@ create_smart_app:
 	@mv -f $(CURDIR)/"Smart Join"/Build/Products/Release/"Smart Join.app" $(BUILDPATH)/Macblox/"Smart Join.app"
 	@mv -f $(CURDIR)/"Smart Join"/Build/Products/Release/"Smart Join.app.dSYM" $(BUILDPATH)/Macblox/"Smart Join.app.dSYM"
 
-create_GameWatcher:
-	@xcodebuild -project $(CURDIR)/"GameWatcher"/"GameWatcher.xcodeproj" -scheme "GameWatcher" -configuration Release -derivedDataPath $(CURDIR)/"GameWatcher"
-	@mv -f $(CURDIR)/"GameWatcher"/Build/Products/Release/"GameWatcher.app" $(BUILDPATH)/Macblox/"Play.app"/Contents/MacOS/"GameWatcher.app"
-	@mv -f $(CURDIR)/"GameWatcher"/Build/Products/Release/"GameWatcher.app.dSYM" $(BUILDPATH)/Macblox/"GameWatcher.app.dSYM"
-
 # Create the main app
 create_runner_app:
 	@if [ -d $(BUILDPATH) ]; then \
 		rm -d -r $(BUILDPATH); \
-	fi
-	@if [ -d $(CURDIR)/GameWatcherApp ]; then \
-		rm -d -r $(CURDIR)/GameWatcherApp; \
 	fi
 	@mkdir $(BUILDPATH)
 	@mkdir $(BUILDPATH)/Macblox
@@ -47,6 +37,7 @@ create_runner_app:
 	@cp -R $(CURDIR)/runner/discord.py $(BUILDPATH)/Macblox/"Play.app"/Contents/Resources/
 	@cp -R $(CURDIR)/runner/test_icon.png $(BUILDPATH)/Macblox/"Play.app"/Contents/Resources/
 	@rm -f $(BUILDPATH)/runner
+	@./fixInstall.sh $(BUILDPATH)/Macblox/"Play.app"/Contents/MacOS/play
 	$(CC) $(CXXFLAGS) $(LDFLAGS) -o $(BUILDPATH)/bootstrap $(CURDIR)/bootstrap/app.mm $(CURDIR)/bootstrap/helper.mm $(CURDIR)/bootstrap/tinyxml2.cpp $(CURDIR)/bootstrap/multi.mm
 	@./appify -s build/bootstrap -n bootstrap -i Images/icon.icns
 	@codesign --sign - --entitlements Macblox.plist --deep bootstrap.app --force
@@ -58,31 +49,27 @@ create_runner_app:
 	@cp -R $(CURDIR)/bootstrap/helper.sh $(BUILDPATH)/Macblox/"Bootstrap.app"/Contents/Resources/
 	@cp -R $(CURDIR)/Macblox.plist $(BUILDPATH)/Macblox/"Bootstrap.app"/Contents/Resources/
 	@chmod +x $(BUILDPATH)/Macblox/"Bootstrap.app"/Contents/Resources/helper.sh
+	@./fixInstall.sh $(BUILDPATH)/Macblox/"Bootstrap.app"/Contents/MacOS/bootstrap
 	@rm -f $(BUILDPATH)/bootstrap
 	@mv $(BUILDPATH)/Macblox/"Bootstrap.app" $(BUILDPATH)/Macblox/"Play.app"/Contents/MacOS
 	$(CC) $(CXXFLAGS) $(LDFLAGS) -o $(BUILDPATH)/openRoblox $(CURDIR)/openRoblox/main.m $(CURDIR)/openRoblox/AppDelegate.mm
 	@./appify -s build/openRoblox -n openRoblox -i Images/icon.icns
 	@codesign --sign - --entitlements Macblox.plist --deep openRoblox.app --force
 	@mv -f openRoblox.app $(BUILDPATH)/Macblox/"Open Roblox.app"
+	@./fixInstall.sh $(BUILDPATH)/Macblox/"Open Roblox.app"/Contents/MacOS/openRoblox
 	@rm -f $(BUILDPATH)/openRoblox
-	@cd ~
-	@git clone https://github.com/SomeRandomGuy45/GameWatcherApp.git
-	@unzip $(CURDIR)/GameWatcherApp/GameWatcher.app.zip
-	@rm -rf $(CURDIR)/GameWatcherApp/.git
-	@chmod +x $(CURDIR)/GameWatcher.app/Contents/MacOS/GameWatcher
-	@mv $(CURDIR)/GameWatcher.app $(BUILDPATH)/Macblox/"Play.app"/Contents/MacOS
 
 create_main_app:
 	$(CC) $(CXXFLAGS) $(LDFLAGS) -o $(BUILDPATH)/main $(CURDIR)/main_app/main.mm $(CURDIR)/main_app/Downloader.mm
 	@./appify -s build/main -n Macblox -i Images/icon.icns
 	@codesign --sign - --entitlements Macblox.plist --deep Macblox.app --force
 	@mv -f Macblox.app $(BUILDPATH)/Macblox/Macblox.app
+	@./fixInstall.sh $(BUILDPATH)/Macblox/"Macblox.app"/Contents/MacOS/Macblox
 	@rm -f $(BUILDPATH)/main
 
 create_installer_app:
 	@./appify -s Install.sh -n Install -i Images/icon.icns  
 	@codesign --sign - --entitlements Macblox.plist --deep Install.app --force
-
 
 resign:
 	@codesign --sign - --entitlements Macblox.plist --deep $(BUILDPATH)/Macblox/"Macblox.app" --force
@@ -95,4 +82,4 @@ clean:
 	rm -rf $(BUILDPATH)
 
 # Phony targets
-.PHONY: all create_main_app create_background_app clean resign
+.PHONY: all create_main_app create_background_app clean

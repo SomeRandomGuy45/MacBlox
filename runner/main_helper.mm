@@ -289,28 +289,42 @@ NSString* toNSString(const bool& value) {
     return [NSString stringWithFormat:@"%s", value ? "true" : "false"];
 }
 
-size_t write_data(void *ptr, size_t size, size_t nmemb, FILE *stream) {
-    size_t written = fwrite(ptr, size, nmemb, stream);
-    return written;
-}
-
-std::string GetDataFromURL(std::string URL)
+std::string GetDataFromURL(std::string urlString)
 {
-    try {
-        std::ostringstream os;
-        os << curlpp::options::Url(URL);
-        return os.str();
-    } 
-    catch (curlpp::LogicError &e)
-    {
-        NSLog(@"[ERROR] curlpp::LogicError: " );
-        return e.what();
+    // Convert std::string to NSString
+    NSString *nsURLString = [NSString stringWithUTF8String:urlString.c_str()];
+    NSURL *url = [NSURL URLWithString:nsURLString];
+    
+    // Create a semaphore for synchronous waiting
+    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+    
+    __block NSString *resultString = nil;
+    __block NSError *resultError = nil;
+    
+    // Create and start the NSURLSession data task
+    NSURLSession *session = [NSURLSession sharedSession];
+    NSURLSessionDataTask *dataTask = [session dataTaskWithURL:url completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
+        if (error) {
+            resultError = error;
+        } else {
+            resultString = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+        }
+        // Signal the semaphore to unblock the waiting thread
+        dispatch_semaphore_signal(semaphore);
+    }];
+    
+    [dataTask resume];
+    
+    // Wait for the semaphore to be signaled
+    dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
+    
+    if (resultError) {
+        std::cerr << "[ERROR] " << resultError.localizedDescription.UTF8String << std::endl;
+        return ""; // Return an empty string on error
     }
-    catch (curlpp::RuntimeError &e)
-    {
-        NSLog(@"[ERROR] curlpp::RuntimeError: " );
-        return e.what();
-    }
+    
+    // Convert NSString to std::string
+    return std::string([resultString UTF8String]);
 }
 
 // Helper function to get the default temporary directory

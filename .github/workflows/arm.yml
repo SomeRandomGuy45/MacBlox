@@ -39,6 +39,7 @@ jobs:
         cd MacBlox
         make
         echo "[INFO] Finished building MacBlox"
+        otool -L build/Macblox/Macblox.app/Contents/MacOS/Macblox
         tar -cvf Build.tar build/
 
     - name: Upload Artifact

@@ -2,7 +2,6 @@
 #import <Foundation/Foundation.h>
 #import <AppKit/AppKit.h>
 #import <Cocoa/Cocoa.h>
-#import "minizip/unzip.h"
 #import <OSAKit/OSAKit.h>
 #import <ScriptingBridge/ScriptingBridge.h>
 

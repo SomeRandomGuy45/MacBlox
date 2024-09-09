@@ -22,8 +22,6 @@ Macblox is a funny project i wanted to do because there wasn't bloxstrap for mac
 
 # Building
 ### Libraries needed:
-* libcurl [Website](https://curl.se/libcurl/)
-* curlpp [Github](https://github.com/jpbarrette/curlpp/)
 * wxwidgets [Github](https://github.com/wxWidgets/wxWidgets)
 ### Building the project:
 Just run the following command

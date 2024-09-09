@@ -1,5 +1,4 @@
 #import <Foundation/Foundation.h>
-#import <minizip/unzip.h>
 #import <AppKit/AppKit.h>
 #import <OSAKit/OSAKit.h>
 #import "Downloader.h"
@@ -276,64 +275,19 @@ std::string downloadFile_WITHOUT_DESTINATION(const char* urlString) {
 }
 
 bool unzipFile(const char* zipFilePath, const char* destinationPath) {
-    @autoreleasepool {
-        NSString *zipPath = [NSString stringWithUTF8String:zipFilePath];
-        NSString *destPath = [NSString stringWithUTF8String:destinationPath];
-        
-        unzFile zipFile = unzOpen([zipPath fileSystemRepresentation]);
-        if (!zipFile) {
-            NSLog(@"[ERROR] Failed to open zip file: %s", zipFilePath);
-            return false;
-        }
-        
-        int ret = unzGoToFirstFile(zipFile);
-        if (ret != UNZ_OK) {
-            NSLog(@"[ERROR] Failed to go to first file in zip archive");
-            unzClose(zipFile);
-            return false;
-        }
+    // Construct the command to unzip the file
+    std::string command = "unzip -o ";
+    command += zipFilePath;
+    command += " -d ";
+    command += destinationPath;
 
-        do {
-            char filename[256];
-            unz_file_info fileInfo;
-            ret = unzGetCurrentFileInfo(zipFile, &fileInfo, filename, sizeof(filename), NULL, 0, NULL, 0);
-            if (ret != UNZ_OK) {
-                NSLog(@"[ERROR] Failed to get file info");
-                unzClose(zipFile);
-                return false;
-            }
+    // Call the system function to execute the command
+    int result = system(command.c_str());
 
-            NSString *filePath = [destPath stringByAppendingPathComponent:[NSString stringWithUTF8String:filename]];
-            if (filename[strlen(filename) - 1] == '/') {
-                [[NSFileManager defaultManager] createDirectoryAtPath:filePath withIntermediateDirectories:YES attributes:nil error:nil];
-            } else {
-                ret = unzOpenCurrentFile(zipFile);
-                if (ret != UNZ_OK) {
-                    NSLog(@"[ERROR] Failed to open file in zip archive");
-                    unzClose(zipFile);
-                    return false;
-                }
-
-                FILE *outFile = fopen([filePath fileSystemRepresentation], "wb");
-                if (!outFile) {
-                    NSLog(@"[ERROR] Failed to open output file");
-                    unzCloseCurrentFile(zipFile);
-                    unzClose(zipFile);
-                    return false;
-                }
-
-                char buffer[8192];
-                int bytesRead;
-                while ((bytesRead = unzReadCurrentFile(zipFile, buffer, sizeof(buffer))) > 0) {
-                    fwrite(buffer, 1, bytesRead, outFile);
-                }
-
-                fclose(outFile);
-                unzCloseCurrentFile(zipFile);
-            }
-        } while (unzGoToNextFile(zipFile) == UNZ_OK);
-
-        unzClose(zipFile);
-        return true;
+    // Check the result of the system call
+    if (result == 0) {
+        return true;  // Unzip succeeded
+    } else {
+        return false; // Unzip failed
     }
 }

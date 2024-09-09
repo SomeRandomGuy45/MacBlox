@@ -22,8 +22,6 @@
 #include <functional>
 #include <sys/stat.h>
 #include <curl/curl.h>
-#include "curlpp/cURLpp.hpp"
-#include "curlpp/Options.hpp"
 #include <libgen.h>
 #include <signal.h>
 #include <errno.h>
