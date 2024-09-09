@@ -25,7 +25,7 @@ create_smart_app:
 # Create the main app
 create_runner_app:
 	@if [ -d $(BUILDPATH) ]; then \
-		rm -d -r $(BUILDPATH); \
+		rm -d -r -rf $(BUILDPATH); \
 	fi
 	rm -rf $(CURDIR)/GameWatcherApp 
 	@mkdir $(BUILDPATH)
