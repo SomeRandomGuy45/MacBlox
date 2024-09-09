@@ -45,4 +45,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
           name: Build
-          path: ~/work/MacBlox/MacBlox/MacBlox/Build.tar
+          path: ~/work/MacBlox/MacBlox/MacBlox/MacBlox.tar
