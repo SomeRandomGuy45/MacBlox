@@ -1,5 +1,13 @@
 #!/bin/bash
 
+: "
+
+    Hello!
+    This scripts will help you to create a frameworks folder which places the dylib files that it needs
+    This can be used if your using something like brew when creating your apps! 
+
+"
+
 # Define the path where your executables and libraries are located
 SEARCH_DIR="$1"
 BUILD_DIR="$2"

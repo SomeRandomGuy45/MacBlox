@@ -25,8 +25,12 @@ std::string getParentFolderOfApp() {
     [NSApp terminate:nil];
 }
 
-- (void)applicationWillTerminate:(NSNotification *)notification {
+- (void)applicationWillTerminate:(NSNotification *)aNotification {
     std::cout << "[INFO] App is about to terminate\n";
+}
+
+- (BOOL)applicationSupportsSecureRestorableState:(NSNotification *)aNotification {
+    return YES;
 }
 
 @end

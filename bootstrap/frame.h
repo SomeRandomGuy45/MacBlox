@@ -1083,8 +1083,6 @@ void BootstrapperFrame::DoLogic()
         RenameFile(ArrowFarCursor.c_str(), paths["ArrowFarCursor"].c_str());
         copyFile(GetBasePath + "/data.json", TmpPath + "/Roblox.app/Contents/MacOS/ClientSettings/ClientAppSettings.json");
         searchFolders(ModFolder, false);
-        std::string fixCommand ="\"" + GetResourcesFolderPath() + "/helper.sh\"";
-        system(fixCommand.c_str());
         GetCurrentCountOfModFolder(ModFolder, GetBasePath);
         std::this_thread::sleep_for(std::chrono::seconds(2));
         UpdateProgress(1);
