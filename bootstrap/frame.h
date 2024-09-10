@@ -32,6 +32,7 @@
 #include "json.hpp"
 
 #import <Foundation/Foundation.h>
+#import <Cocoa/Cocoa.h>
 
 namespace fs = std::filesystem;
 using namespace tinyxml2;
@@ -675,6 +676,77 @@ void BootstrapperFrame::CopyAndResignRoblox()
     system(redo.c_str());
 }
 
+NSString* stringToNSString(const std::string& str) {
+    return [NSString stringWithUTF8String:str.c_str()];
+}
+
+NSImage* resizeImage(NSImage *image, NSSize newSize) {
+    NSImage *resizedImage = [[NSImage alloc] initWithSize:newSize];
+    
+    [resizedImage lockFocus];
+    [[NSGraphicsContext currentContext] setImageInterpolation:NSImageInterpolationHigh];
+    
+    // Draw the image into the new size
+    [image drawInRect:NSMakeRect(0, 0, newSize.width, newSize.height)
+             fromRect:NSMakeRect(0, 0, image.size.width, image.size.height)
+            operation:NSCompositingOperationCopy
+             fraction:1.0];
+    
+    [resizedImage unlockFocus];
+    return resizedImage;
+}
+
+bool compareFiles(const std::string& path1, const std::string& path2) {
+    // Load images using NSImage from the given paths
+    NSImage *image1 = [[NSImage alloc] initWithContentsOfFile:stringToNSString(path1)];
+    NSImage *image2 = [[NSImage alloc] initWithContentsOfFile:stringToNSString(path2)];
+
+    // Ensure both images are valid
+    if (![image1 isValid]) {
+        NSLog(@"[ERROR] Image 1 is not valid with path: %s", path1.c_str());
+        return false;
+    }
+    else if (![image2 isValid]) {
+        NSLog(@"[ERROR] Image 2 is not valid with path: %s", path2.c_str());
+        return false;
+    }
+
+    // Ensure the images have the same size
+    NSSize minSize;
+    minSize.width = std::min(image1.size.width, image2.size.width);
+    minSize.height = std::min(image1.size.height, image2.size.height);
+
+    // Resize both images to the minimum size
+    NSImage *resizedImage1 = resizeImage(image1, minSize);
+    NSImage *resizedImage2 = resizeImage(image2, minSize);
+
+    // Create bitmap representations for both resized images
+    NSBitmapImageRep *bitmap1 = [[NSBitmapImageRep alloc] initWithData:[resizedImage1 TIFFRepresentation]];
+    NSBitmapImageRep *bitmap2 = [[NSBitmapImageRep alloc] initWithData:[resizedImage2 TIFFRepresentation]];
+
+    // Ensure both bitmaps are valid
+    if (!bitmap1 || !bitmap2) {
+        NSLog(@"[ERROR] Unable to create bitmap representations for images.");
+        return false;
+    }
+
+    // Compare pixel data byte by byte
+    NSInteger bytesPerRow = bitmap1.bytesPerRow;
+    NSInteger totalBytes = bytesPerRow * bitmap1.pixelsHigh;
+
+    unsigned char *data1 = [bitmap1 bitmapData];
+    unsigned char *data2 = [bitmap2 bitmapData];
+
+    for (NSInteger i = 0; i < totalBytes; i++) {
+        if (data1[i] != data2[i]) {
+            NSLog(@"[DEBUG] Found difference");
+            return false; // Found a difference
+        }
+    }
+
+    return true; // Images are identical
+}
+
 void BootstrapperFrame::DoEmojiLogic() {
     std::string DownloadPath = "/tmp/Roblox.app/Contents/Resources/content/fonts/TwemojiMozilla.ttf";
     std::string TypeOfDownload = "Default";  // Default type
@@ -1083,6 +1155,13 @@ void BootstrapperFrame::DoLogic()
         RenameFile(ArrowFarCursor.c_str(), paths["ArrowFarCursor"].c_str());
         copyFile(GetBasePath + "/data.json", TmpPath + "/Roblox.app/Contents/MacOS/ClientSettings/ClientAppSettings.json");
         searchFolders(ModFolder, false);
+        /*
+        if (compareFiles(GetResourcesFolderPath() + "/bootstrap_icon.ico","/tmp/Roblox.app/Contents/Resources/AppIcon.icns") == false)
+        {
+            std::string fixCommand ="\"" + GetResourcesFolderPath() + "/helper.sh\"";
+            system(fixCommand.c_str());
+        }
+        */
         GetCurrentCountOfModFolder(ModFolder, GetBasePath);
         std::this_thread::sleep_for(std::chrono::seconds(2));
         UpdateProgress(1);
