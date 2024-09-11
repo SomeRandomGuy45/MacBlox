@@ -9,13 +9,16 @@ namespace fs = std::filesystem;
 bool isDiscordFound_ = false;
 
 inline std::string GetBashPath() {
-    // Get the current process info
-    NSProcessInfo *processInfo = [NSProcessInfo processInfo];
+    // Get the application's base path using NSBundle
+    NSString *basePath = [[NSBundle mainBundle] bundlePath];
     
-    // Get the executable path
-    NSString *executablePath = [processInfo executablePath];
+    // Convert NSString to C-style string
+    const char *basePathCString = [basePath UTF8String];
     
-    return std::string([executablePath UTF8String]);
+    // Convert C-style string to std::string
+    std::string basePathString(basePathCString);
+    
+    return basePathString + "/Contents/MacOS";
 }
 
 @interface HelperClass : NSObject
@@ -30,11 +33,13 @@ inline std::string GetBashPath() {
     if (!doesAppExist("/Applications/Discord.app"))
     {
         NSLog(@"[INFO] Discord not found in /Applications/Discord.app");
+        [sender setState:NSControlStateValueOff];
         return;
     }
     if (!isAppRunning("Discord"))
     {
         NSLog(@"[INFO] Discord not running");
+        [sender setState:NSControlStateValueOff];
         return;
     }
     // Toggle the state
@@ -357,19 +362,24 @@ void createStatusBarIcon(const std::string &imagePath)
     {
         isDiscordFound_ = true;
     }
+    
     NSStatusBar *statusBar = [NSStatusBar systemStatusBar];
     NSStatusItem *statusItem = [statusBar statusItemWithLength:NSVariableStatusItemLength];
 
     // Convert std::string to NSString
-    NSString *path = [NSString stringWithUTF8String:imagePath.c_str()];
+    NSString *basePath = [NSString stringWithUTF8String:imagePath.c_str()];
 
-    // Create an NSImage from the file path
-    NSImage *statusImage = [[NSImage alloc] initWithContentsOfFile:path];
+    // Automatically load the correct image for 1x or 2x
+    NSImage *statusImage = [[NSImage alloc] initWithContentsOfFile:basePath];
     if (statusImage == nil) {
-        NSLog(@"[ERROR] Failed to load image from path: %@", path);
+        NSLog(@"[ERROR] Failed to load image from path: %@", basePath);
         return;
     }
 
+    // Set the template property for dark mode compatibility
+    //[statusImage setTemplate:YES];
+
+    // Set the image on the status item
     [statusItem setImage:statusImage];
     
     // Access the button associated with the NSStatusItem
@@ -391,7 +401,7 @@ void createStatusBarIcon(const std::string &imagePath)
     [checkbox setButtonType:NSSwitchButton]; // Set the button type to a checkbox
     [checkbox setTitle:@"Toggle Discord RPC"];
     if (isDiscordFound_) {
-        [checkbox setState:NSControlStateValueOn]; // Initial state is off
+        [checkbox setState:NSControlStateValueOn]; // Initial state is on
     }
     else {
         [checkbox setState:NSControlStateValueOff]; // Initial state is off
@@ -408,13 +418,16 @@ void createStatusBarIcon(const std::string &imagePath)
     [menu addItem:boolMenuItem];
 
     NSMenuItem *openMenuItem = [[NSMenuItem alloc] initWithTitle:@"Open Game Watcher"
-                                                                action:@selector(OpenMainHelper:)
-                                                         keyEquivalent:@""];
+                                                          action:@selector(OpenMainHelper:)
+                                                   keyEquivalent:@""];
     [openMenuItem setTarget:helper];
     [openMenuItem setAction:@selector(OpenMainHelper:)];
     [openMenuItem setEnabled:YES];
 
     [menu addItem:openMenuItem];
+
+    [menu addItem:[NSMenuItem separatorItem]];
+    [menu addItemWithTitle:@"Quit" action:@selector(terminate:) keyEquivalent:@""];
 
     NSLog(@"[DEBUG] Menu item enabled state: %d", [openMenuItem isEnabled]);
     

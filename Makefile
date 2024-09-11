@@ -27,7 +27,7 @@ create_runner_app:
 	@if [ -d $(BUILDPATH) ]; then \
 		rm -d -r -rf $(BUILDPATH); \
 	fi
-	rm -rf $(CURDIR)/GameWatcherApp 
+	@rm -rf $(CURDIR)/GameWatcherApp 
 	@mkdir $(BUILDPATH)
 	@mkdir $(BUILDPATH)/Macblox
 	$(CC) $(CXXFLAGS) $(LDFLAGS) -o $(BUILDPATH)/runner $(CURDIR)/runner/main.m $(CURDIR)/runner/helper.mm $(CURDIR)/runner/AppDelegate.mm $(CURDIR)/runner/main_helper.mm
@@ -36,7 +36,8 @@ create_runner_app:
 	@mv -f play.app $(BUILDPATH)/play.app
 	@mv $(BUILDPATH)/play.app $(BUILDPATH)/Macblox/"Play.app"
 	@cp -R $(CURDIR)/runner/discord.py $(BUILDPATH)/Macblox/"Play.app"/Contents/Resources/
-	@cp -R $(CURDIR)/runner/test_icon.png $(BUILDPATH)/Macblox/"Play.app"/Contents/Resources/
+	@cp -R $(CURDIR)/runner/display.png $(BUILDPATH)/Macblox/"Play.app"/Contents/Resources/
+	@cp -R $(CURDIR)/runner/display@2x.png $(BUILDPATH)/Macblox/"Play.app"/Contents/Resources/
 	@rm -f $(BUILDPATH)/runner
 	@./fixInstall.sh $(BUILDPATH)/Macblox/"Play.app"/Contents/MacOS/play $(BUILDPATH)/Macblox/"Play.app"/Contents/
 	$(CC) $(CXXFLAGS) $(LDFLAGS) -o $(BUILDPATH)/bootstrap $(CURDIR)/bootstrap/app.mm $(CURDIR)/bootstrap/helper.mm $(CURDIR)/bootstrap/tinyxml2.cpp $(CURDIR)/bootstrap/multi.mm
@@ -61,7 +62,6 @@ create_runner_app:
 	@rm -f $(BUILDPATH)/openRoblox
 	@git clone https://github.com/SomeRandomGuy45/GameWatcherApp.git
 	@unzip $(CURDIR)/GameWatcherApp/GameWatcher.app.zip
-	@rm -rf $(CURDIR)/GameWatcherApp/.git
 	@chmod +x $(CURDIR)/GameWatcher.app/Contents/MacOS/GameWatcher
 	@mv $(CURDIR)/GameWatcher.app $(BUILDPATH)/Macblox/"Play.app"/Contents/MacOS
 

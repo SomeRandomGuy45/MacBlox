@@ -12,7 +12,7 @@ int main(int argc, char* argv[]) {
         NSApplication *app = [NSApplication sharedApplication];
         AppDelegate *delegate = [[AppDelegate alloc] initWithArguments:arguments];
         NSLog(@"[INFO] Creating status bar icon!");
-        createStatusBarIcon(GetResourcesFolderPath() + "/test_icon.png");
+        createStatusBarIcon(GetResourcesFolderPath() + "/display.png");
         NSLog(@"[INFO] Status bar icon created!");
         [app setDelegate:delegate];
         [app run];

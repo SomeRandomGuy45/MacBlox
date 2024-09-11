@@ -98,12 +98,21 @@ std::string script_discord = R"(
         end if
     )";
 std::string ScriptNeededToRun = R"(
-            tell application "System Events"
-                set isTerminalRunning to (exists (processes whose name is "Terminal"))
+            tell application "Terminal"
+                -- Get a list of all windows
+                set terminalWindows to windows
+                
+                -- Loop through each window and execute `exit`
+                repeat with aWindow in terminalWindows
+                    tell aWindow
+                        do script "exit" in (selected tab of aWindow)
+                    end tell
+                end repeat
+
+                -- Quit the Terminal application
+                quit
             end tell
-            if isTerminalRunning then
-                do shell script "killall -QUIT Terminal"
-            end if)";
+            )";
 
 // long
 long placeId = 0;
@@ -167,20 +176,16 @@ std::string getApplicationSupportPath() {
 }
 
 std::string GetBashPath() {
-    char buffer[PATH_MAX];
-    uint32_t size = sizeof(buffer);
+    // Get the application's base path using NSBundle
+    NSString *basePath = [[NSBundle mainBundle] bundlePath];
     
-    if (_NSGetExecutablePath(buffer, &size) != 0) {
-        return ""; // Return empty string on failure
-    }
+    // Convert NSString to C-style string
+    const char *basePathCString = [basePath UTF8String];
     
-    // Ensure buffer is null-terminated
-    buffer[PATH_MAX - 1] = '\0';
+    // Convert C-style string to std::string
+    std::string basePathString(basePathCString);
     
-    // Get the directory of the executable
-    char* dir = dirname(buffer);
-    
-    return std::string(dir);
+    return basePathString + "/Contents/MacOS";
 }
 
 

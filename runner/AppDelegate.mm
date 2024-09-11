@@ -5,15 +5,19 @@
 #include <vector>
 #include <semaphore.h>
 #include <stdio.h>
+#include <thread>
 #include "json.hpp"
 
 #import <Foundation/Foundation.h>
+#import <AppKit/AppKit.h>
 #import "AppDelegate.h"
 #import "helper.h"
 #import "Logger.h"
 
 namespace fs = std::filesystem;
 using json = nlohmann::json;
+
+BOOL WasReseting = NO;
 
 std::string finalURLString = "";
 std::string checkIfRobloxIsRunning = R"(
@@ -31,20 +35,16 @@ std::string checkIfRobloxIsRunning = R"(
 bool isFound = true;
 
 inline std::string GetBashPath() {
-    char buffer[PATH_MAX];
-    uint32_t size = sizeof(buffer);
+    // Get the application's base path using NSBundle
+    NSString *basePath = [[NSBundle mainBundle] bundlePath];
     
-    if (_NSGetExecutablePath(buffer, &size) != 0) {
-        return ""; // Return empty string on failure
-    }
+    // Convert NSString to C-style string
+    const char *basePathCString = [basePath UTF8String];
     
-    // Ensure buffer is null-terminated
-    buffer[PATH_MAX - 1] = '\0';
+    // Convert C-style string to std::string
+    std::string basePathString(basePathCString);
     
-    // Get the directory of the executable
-    char* dir = dirname(buffer);
-    
-    return std::string(dir);
+    return basePathString + "/Contents/MacOS";
 }
 
 class Copy {
@@ -306,6 +306,19 @@ bool killAppByPID(pid_t pid) {
     }
 }
 
+pid_t getAppPID(NSString *appName) {
+    NSArray *runningApps = [[NSWorkspace sharedWorkspace] runningApplications];
+    
+    for (NSRunningApplication *app in runningApps) {
+        if ([[app localizedName] isEqualToString:appName]) {
+            return [app processIdentifier];
+        }
+    }
+    
+    // If the app is not found, return -1 (indicating no PID was found)
+    return -1;
+}
+
 @implementation AppDelegate
 
 - (instancetype)initWithArguments:(NSArray *)arguments {
@@ -386,6 +399,23 @@ bool killAppByPID(pid_t pid) {
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
     //runLoginInScript("Background_Runner", getCurrentAppPath());
+    NSProcessInfo *processInfo = [NSProcessInfo processInfo];
+    self.pid = [@([processInfo processIdentifier]) stringValue];
+    NSLog(@"[INFO] App's PID: %@", self.pid);
+    NSDictionary *environment = [[NSProcessInfo processInfo] environment];
+    NSString *termProgram = environment[@"TERM_PROGRAM"];
+    
+    /*
+    if ([termProgram length] != 0 && ![termProgram isEqualTo:@"vscode"])
+    {
+        NSLog(@"[INFO] App environment: %@", termProgram);
+        std::string Command = "open -a " + GetBashPath() + "/play";
+        NSLog(@"[INFO] App command before we kill: %s", Command.c_str());
+        system(Command.c_str());
+        WasReseting = YES;
+        [NSApp terminate:self];
+    }
+    */
     if (!doesAppExist("/Applications/Discord.app"))
     {
         NSLog(@"[INFO] Discord not found in /Applications/Discord.app");
@@ -400,6 +430,11 @@ bool killAppByPID(pid_t pid) {
 }
 
 - (void)applicationWillTerminate:(NSNotification *)notification {
+    if (WasReseting)
+    {
+        //We are just reseting the app to launch outside of the terminal
+        return;
+    }
     if (isAppRunning("Terminal")) {
         quitTerminal();
     }
