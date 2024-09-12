@@ -1,4 +1,4 @@
-#import "helper.h"
+#import "functions/helper.h"
 #import <Foundation/Foundation.h>
 #import <AppKit/AppKit.h>
 #import <Cocoa/Cocoa.h>

@@ -21,8 +21,9 @@
 #include <iomanip>
 #include <Cocoa/Cocoa.h>
 #import "Logger.h"
-#import "helper.h"
-
+#import "sol/sol.hpp"
+#import "functions/api.h"
+#import "functions/helper.h"
 
 // bool
 bool isDebug = false;
@@ -489,6 +490,24 @@ void executeScript(const std::string& script) {
     }
 }
 
+void TestLuaFunctions()
+{
+    sol::state lua;
+    lua.open_libraries(sol::lib::base, sol::lib::package);
+
+    lua.set_function("test_api", API::test_api);
+    lua.set_function("isDiscordRunning", API::isDiscordRunning);
+
+    // Test Lua script
+    lua.script(R"(
+        test_api()
+        if isDiscordRunning() then
+            print("[INFO-LUA] Discord is running!")
+        else
+            print("[INFO-LUA] Discord is not running!")
+        end
+    )");
+}
 
 //Maybe make this a struct
 static void UpdDiscordActivity(
@@ -1390,6 +1409,7 @@ std::string GetExPath() {
 
 int main_loop(NSArray *arguments, std::string supercoolvar, bool dis) {
     std::vector<std::string> stdArguments;
+    TestLuaFunctions();
     for (NSString *arg in arguments) {
         stdArguments.push_back([arg UTF8String]);
     }

@@ -32,6 +32,7 @@ jobs:
         brew install wxwidgets@3.2
         brew install curlpp
         brew install minizip
+        brew install lua
 
     - name: Building
       run: |

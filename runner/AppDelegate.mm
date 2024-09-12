@@ -11,7 +11,7 @@
 #import <Foundation/Foundation.h>
 #import <AppKit/AppKit.h>
 #import "AppDelegate.h"
-#import "helper.h"
+#import "functions/helper.h"
 #import "Logger.h"
 
 namespace fs = std::filesystem;

@@ -48,7 +48,7 @@
 #include <iomanip>
 #include <cstdio>
 #include "json.hpp"
-#include "helper.h"
+#include "functions/helper.h"
 #include <Foundation/Foundation.h>
 
 int main_loop(NSArray *arguments, std::string supercoolvar, bool dis);

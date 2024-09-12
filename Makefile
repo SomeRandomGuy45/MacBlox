@@ -1,4 +1,3 @@
-# Paths and configuration
 BUILDPATH = $(CURDIR)/build
 WX_CONFIG = $(shell wx-config --cxxflags --libs)
 ARCH = $(shell uname -m)
@@ -10,9 +9,12 @@ OPENSSL_PREFIX = $(shell brew --prefix openssl)
 OPENSSL_PREFIX_LIB = $(OPENSSL_PREFIX)/lib
 OPENSLL_lib1 = $(OPENSSL_PREFIX_LIB)/libssl.3.dylib
 OPENSLL_lib2 = $(OPENSSL_PREFIX_LIB)/libcrypto.3.dylib
+LUA_PREFIX = $(shell brew --prefix lua)
+LUA_INCLUDE = -I$(LUA_PREFIX)/include
+LUA_LIB = -L$(LUA_PREFIX)/lib -llua
 CC = clang++
-CXXFLAGS = -x objective-c++ $(WX_CONFIG) $(LIBRARY_PATH) $(BREW_LIB) $(BREW_INCLUDE)
-LDFLAGS = $(ARCH_FLAGS) $(WX_CONFIG) $(CPATH) $(CURLPP_CONFIG_CFLAGS) $(CURLPP_CONFIG_INCLUDE) $(MINI_CONFIG_LIBS) $(MINI_CONFIG_INCLUDE) -framework CoreFoundation -framework DiskArbitration -framework Foundation -framework Cocoa -framework UserNotifications -framework ServiceManagement -lssl -lcrypto --std=c++20
+CXXFLAGS = -x objective-c++ $(WX_CONFIG) $(LIBRARY_PATH) $(BREW_LIB) $(BREW_INCLUDE) $(LUA_INCLUDE)
+LDFLAGS = $(ARCH_FLAGS) $(WX_CONFIG) $(CPATH) $(CURLPP_CONFIG_CFLAGS) $(CURLPP_CONFIG_INCLUDE) $(MINI_CONFIG_LIBS) $(MINI_CONFIG_INCLUDE) -framework CoreFoundation -framework DiskArbitration -framework Foundation -framework Cocoa -framework UserNotifications -framework ServiceManagement -lssl -lcrypto $(LUA_LIB) --std=c++20
 
 # Default target
 all: create_runner_app create_main_app create_background_app resign
