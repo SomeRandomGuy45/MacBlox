@@ -4,3 +4,6 @@
 [submodule "CreateMacbloxInstaller"]
 	path = CreateMacbloxInstaller
 	url = https://github.com/SomeRandomGuy45/CreateMacbloxInstaller
+[submodule "sol2"]
+	path = sol2
+	url = https://github.com/ThePhD/sol2.git
