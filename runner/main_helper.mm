@@ -494,7 +494,7 @@ void executeScript(const std::string& script) {
 
 sol::state CreateNewLuaEnvironment(bool allowApi)
 {
-    sol::start lua;
+    sol::state lua;
     lua.open_libraries(sol::lib::base, sol::lib::package);
 
     if (allowApi) {
@@ -509,14 +509,15 @@ sol::state CreateNewLuaEnvironment(bool allowApi)
 void RunNewFile(const std::string& fileName)
 {
     lua_threads.emplace_back([fileName]() {
-        sol::start lua = CreateNewLuaEnvironment(true);
+        sol::state lua = CreateNewLuaEnvironment(true);
         try {
             lua.script_file(fileName);
-            NSLog(@"[INFO-LUA] Created new lua environment with file path: %s", fileName.c_str())
+            NSLog(@"[INFO-LUA] Created new lua environment with file path: %s", fileName.c_str());
         } catch (const std::exception& e) {
            NSLog(@"[ERROR-LUA] Error executing new script with error: %s", e.what());
         }
-    })
+    });
+    lua_threads.back().detach();
 }
 
 void TestLuaFunctions()
