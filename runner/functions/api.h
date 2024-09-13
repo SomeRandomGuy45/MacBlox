@@ -7,6 +7,7 @@
 #include <cstdio>
 #include "function_wrapper.h"
 #include "helper.h"
+#include "main_helper.h"
 
 std::unordered_map<std::string, std::unique_ptr<FunctionWrapper>> functionList;
 
@@ -38,5 +39,21 @@ namespace API
         std::string output = runCommand(command);
         //std::cout << output << "\n";
         return !output.empty();
+    }
+
+    void UpdateDiscord(std::string details, 
+        std::string state, 
+        int64_t startTimestamp, 
+        int64_t endTimestamp,
+        long AssetIDLarge, 
+        long AssetIDSmall, 
+        std::string largeImgText, 
+        std::string smallImageText, 
+        std::string button1Text, 
+        std::string button2Text, 
+        std::string button1url, 
+        std::string button2url)
+    {
+        UpdDiscordActivity(details, state, startTimestamp, AssetIDLarge, AssetIDSmall, largeImgText, smallImageText, button1Text, button2Text, button1url, button2url, endTimestamp);
     }
 }

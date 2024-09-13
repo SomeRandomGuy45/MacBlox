@@ -8,7 +8,7 @@
 
 */
 
-#include "main_helper.h"
+#include "functions/main_helper.h"
 #include <objc/objc.h>
 #include <objc/runtime.h>
 #include <Foundation/Foundation.h>
@@ -114,6 +114,8 @@ std::string ScriptNeededToRun = R"(
                 quit
             end tell
             )";
+//vector
+std::vector<std::thread> lua_threads;
 
 // long
 long placeId = 0;
@@ -488,6 +490,33 @@ void executeScript(const std::string& script) {
         NSLog(@"[ERROR] Failed to execute the AppleScript." );
         return;
     }
+}
+
+sol::state CreateNewLuaEnvironment(bool allowApi)
+{
+    sol::start lua;
+    lua.open_libraries(sol::lib::base, sol::lib::package);
+
+    if (allowApi) {
+        lua.set_function("test_api", API::test_api);
+        lua.set_function("isDiscordRunning", API::isDiscordRunning);
+        lua.set_function("updDiscordActivity", API::UpdateDiscord);
+    }
+
+    return lua;
+}
+
+void RunNewFile(const std::string& fileName)
+{
+    lua_threads.emplace_back([fileName]() {
+        sol::start lua = CreateNewLuaEnvironment(true);
+        try {
+            lua.script_file(fileName);
+            NSLog(@"[INFO-LUA] Created new lua environment with file path: %s", fileName.c_str())
+        } catch (const std::exception& e) {
+           NSLog(@"[ERROR-LUA] Error executing new script with error: %s", e.what());
+        }
+    })
 }
 
 void TestLuaFunctions()

@@ -48,7 +48,22 @@
 #include <iomanip>
 #include <cstdio>
 #include "json.hpp"
-#include "functions/helper.h"
+#include "helper.h"
 #include <Foundation/Foundation.h>
 
 int main_loop(NSArray *arguments, std::string supercoolvar, bool dis);
+
+static void UpdDiscordActivity(
+    const std::string& details, 
+    const std::string& state, 
+    int64_t startTimestamp, 
+    long AssetIDLarge, 
+    long AssetIDSmall, 
+    const std::string& largeImgText, 
+    const std::string& smallImageText, 
+    const std::string& button1Text, 
+    const std::string& button2Text, 
+    const std::string& button1url, 
+    const std::string& button2url,
+    int64_t endTimestamp
+    );

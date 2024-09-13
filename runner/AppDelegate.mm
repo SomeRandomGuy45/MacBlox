@@ -6,7 +6,7 @@
 #include <semaphore.h>
 #include <stdio.h>
 #include <thread>
-#include "json.hpp"
+#include "functions/json.hpp"
 
 #import <Foundation/Foundation.h>
 #import <AppKit/AppKit.h>
