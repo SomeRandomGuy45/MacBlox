@@ -37,7 +37,7 @@ create_runner_app:
 	@codesign --sign - --entitlements Macblox.plist --deep play.app --force
 	@mv -f play.app $(BUILDPATH)/play.app
 	@mv $(BUILDPATH)/play.app $(BUILDPATH)/Macblox/"Play.app"
-	@cp -R $(CURDIR)/runner/discord.py $(BUILDPATH)/Macblox/"Play.app"/Contents/Resources/
+	@cp -R $(CURDIR)/runner/Discord $(BUILDPATH)/Macblox/"Play.app"/Contents/Resources/
 	@cp -R $(CURDIR)/runner/display.png $(BUILDPATH)/Macblox/"Play.app"/Contents/Resources/
 	@cp -R $(CURDIR)/runner/display@2x.png $(BUILDPATH)/Macblox/"Play.app"/Contents/Resources/
 	@rm -f $(BUILDPATH)/runner

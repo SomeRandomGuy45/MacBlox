@@ -435,9 +435,6 @@ pid_t getAppPID(NSString *appName) {
         //We are just reseting the app to launch outside of the terminal
         return;
     }
-    if (isAppRunning("Terminal")) {
-        quitTerminal();
-    }
     checkAndCloseRoblox();
     for (auto &app_copy : copyPaths)
     {

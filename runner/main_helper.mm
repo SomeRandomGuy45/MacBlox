@@ -46,7 +46,7 @@ std::string logfile = "~/Library/Logs/Roblox/"; //gets the log directory path
 std::string jobId = "";
 std::string GameIMG = "";
 std::string ActivityMachineAddress = "";
-std::string basePythonScript = "python3 " + GetResourcesFolderPath() + "/discord.py";
+std::string basePythonScript = GetResourcesFolderPath() + "/Discord";
 std::string path_script = GetResourcesFolderPath() + "/helper.sh";
 std::string temp_dir;
 std::string fileContent = "";
@@ -147,6 +147,21 @@ extern char **environ;
 
 // namespace
 namespace fs = std::filesystem;
+
+//run command
+std::string runCommand(const std::string& command) {
+    std::string result;
+    char buffer[128];
+    FILE* pipe = popen(command.c_str(), "r");
+    if (!pipe) {
+        throw std::runtime_error("popen() failed!");
+    }
+    while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+        result += buffer;
+    }
+    pclose(pipe);
+    return result;
+}
 
 // using
 using json = nlohmann::json;
@@ -367,27 +382,125 @@ std::vector<uint8_t> get_temp_dir_bytes() {
     return std::vector<uint8_t>(temp_dir_str.begin(), temp_dir_str.end());
 }
 
-void CreateNotification(const wxString &title, const wxString &message, int timeout) {
-    if (timeout != 0 && timeout != -1) {
-        timeout = -1; // reset timeout to -1
+void CreateNotification(const wxString &title, const wxString &message, double timeout) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        NSString *nsTitle = wxStringToNSString(title);
+        NSString *nsMessage = wxStringToNSString(message);
+        
+        NSUserNotification *notification = [[NSUserNotification alloc] init];
+        [notification setTitle:nsTitle];
+        [notification setInformativeText:nsMessage];
+        notification.soundName = NSUserNotificationDefaultSoundName;
+        
+        NSUserNotificationCenter *center = [NSUserNotificationCenter defaultUserNotificationCenter];
+        
+        // Show the notification
+        [center deliverNotification:notification];
+        
+        if ([center deliveredNotifications].count == 0) {
+            NSLog(@"[ERROR] Failed to show notification");
+        } else {
+            NSLog(@"[INFO] Notification shown successfully");
+        }
+
+        if (timeout > 0) {
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(timeout * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                [[NSUserNotificationCenter defaultUserNotificationCenter] removeDeliveredNotification:notification];
+                NSLog(@"[INFO] Notification with title: %@ has been removed after %.2f seconds", nsTitle, timeout);
+            });
+        }
+    });
+}
+
+void CreateNotification(const char* title, const char* message, double timeout) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        // Convert C strings to NSString
+        NSString *nsTitle = [NSString stringWithUTF8String:title];
+        NSString *nsMessage = [NSString stringWithUTF8String:message];
+
+        // Check for nil in case of conversion failure
+        if (!nsTitle || !nsMessage) {
+            NSLog(@"[ERROR] Failed to convert C strings to NSStrings");
+            return;
+        }
+
+        // Create and configure the notification
+        NSUserNotification *notification = [[NSUserNotification alloc] init];
+        notification.title = nsTitle;
+        notification.informativeText = nsMessage;
+        notification.soundName = NSUserNotificationDefaultSoundName;
+
+        // Deliver the notification
+        NSUserNotificationCenter *center = [NSUserNotificationCenter defaultUserNotificationCenter];
+        [center deliverNotification:notification];
+
+        // Log the notification creation
+        NSLog(@"[INFO] Notification created with title: %@ and message: %@", nsTitle, nsMessage);
+        if (timeout > 0) {
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(timeout * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                [[NSUserNotificationCenter defaultUserNotificationCenter] removeDeliveredNotification:notification];
+                NSLog(@"[INFO] Notification with title: %@ has been removed after %.2f seconds", nsTitle, timeout);
+            });
+        }
+    });
+}
+
+//API Namespace
+namespace API
+{
+    void test_api()
+    {
+        std::cout << "[INFO-LUA] test_api!" << std::endl;
     }
 
-    NSString *nsTitle = wxStringToNSString(title);
-    NSString *nsMessage = wxStringToNSString(message);
+    bool isDiscordRunning()
+    {
+        std::string command = "ps aux | grep '[d]iscord'"; // Avoid matching the grep command itself
+        std::string output = runCommand(command);
+        //std::cout << output << "\n";
+        return !output.empty();
+    }
+
     
-    NSUserNotification *notification = [[NSUserNotification alloc] init];
-    [notification setTitle:nsTitle];
-    [notification setInformativeText:nsMessage];
-    
-    NSUserNotificationCenter *center = [NSUserNotificationCenter defaultUserNotificationCenter];
-    
-    // Show the notification
-    [center deliverNotification:notification];
-    
-    if ([center deliveredNotifications].count == 0) {
-        NSLog(@"[ERROR] Failed to show notification");
-    } else {
-        NSLog(@"[INFO] Notification shown successfully");
+
+    void UpdateDiscord(const char* details, 
+        const char* state, 
+        int64_t startTimestamp, 
+        int64_t endTimestamp,
+        const char* AssetIDLarge, 
+        const char* AssetIDSmall, 
+        const char* largeImgText, 
+        const char* smallImageText, 
+        const char* button1Text, 
+        const char* button2Text, 
+        const char* button1url, 
+        const char* button2url)
+        {
+            // Call function, constructing std::string from const char* on the fly
+            UpdDiscordActivity(
+                std::string(details), 
+                std::string(state), 
+                startTimestamp, 
+                std::string(AssetIDLarge), 
+                std::string(AssetIDSmall), 
+                std::string(largeImgText), 
+                std::string(smallImageText), 
+                std::string(button1Text), 
+                std::string(button2Text), 
+                std::string(button1url), 
+                std::string(button2url), 
+                endTimestamp
+            );
+        }
+
+    void doCommand(const char* command)
+    {
+        runCommand(std::string(command));
+    }
+
+    void createNotification(const char* title, const char* message, double timeout)
+    {
+        CreateNotification(title, message, timeout);
     }
 }
 
@@ -497,13 +610,32 @@ sol::state CreateNewLuaEnvironment(bool allowApi)
     sol::state lua;
     lua.open_libraries(sol::lib::base, sol::lib::package);
 
+    std::string basePath = getApplicationSupportPath();
+    std::string customLuaPath = basePath + "/LuaFolder/?.lua";
+
+    // Modify package.path to include your custom directory
+    lua["package"]["path"] = lua["package"]["path"].get<std::string>() + ";" + customLuaPath;
+
     if (allowApi) {
         lua.set_function("test_api", API::test_api);
         lua.set_function("isDiscordRunning", API::isDiscordRunning);
         lua.set_function("updDiscordActivity", API::UpdateDiscord);
+        lua.set_function("createNotification", API::createNotification);
+        lua.set_function("returnBasePath", getApplicationSupportPath);
+        lua.set_function("runCommand", API::doCommand);
     }
 
     return lua;
+}
+
+std::string CreateLuaFolder()
+{
+    std::string luaFolderDIR = getApplicationSupportPath() + "/LuaFolder";
+    if (!fs::exists(luaFolderDIR)) {
+        fs::create_directories(luaFolderDIR);
+        NSLog(@"[INFO] Created new Lua folder at: %s", luaFolderDIR.c_str());
+    }
+    return luaFolderDIR;
 }
 
 void RunNewFile(const std::string& fileName)
@@ -522,11 +654,8 @@ void RunNewFile(const std::string& fileName)
 
 void TestLuaFunctions()
 {
-    sol::state lua;
+    sol::state lua = CreateNewLuaEnvironment(true);;
     lua.open_libraries(sol::lib::base, sol::lib::package);
-
-    lua.set_function("test_api", API::test_api);
-    lua.set_function("isDiscordRunning", API::isDiscordRunning);
 
     // Test Lua script
     lua.script(R"(
@@ -539,13 +668,20 @@ void TestLuaFunctions()
     )");
 }
 
+bool is_number(const std::string& s)
+{
+    std::string::const_iterator it = s.begin();
+    while (it != s.end() && std::isdigit(*it)) ++it;
+    return !s.empty() && it == s.end();
+}
+
 //Maybe make this a struct
 static void UpdDiscordActivity(
     const std::string& details, 
     const std::string& state, 
     int64_t startTimestamp, 
-    long AssetIDLarge, 
-    long AssetIDSmall, 
+    std::string AssetIDLarge, 
+    std::string AssetIDSmall, 
     const std::string& largeImgText, 
     const std::string& smallImageText, 
     const std::string& button1Text, 
@@ -559,21 +695,32 @@ static void UpdDiscordActivity(
         NSLog(@"[ERROR] Discord is not found. Please make sure Discord is running and the Discord RPC library is correctly integrated.");
         return;
     }
+
+    runAppleScriptAndGetOutput(ScriptNeededToRun);
+
+
     // Set default timestamps if not provided
     startTimestamp = startTimestamp != 0 ? startTimestamp : time(0);
 
     // Set default asset IDs if not provided
-    AssetIDLarge = AssetIDLarge != 0 ? AssetIDLarge : 0;
-    AssetIDSmall = AssetIDSmall != 0 ? AssetIDSmall : 0;
+    AssetIDLarge = AssetIDLarge != "0" ? AssetIDLarge : "0";
+    AssetIDSmall = AssetIDSmall != "0" ? AssetIDSmall : "0";
 
     // Generate asset URLs
-    std::string key_large = AssetIDLarge != 0 
-        ? "https://assetdelivery.roblox.com/v1/asset/?id=" + std::to_string(AssetIDLarge) 
+    std::string key_large = AssetIDLarge != "0" 
+        ? "https://assetdelivery.roblox.com/v1/asset/?id=" + (AssetIDLarge) 
         : GameIMG;
 
-    std::string key_small = "https://assetdelivery.roblox.com/v1/asset/?id=" + std::to_string(AssetIDSmall);
-    if (AssetIDSmall == -1) {
+    std::string key_small = "https://assetdelivery.roblox.com/v1/asset/?id=" + (AssetIDSmall);
+    if (!is_number(AssetIDLarge))
+    {
+        key_small = AssetIDLarge; //we guess its a url :hm:
+    }
+    if (AssetIDSmall == "-1") {
         key_small = "roblox";
+    }
+    else if (!is_number(AssetIDSmall)) {
+        key_small = AssetIDSmall;
     }
 
     std::string new_script = basePythonScript + " \"" + details + "\" \"" + state + "\" " +
@@ -921,7 +1068,7 @@ void doFunc(const std::string& logtxt) {
             }
             try {
                 // Create notification
-                CreateNotification(Title_Text, Msg_Text, wxNotificationMessage::Timeout_Auto);
+                CreateNotification(Title_Text, Msg_Text, 5);
 
                 // Convert C++ strings to NSString
                 NSString* placeIdStr = toNSString(placeId);
@@ -1007,7 +1154,7 @@ void doFunc(const std::string& logtxt) {
                 // Update Discord activity
                 if (it != buttonPairs.end() && it2 != buttonPairs.end()) {
                     deeplink_ForGame[gameName] = it->second;
-                    UpdDiscordActivity("Playing " + gameName, status, TimeStartedUniverse, 0, -1, gameName, "Roblox", it->first, it2->first, it->second, it2->second, 0);
+                    UpdDiscordActivity("Playing " + gameName, status, TimeStartedUniverse, "0", "-1", gameName, "Roblox", it->first, it2->first, it->second, it2->second, 0);
                 } else {
                     deeplink_ForGame[gameName] = "roblox://experiences/start?placeId=" + std::to_string(placeId);
                     it = std::find_if(buttonPairs.begin(), buttonPairs.end(),
@@ -1015,7 +1162,7 @@ void doFunc(const std::string& logtxt) {
                             return pair.first == "Roblox";
                         });
                     if (it != buttonPairs.end() && it2 != buttonPairs.end()) {
-                        UpdDiscordActivity("Playing " + gameName, status, TimeStartedUniverse, 0, -1, gameName, "Roblox", it->first, it2->first, it->second, it2->second, 0);
+                        UpdDiscordActivity("Playing " + gameName, status, TimeStartedUniverse, "0", "-1", gameName, "Roblox", it->first, it2->first, it->second, it2->second, 0);
                     }
                 }
             } catch (const std::bad_alloc& e) {
@@ -1208,7 +1355,7 @@ void doFunc(const std::string& logtxt) {
                 }
                 if (it != buttonPairs.end())
                 {
-                    UpdDiscordActivity(details, status, timeStart, id_long, id_small, largeImageHover, smallImageHover, it->first, it2->first, it->second, it2->second, timeEnd);
+                    UpdDiscordActivity(details, status, timeStart, std::to_string(id_long), std::to_string(id_small), largeImageHover, smallImageHover, it->first, it2->first, it->second, it2->second, timeEnd);
                 }
                 else
                 {
@@ -1216,7 +1363,7 @@ void doFunc(const std::string& logtxt) {
                         [](const std::pair<std::string, std::string>& pair) {
                             return pair.first == "Roblox";
                         });
-                    UpdDiscordActivity(details, status, timeStart, id_long, id_small, largeImageHover, smallImageHover, it->first, it2->first, it->second, it2->second, timeEnd);
+                    UpdDiscordActivity(details, status, timeStart, std::to_string(id_long), std::to_string(id_small), largeImageHover, smallImageHover, it->first, it2->first, it->second, it2->second, timeEnd);
                 }
             }
         }
@@ -1597,6 +1744,19 @@ int main_loop(NSArray *arguments, std::string supercoolvar, bool dis) {
                     std::this_thread::sleep_for(std::chrono::seconds(1));
                 }
 
+                 std::string LuaFolder_Path = CreateLuaFolder();
+                for (const auto& file : std::filesystem::recursive_directory_iterator(LuaFolder_Path))
+                {
+                    if (file.is_regular_file())
+                    {
+                        std::string filename = file.path().filename().string();
+                        if (filename.find(".script.lua")!= std::string::npos)
+                        {
+                            RunNewFile(file.path());
+                        }
+                    }
+                }
+
                 if (fs::path(getLatestLogFile(true)).filename().string() != fs::path(logFilePath).filename().string())
                 {
                     logFilePath = getLatestLogFile(true);
@@ -1635,6 +1795,13 @@ int main_loop(NSArray *arguments, std::string supercoolvar, bool dis) {
                 std::string Command = GetBashPath() + "/GameWatcher.app/Contents/MacOS/GameWatcher -clearJsonGameData";
                 std::cout << "[INFO] Command is: " << Command << "\n";
                 system(Command.c_str());
+                runAppleScriptAndGetOutput(ScriptNeededToRun);
+                for (auto& thread : lua_threads)
+                {
+                    thread = std::thread([&]() {
+                        NSLog(@"[INFO-LUA] Exiting lua thread");
+                    });
+                }
                 discordThread = std::thread([&]() {
                     NSLog(@"[INFO] Stopping discord thread");
                 });
@@ -1659,7 +1826,6 @@ int main_loop(NSArray *arguments, std::string supercoolvar, bool dis) {
             } catch (const std::filesystem::filesystem_error& e) {
                 std::cerr << "[ERROR] Filesystem error: " << e.what() << std::endl;
             }
-            runAppleScriptAndGetOutput(ScriptNeededToRun);
             SBackground = true;
             shouldEnd = false;
             [NSApp terminate:nil];
