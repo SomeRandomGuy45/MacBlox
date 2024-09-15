@@ -19,6 +19,7 @@
 #include <pthread.h>
 #include <cstdlib>
 #include <iomanip>
+#include <any>
 #include <Cocoa/Cocoa.h>
 #import "Logger.h"
 #import "sol/sol.hpp"
@@ -484,6 +485,49 @@ std::string getData_Lua(const char* urlString) {
 //API Namespace
 namespace API
 {
+
+    namespace FLAGS
+    {
+        // {flagName, {enabled, isReadOnly}}
+        std::unordered_map<std::string, std::pair<bool, bool>> Feature_Flags = {
+            {"isDebug", {false, false}},
+            {"allowDownload", {false, false}},
+            {"allowSystemCommand", {false, true}},
+        };
+        void set_flag(const char* flag_name, bool flag_value)
+        {
+            std::string flag_name_str = std::string(flag_name);
+            auto it = Feature_Flags.find(flag_name_str);
+            if (it != Feature_Flags.end()) {
+                if (Feature_Flags["isDebug"].first == true)
+                {
+                    std::cout << "[INFO-LUA] Setting flag " << flag_name_str << " to " << (flag_value? "true" : "false") << std::endl;
+                }
+                if (it->second.second == true)
+                {
+                    //Read only value
+                    return;
+                }
+                it->second.first = flag_value;
+            }
+        }
+
+        sol::table list_flags(sol::this_state s)
+        {
+            sol::state_view lua(s);
+            sol::table tbl = lua.create_table();
+            for (const auto& [flag_name, flag_values] : Feature_Flags)
+            {
+                tbl["flag_name"] = flag_name;
+                sol::table inner_tbl = lua.create_table();
+                inner_tbl["enabled"] = flag_values.first;
+                inner_tbl["isReadOnly"] = flag_values.second;
+                tbl["flag_data"] = inner_tbl;
+            }
+            return tbl;
+        }
+    }
+
     void test_api()
     {
         std::cout << "[INFO-LUA] test_api!" << std::endl;
@@ -727,8 +771,12 @@ sol::state CreateNewLuaEnvironment(bool allowApi)
         lua.set_function("createNotification", API::createNotification);
         lua.set_function("returnBasePath", getApplicationSupportPath);
         lua.set_function("runCommand", API::doCommand);
-        lua.set_function("decodeJSON", &API::decodeJSON);
+        lua.set_function("decodeJSON", API::decodeJSON);
         lua.set_function("getDataFromURL", API::getDataFromURL);
+        sol::table flags = lua.create_table();
+        flags.set_function("set_flag", API::FLAGS::set_flag);
+        flags.set_function("list_flags", API::FLAGS::list_flags);
+        lua["flag"] = flags;
     }
 
     return lua;
