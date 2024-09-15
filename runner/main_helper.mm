@@ -1207,6 +1207,7 @@ void doFunc(const std::string& logtxt) {
 
         if (std::regex_search(logtxt, match, pattern) && match.size() == 2 && match[1].str() == ActivityMachineAddress) {
             ActivityInGame = true;
+            system("killall GameWatcher");
             std::future<std::string> test_ig = GetServerLocation(ActivityMachineAddress, ActivityInGame);
             std::string serverLocationStr = test_ig.get();
             wxString Title_Text = "";
@@ -1295,26 +1296,38 @@ void doFunc(const std::string& logtxt) {
                         return pair.first == "See game page";
                     });
 
-                // Check if Discord is installed and running
-                if (!doesAppExist("/Applications/Discord.app")) {
-                    NSLog(@"[INFO] Discord not found in /Applications/Discord.app");
-                    return;
-                }
-                if (!isAppRunning("Discord")) {
-                    NSLog(@"[INFO] Discord not running");
-                    return;
-                }
-                if (!isDiscordFound) {
-                    NSLog(@"[ERROR] Discord is not found. Please make sure Discord is running and the Discord RPC library is correctly integrated.");
-                    return;
-                }
-
                 // Update Discord activity
                 if (it != buttonPairs.end() && it2 != buttonPairs.end()) {
                     deeplink_ForGame[gameName] = it->second;
+                    // Check if Discord is installed and running
+                    if (!doesAppExist("/Applications/Discord.app")) {
+                        NSLog(@"[INFO] Discord not found in /Applications/Discord.app");
+                        return;
+                    }
+                    if (!isAppRunning("Discord")) {
+                        NSLog(@"[INFO] Discord not running");
+                        return;
+                    }
+                    if (!isDiscordFound) {
+                        NSLog(@"[ERROR] Discord is not found. Please make sure Discord is running and the Discord RPC library is correctly integrated.");
+                        return;
+                    }
                     UpdDiscordActivity("Playing " + gameName, status, TimeStartedUniverse, "0", "-1", gameName, "Roblox", it->first, it2->first, it->second, it2->second, 0);
                 } else {
                     deeplink_ForGame[gameName] = "roblox://experiences/start?placeId=" + std::to_string(placeId);
+                    // Check if Discord is installed and running
+                    if (!doesAppExist("/Applications/Discord.app")) {
+                        NSLog(@"[INFO] Discord not found in /Applications/Discord.app");
+                        return;
+                    }
+                    if (!isAppRunning("Discord")) {
+                        NSLog(@"[INFO] Discord not running");
+                        return;
+                    }
+                    if (!isDiscordFound) {
+                        NSLog(@"[ERROR] Discord is not found. Please make sure Discord is running and the Discord RPC library is correctly integrated.");
+                        return;
+                    }
                     it = std::find_if(buttonPairs.begin(), buttonPairs.end(),
                         [](const std::pair<std::string, std::string>& pair) {
                             return pair.first == "Roblox";
