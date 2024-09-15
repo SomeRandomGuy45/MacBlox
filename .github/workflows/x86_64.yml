@@ -41,6 +41,7 @@ jobs:
         make
         echo "[INFO] Finished building MacBlox"
         tar -cvf MacBlox.tar build/MacBlox/*
+        ls build/MacBlox/
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
