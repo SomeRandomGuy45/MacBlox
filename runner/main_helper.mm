@@ -445,6 +445,42 @@ void CreateNotification(const char* title, const char* message, double timeout) 
     });
 }
 
+std::string getData_Lua(const char* urlString) {
+    __block std::string resultString;
+
+    dispatch_sync(dispatch_get_main_queue(), ^{
+        NSString* nsUrlString = [NSString stringWithUTF8String:urlString];
+        NSURL *url = [NSURL URLWithString:nsUrlString];
+
+        if (!url) {
+            NSLog(@"[ERROR] Invalid URL: %s", urlString);
+            return;
+        }
+
+        // Download the file using NSData
+        NSError *error = nil;
+        NSData *data = [NSData dataWithContentsOfURL:url options:0 error:&error];
+
+        if (error) {
+            NSLog(@"Error downloading file: %@", [error localizedDescription]);
+            return;
+        }
+
+        // Convert NSData to NSString
+        NSString *contentString = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+
+        if (!contentString) {
+            NSLog(@"[ERROR] Failed to convert file data to string");
+            return;
+        }
+
+        // Convert NSString to std::string
+        resultString = std::string([contentString UTF8String]);
+    });
+
+    return resultString;
+}
+
 //API Namespace
 namespace API
 {
@@ -501,6 +537,74 @@ namespace API
     void createNotification(const char* title, const char* message, double timeout)
     {
         CreateNotification(title, message, timeout);
+    }
+
+    std::string getDataFromURL(const char* urlString) {
+        std::string content = getData_Lua(urlString);
+        return content;
+    }
+
+    sol::table decodeJSON(sol::this_state s, const char* json_str)
+    {
+        sol::state_view lua(s);
+
+        // Parse the JSON string
+        json json_data;
+        try {
+            json_data = json::parse(json_str);
+        } catch (const json::parse_error& e) {
+            std::cerr << "JSON parsing error: " << e.what() << std::endl;
+            return lua.create_table(); // Return an empty table in case of error
+        }
+
+        // Create a Lua table
+        sol::table lua_table = lua.create_table();
+
+        // Helper function to convert JSON objects to Lua tables
+        std::function<void(const json&, sol::table)> populate_lua_table;
+        populate_lua_table = [&](const json& json_obj, sol::table tbl) {
+            for (auto it = json_obj.begin(); it != json_obj.end(); ++it) {
+                const auto& key = it.key();
+                const auto& value = *it;
+
+                if (value.is_object()) {
+                    sol::table nested_table = lua.create_table();
+                    populate_lua_table(value, nested_table);
+                    tbl[key] = nested_table;
+                } else if (value.is_array()) {
+                    sol::table array_table = lua.create_table();
+                    for (size_t i = 0; i < value.size(); ++i) {
+                        if (value[i].is_object()) {
+                            sol::table nested_table = lua.create_table();
+                            populate_lua_table(value[i], nested_table);
+                            array_table[i + 1] = nested_table; // Lua arrays are 1-based
+                        } else if (value[i].is_string()) {
+                            array_table[i + 1] = value[i].get<std::string>();
+                        } else if (value[i].is_number()) {
+                            array_table[i + 1] = value[i].get<double>();
+                        } else if (value[i].is_boolean()) {
+                            array_table[i + 1] = value[i].get<bool>();
+                        } else if (value[i].is_null()) {
+                            array_table[i + 1] = sol::lua_nil;
+                        }
+                    }
+                    tbl[key] = array_table;
+                } else if (value.is_string()) {
+                    tbl[key] = value.get<std::string>();
+                } else if (value.is_number()) {
+                    tbl[key] = value.get<double>();
+                } else if (value.is_boolean()) {
+                    tbl[key] = value.get<bool>();
+                } else if (value.is_null()) {
+                    tbl[key] = sol::lua_nil;
+                }
+            }
+        };
+
+        // Populate the Lua table with the parsed JSON data
+        populate_lua_table(json_data, lua_table);
+
+        return lua_table;
     }
 }
 
@@ -623,6 +727,8 @@ sol::state CreateNewLuaEnvironment(bool allowApi)
         lua.set_function("createNotification", API::createNotification);
         lua.set_function("returnBasePath", getApplicationSupportPath);
         lua.set_function("runCommand", API::doCommand);
+        lua.set_function("decodeJSON", &API::decodeJSON);
+        lua.set_function("getDataFromURL", API::getDataFromURL);
     }
 
     return lua;
@@ -1828,7 +1934,9 @@ int main_loop(NSArray *arguments, std::string supercoolvar, bool dis) {
             }
             SBackground = true;
             shouldEnd = false;
-            [NSApp terminate:nil];
+            dispatch_sync(dispatch_get_main_queue(), ^{
+                [NSApp terminate:nil];
+            });
         //}
     });
     return 0;
