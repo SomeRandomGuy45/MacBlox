@@ -518,11 +518,12 @@ namespace API
             sol::table tbl = lua.create_table();
             for (const auto& [flag_name, flag_values] : Feature_Flags)
             {
-                tbl["flag_name"] = flag_name;
+                sol::table new_table = lua.create_table();
                 sol::table inner_tbl = lua.create_table();
                 inner_tbl["enabled"] = flag_values.first;
                 inner_tbl["isReadOnly"] = flag_values.second;
-                tbl["flag_data"] = inner_tbl;
+                new_table["flag_data"] = inner_tbl;
+                tbl[flag_name] = new_table;
             }
             return tbl;
         }
@@ -584,8 +585,11 @@ namespace API
     }
 
     std::string getDataFromURL(const char* urlString) {
-        std::string content = getData_Lua(urlString);
-        return content;
+        if (FLAGS::Feature_Flags["allowDownload"].first == false)
+        {
+            return "Downloading Disabled";
+        }
+        return getData_Lua(urlString);;
     }
 
     sol::table decodeJSON(sol::this_state s, const char* json_str)
@@ -597,7 +601,7 @@ namespace API
         try {
             json_data = json::parse(json_str);
         } catch (const json::parse_error& e) {
-            std::cerr << "JSON parsing error: " << e.what() << std::endl;
+            std::cerr << "[ERROR] JSON parsing error: " << e.what() << std::endl;
             return lua.create_table(); // Return an empty table in case of error
         }
 
