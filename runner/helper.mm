@@ -125,6 +125,7 @@ std::string GetResourcesFolderPath()
 
 void runApp(const std::string &launchPath, bool Check) {
    // Convert std::string to NSString
+    std::cout << "[INFO] " << launchPath << "\n";
     NSString *launchAppPath = [NSString stringWithUTF8String:launchPath.c_str()];
 
     // Create an NSURL instance using the launchAppPath
@@ -377,7 +378,7 @@ void createStatusBarIcon(const std::string &imagePath)
     }
 
     // Set the template property for dark mode compatibility
-    //[statusImage setTemplate:YES];
+    [statusImage setTemplate:YES];
 
     // Set the image on the status item
     [statusItem setImage:statusImage];
@@ -394,28 +395,30 @@ void createStatusBarIcon(const std::string &imagePath)
     // Create an instance of HelperClass
     HelperClass *helper = [[HelperClass alloc] init];
 
-    // Create a custom view for the menu item with a checkbox
-    NSView *menuItemView = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, 150, 22)];
+    if (isDiscordFound_)
+    {
+        // Create a custom view for the menu item with a checkbox
+        NSView *menuItemView = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, 150, 22)];
 
-    NSButton *checkbox = [[NSButton alloc] initWithFrame:NSMakeRect(0, 0, 150, 22)];
-    [checkbox setButtonType:NSSwitchButton]; // Set the button type to a checkbox
-    [checkbox setTitle:@"Toggle Discord RPC"];
-    if (isDiscordFound_) {
-        [checkbox setState:NSControlStateValueOn]; // Initial state is on
+        NSButton *checkbox = [[NSButton alloc] initWithFrame:NSMakeRect(0, 0, 150, 22)];
+        [checkbox setButtonType:NSSwitchButton]; // Set the button type to a checkbox
+        [checkbox setTitle:@"Toggle Discord RPC"];
+        if (isDiscordFound_) {
+            [checkbox setState:NSControlStateValueOn]; // Initial state is on
+        }
+        else {
+            [checkbox setState:NSControlStateValueOff]; // Initial state is off
+        }
+        [checkbox setTarget:helper];
+        [checkbox setAction:@selector(toggleOption:)];
+
+        [menuItemView addSubview:checkbox];
+
+        // Create the menu item with the custom view
+        NSMenuItem *boolMenuItem = [[NSMenuItem alloc] init];
+        [boolMenuItem setView:menuItemView];
+        [menu addItem:boolMenuItem];
     }
-    else {
-        [checkbox setState:NSControlStateValueOff]; // Initial state is off
-    }
-    [checkbox setTarget:helper];
-    [checkbox setAction:@selector(toggleOption:)];
-
-    [menuItemView addSubview:checkbox];
-
-    // Create the menu item with the custom view
-    NSMenuItem *boolMenuItem = [[NSMenuItem alloc] init];
-    [boolMenuItem setView:menuItemView];
-
-    [menu addItem:boolMenuItem];
 
     NSMenuItem *openMenuItem = [[NSMenuItem alloc] initWithTitle:@"Open Game Watcher"
                                                           action:@selector(OpenMainHelper:)

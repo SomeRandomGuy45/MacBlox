@@ -32,6 +32,23 @@ std::string checkIfRobloxIsRunning = R"(
                     end if
                             )";
 
+inline std::string ScriptNeededToRun = R"(
+            tell application "Terminal"
+                -- Get a list of all windows
+                set terminalWindows to windows
+                
+                -- Loop through each window and execute `exit`
+                repeat with aWindow in terminalWindows
+                    tell aWindow
+                        do script "exit" in (selected tab of aWindow)
+                    end tell
+                end repeat
+
+                -- Quit the Terminal application
+                quit
+            end tell
+            )";
+
 bool isFound = true;
 
 inline std::string GetBashPath() {
@@ -219,7 +236,9 @@ bool isAppRunningTerminal() {
 }
 
 void quitTerminal() {
+    std::string command_ = "osascript -e " + ScriptNeededToRun;
     std::string command = "osascript -e 'do shell script \"killall -QUIT Terminal\"'";
+    system(command_.c_str());
     system(command.c_str());
 }
 
@@ -405,17 +424,13 @@ pid_t getAppPID(NSString *appName) {
     NSDictionary *environment = [[NSProcessInfo processInfo] environment];
     NSString *termProgram = environment[@"TERM_PROGRAM"];
     
-    /*
     if ([termProgram length] != 0 && ![termProgram isEqualTo:@"vscode"])
     {
         NSLog(@"[INFO] App environment: %@", termProgram);
-        std::string Command = "open -a " + GetBashPath() + "/play";
-        NSLog(@"[INFO] App command before we kill: %s", Command.c_str());
-        system(Command.c_str());
-        WasReseting = YES;
-        [NSApp terminate:self];
+        //WasReseting = YES;
+        //[NSApp terminate:nil];
     }
-    */
+
     if (!doesAppExist("/Applications/Discord.app"))
     {
         NSLog(@"[INFO] Discord not found in /Applications/Discord.app");
@@ -433,6 +448,14 @@ pid_t getAppPID(NSString *appName) {
     if (WasReseting)
     {
         //We are just reseting the app to launch outside of the terminal
+        NSURL *urlToOpen = [NSURL URLWithString:@"roblox://"];
+        if ([[NSWorkspace sharedWorkspace] openURL:urlToOpen])
+        {
+            NSLog(@"[OK] Relaunching application successfully!");
+            return;
+        }
+        NSLog(@"[ERROR] Cannot open URL!");
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
         return;
     }
     checkAndCloseRoblox();

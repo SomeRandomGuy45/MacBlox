@@ -1,0 +1,1 @@
+print(getDataFromURL("https://raw.githubusercontent.com/SomeRandomGuy45/MacBlox/main/.gitignore"))

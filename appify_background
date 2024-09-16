@@ -119,8 +119,6 @@ cat <<EOF > $DIR/Info.plist
 			</array>
 		</dict>
 	</array>
-   <key>LSApplicationCategoryType</key>
-   <string>public.app-category.utilities</string>
    <key>LSMinimumSystemVersion</key>
    <string>10.12</string>
    <key>CFBundleSignature</key>

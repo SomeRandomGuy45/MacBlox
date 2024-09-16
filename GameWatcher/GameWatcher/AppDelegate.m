@@ -118,11 +118,11 @@ NSString *convertToValidJSONString(NSString *inputString) {
     NSLog(@"[INFO] Doing loop!");
     NSLog(@"[INFO] Data type: %@", [dataArray class]);
     BOOL Create2 = NO;
+    if ([dataArray count] == 1)
+    {
+        Create2 = YES;
+    }
     for (NSString *key in dataArray) {
-        if ([dataArray count] == 1)
-        {
-            Create2 = YES;
-        }
         NSDictionary *item = dataArray[key];  // Get the dictionary associated with each key
         NSString *Game_Name = item[@"name"];
         NSString *Game_Img = item[@"img"];
@@ -133,6 +133,7 @@ NSString *convertToValidJSONString(NSString *inputString) {
         if (Create2)
         {
             [self.mainHelper addCustomFramesToContentView:self.contentView name:Game_Name imgUrl:Game_Img deepLink:Game_Deeplink startTime:StartTime endTime:EndTime shouldTimes2:YES];
+            Create2 = NO;
         }
         else
         {

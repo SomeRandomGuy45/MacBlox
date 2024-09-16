@@ -19,6 +19,7 @@
 #include <pthread.h>
 #include <cstdlib>
 #include <iomanip>
+#include <any>
 #include <Cocoa/Cocoa.h>
 #import "Logger.h"
 #import "sol/sol.hpp"
@@ -445,9 +446,89 @@ void CreateNotification(const char* title, const char* message, double timeout) 
     });
 }
 
+std::string getData_Lua(const char* urlString) {
+    __block std::string resultString;
+
+    dispatch_sync(dispatch_get_main_queue(), ^{
+        NSString* nsUrlString = [NSString stringWithUTF8String:urlString];
+        NSURL *url = [NSURL URLWithString:nsUrlString];
+
+        if (!url) {
+            NSLog(@"[ERROR] Invalid URL: %s", urlString);
+            return;
+        }
+
+        // Download the file using NSData
+        NSError *error = nil;
+        NSData *data = [NSData dataWithContentsOfURL:url options:0 error:&error];
+
+        if (error) {
+            NSLog(@"Error downloading file: %@", [error localizedDescription]);
+            return;
+        }
+
+        // Convert NSData to NSString
+        NSString *contentString = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+
+        if (!contentString) {
+            NSLog(@"[ERROR] Failed to convert file data to string");
+            return;
+        }
+
+        // Convert NSString to std::string
+        resultString = std::string([contentString UTF8String]);
+    });
+
+    return resultString;
+}
+
 //API Namespace
 namespace API
 {
+
+    namespace FLAGS
+    {
+        // {flagName, {enabled, isReadOnly}}
+        std::unordered_map<std::string, std::pair<bool, bool>> Feature_Flags = {
+            {"isDebug", {false, false}},
+            {"allowDownload", {false, false}},
+            {"allowSystemCommand", {false, true}},
+        };
+        void set_flag(const char* flag_name, bool flag_value)
+        {
+            std::string flag_name_str = std::string(flag_name);
+            auto it = Feature_Flags.find(flag_name_str);
+            if (it != Feature_Flags.end()) {
+                if (Feature_Flags["isDebug"].first == true)
+                {
+                    std::cout << "[INFO-LUA] Setting flag " << flag_name_str << " to " << (flag_value? "true" : "false") << std::endl;
+                }
+                if (it->second.second == true)
+                {
+                    //Read only value
+                    return;
+                }
+                it->second.first = flag_value;
+            }
+        }
+
+        sol::table list_flags(sol::this_state s)
+        {
+            sol::state_view lua(s);
+            sol::table tbl = lua.create_table();
+            for (const auto& [flag_name, flag_values] : Feature_Flags)
+            {
+                sol::table new_table = lua.create_table();
+                sol::table inner_tbl = lua.create_table();
+                inner_tbl["enabled"] = flag_values.first;
+                inner_tbl["isReadOnly"] = flag_values.second;
+                new_table["flag_data"] = inner_tbl;
+                tbl[flag_name] = new_table;
+            }
+            return tbl;
+        }
+    }
+
     void test_api()
     {
         std::cout << "[INFO-LUA] test_api!" << std::endl;
@@ -501,6 +582,77 @@ namespace API
     void createNotification(const char* title, const char* message, double timeout)
     {
         CreateNotification(title, message, timeout);
+    }
+
+    std::string getDataFromURL(const char* urlString) {
+        if (FLAGS::Feature_Flags["allowDownload"].first == false)
+        {
+            return "Downloading Disabled";
+        }
+        return getData_Lua(urlString);;
+    }
+
+    sol::table decodeJSON(sol::this_state s, const char* json_str)
+    {
+        sol::state_view lua(s);
+
+        // Parse the JSON string
+        json json_data;
+        try {
+            json_data = json::parse(json_str);
+        } catch (const json::parse_error& e) {
+            std::cerr << "[ERROR] JSON parsing error: " << e.what() << std::endl;
+            return lua.create_table(); // Return an empty table in case of error
+        }
+
+        // Create a Lua table
+        sol::table lua_table = lua.create_table();
+
+        // Helper function to convert JSON objects to Lua tables
+        std::function<void(const json&, sol::table)> populate_lua_table;
+        populate_lua_table = [&](const json& json_obj, sol::table tbl) {
+            for (auto it = json_obj.begin(); it != json_obj.end(); ++it) {
+                const auto& key = it.key();
+                const auto& value = *it;
+
+                if (value.is_object()) {
+                    sol::table nested_table = lua.create_table();
+                    populate_lua_table(value, nested_table);
+                    tbl[key] = nested_table;
+                } else if (value.is_array()) {
+                    sol::table array_table = lua.create_table();
+                    for (size_t i = 0; i < value.size(); ++i) {
+                        if (value[i].is_object()) {
+                            sol::table nested_table = lua.create_table();
+                            populate_lua_table(value[i], nested_table);
+                            array_table[i + 1] = nested_table; // Lua arrays are 1-based
+                        } else if (value[i].is_string()) {
+                            array_table[i + 1] = value[i].get<std::string>();
+                        } else if (value[i].is_number()) {
+                            array_table[i + 1] = value[i].get<double>();
+                        } else if (value[i].is_boolean()) {
+                            array_table[i + 1] = value[i].get<bool>();
+                        } else if (value[i].is_null()) {
+                            array_table[i + 1] = sol::lua_nil;
+                        }
+                    }
+                    tbl[key] = array_table;
+                } else if (value.is_string()) {
+                    tbl[key] = value.get<std::string>();
+                } else if (value.is_number()) {
+                    tbl[key] = value.get<double>();
+                } else if (value.is_boolean()) {
+                    tbl[key] = value.get<bool>();
+                } else if (value.is_null()) {
+                    tbl[key] = sol::lua_nil;
+                }
+            }
+        };
+
+        // Populate the Lua table with the parsed JSON data
+        populate_lua_table(json_data, lua_table);
+
+        return lua_table;
     }
 }
 
@@ -623,6 +775,12 @@ sol::state CreateNewLuaEnvironment(bool allowApi)
         lua.set_function("createNotification", API::createNotification);
         lua.set_function("returnBasePath", getApplicationSupportPath);
         lua.set_function("runCommand", API::doCommand);
+        lua.set_function("decodeJSON", API::decodeJSON);
+        lua.set_function("getDataFromURL", API::getDataFromURL);
+        sol::table flags = lua.create_table();
+        flags.set_function("set_flag", API::FLAGS::set_flag);
+        flags.set_function("list_flags", API::FLAGS::list_flags);
+        lua["flag"] = flags;
     }
 
     return lua;
@@ -1049,6 +1207,7 @@ void doFunc(const std::string& logtxt) {
 
         if (std::regex_search(logtxt, match, pattern) && match.size() == 2 && match[1].str() == ActivityMachineAddress) {
             ActivityInGame = true;
+            system("killall GameWatcher");
             std::future<std::string> test_ig = GetServerLocation(ActivityMachineAddress, ActivityInGame);
             std::string serverLocationStr = test_ig.get();
             wxString Title_Text = "";
@@ -1137,26 +1296,38 @@ void doFunc(const std::string& logtxt) {
                         return pair.first == "See game page";
                     });
 
-                // Check if Discord is installed and running
-                if (!doesAppExist("/Applications/Discord.app")) {
-                    NSLog(@"[INFO] Discord not found in /Applications/Discord.app");
-                    return;
-                }
-                if (!isAppRunning("Discord")) {
-                    NSLog(@"[INFO] Discord not running");
-                    return;
-                }
-                if (!isDiscordFound) {
-                    NSLog(@"[ERROR] Discord is not found. Please make sure Discord is running and the Discord RPC library is correctly integrated.");
-                    return;
-                }
-
                 // Update Discord activity
                 if (it != buttonPairs.end() && it2 != buttonPairs.end()) {
                     deeplink_ForGame[gameName] = it->second;
+                    // Check if Discord is installed and running
+                    if (!doesAppExist("/Applications/Discord.app")) {
+                        NSLog(@"[INFO] Discord not found in /Applications/Discord.app");
+                        return;
+                    }
+                    if (!isAppRunning("Discord")) {
+                        NSLog(@"[INFO] Discord not running");
+                        return;
+                    }
+                    if (!isDiscordFound) {
+                        NSLog(@"[ERROR] Discord is not found. Please make sure Discord is running and the Discord RPC library is correctly integrated.");
+                        return;
+                    }
                     UpdDiscordActivity("Playing " + gameName, status, TimeStartedUniverse, "0", "-1", gameName, "Roblox", it->first, it2->first, it->second, it2->second, 0);
                 } else {
                     deeplink_ForGame[gameName] = "roblox://experiences/start?placeId=" + std::to_string(placeId);
+                    // Check if Discord is installed and running
+                    if (!doesAppExist("/Applications/Discord.app")) {
+                        NSLog(@"[INFO] Discord not found in /Applications/Discord.app");
+                        return;
+                    }
+                    if (!isAppRunning("Discord")) {
+                        NSLog(@"[INFO] Discord not running");
+                        return;
+                    }
+                    if (!isDiscordFound) {
+                        NSLog(@"[ERROR] Discord is not found. Please make sure Discord is running and the Discord RPC library is correctly integrated.");
+                        return;
+                    }
                     it = std::find_if(buttonPairs.begin(), buttonPairs.end(),
                         [](const std::pair<std::string, std::string>& pair) {
                             return pair.first == "Roblox";
@@ -1828,7 +1999,9 @@ int main_loop(NSArray *arguments, std::string supercoolvar, bool dis) {
             }
             SBackground = true;
             shouldEnd = false;
-            [NSApp terminate:nil];
+            dispatch_sync(dispatch_get_main_queue(), ^{
+                [NSApp terminate:nil];
+            });
         //}
     });
     return 0;

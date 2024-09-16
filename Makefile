@@ -24,6 +24,9 @@ create_smart_app:
 	@mv -f $(CURDIR)/"Smart Join"/Build/Products/Release/"Smart Join.app" $(BUILDPATH)/Macblox/"Smart Join.app"
 	@mv -f $(CURDIR)/"Smart Join"/Build/Products/Release/"Smart Join.app.dSYM" $(BUILDPATH)/Macblox/"Smart Join.app.dSYM"
 
+create_helper_app:
+	@xcodebuild -project $(CURDIR)/"GameWatcher"/"GameWatcher.xcodeproj" -scheme "GameWatcher" -configuration Release -derivedDataPath $(CURDIR)/"GameWatcher"
+
 # Create the main app
 create_runner_app:
 	@if [ -d $(BUILDPATH) ]; then \

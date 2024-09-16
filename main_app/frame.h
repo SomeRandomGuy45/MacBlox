@@ -16,6 +16,7 @@
 #include "EditableListBox.h"
 #include "Downloader.h"
 #include "json.hpp"
+#include "TimedAlert.h"
 
 #import <Foundation/Foundation.h>
 
@@ -74,7 +75,7 @@ private:
     void SaveBootstrapJson(const std::string& filepath);
     void CreateModsFolder();
     void OnRightClickDisable(wxMouseEvent& event);
-    void SetSlider(std::string selected);
+    void SetColor(std::string selected);
     void SetLight(std::string selected);
     void SetEmoji(std::string selected);
     void ProcessModName(const std::string& modName);
@@ -102,8 +103,8 @@ private:
         {"V2 Menu", false},
         {"V4 Menu", false},
         {"Chrome Menu", false},
-        {"Use 21 Slider", false},
-        {"Use 10 Slider", false},
+        {"Use Blue Color", false},
+        {"Use Default Color", false},
         {"Use Voxel Lighting", false},
         {"Use Shadowmap Lighting", false},
         {"Use Future Lighting", false},
@@ -128,7 +129,7 @@ private:
     std::unordered_map<std::string, std::function<void(const std::string&)>> actions = {
         {"Bootstrap icon", std::bind(&MainFrame::SetBootstrapIcon, this, std::placeholders::_1)},
         {"Menu", std::bind(&MainFrame::SetMenu, this, std::placeholders::_1)},
-        {"Slider", std::bind(&MainFrame::SetSlider, this, std::placeholders::_1)},
+        {"Color", std::bind(&MainFrame::SetColor, this, std::placeholders::_1)},
         {"Lighting", std::bind(&MainFrame::SetLight, this, std::placeholders::_1)},
         {"Emoji", std::bind(&MainFrame::SetEmoji, this, std::placeholders::_1)}
     };
@@ -189,27 +190,25 @@ void MainFrame::SetLight(std::string selected)
     }
 }
 
-void MainFrame::SetSlider(std::string selected)
+void MainFrame::SetColor(std::string selected)
 {
     for (auto& mod : modsEnabled) {
-        if (mod.first.find("Slider") != std::string::npos && mod.first != selected) {
+        if (mod.first.find("Color") != std::string::npos && mod.first != selected) {
             mod.second = false;
         }
     }
     modsEnabled[selected] = true;
-    if (selected.find("Slider") != std::string::npos)
+    if (selected.find("Color") != std::string::npos)
     {
         std::string ClientAppSettingsJson = FileChecker(GetBasePath() + "/data.json");
         json ClientAppSettings = json::parse(ClientAppSettingsJson);
-        if (selected == "Use 21 Slider")
+        if (selected == "Use Blue Color")
         {
-            ClientAppSettings["FFlagCommitToGraphicsQualityFix"] = "True";
-            ClientAppSettings["FFlagFixGraphicsQuality"] = "True";
+            ClientAppSettings["FFlagLuaAppEnableFoundationColors"] = "True";
         }
         else
         {
-            ClientAppSettings["FFlagCommitToGraphicsQualityFix"] = "False";
-            ClientAppSettings["FFlagFixGraphicsQuality"] = "False";
+            ClientAppSettings["FFlagLuaAppEnableFoundationColors"] = "False";
         }
         std::ofstream ClientJSONDump(GetBasePath() + "/data.json");
         if (ClientJSONDump.is_open())
@@ -674,6 +673,11 @@ void MainFrame::OpenPages(wxCommandEvent& event)
         }
         if (buttonName == "Config")
         {
+            BOOL showed = showTimedAlert();
+            if (!showed)
+            {
+                return;
+            }
             wxEditableListBox* editableListBox = new wxEditableListBox(panel, wxID_ANY);
             wxBoxSizer* mainSizer = new wxBoxSizer(wxHORIZONTAL);
             mainSizer->Add(editableListBox, 1, wxEXPAND | wxALL, 5);
