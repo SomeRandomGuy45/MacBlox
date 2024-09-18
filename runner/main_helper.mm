@@ -25,6 +25,7 @@
 #import "sol/sol.hpp"
 #import "functions/api.h"
 #import "functions/helper.h"
+#import "functions/write.h"
 
 // bool
 bool isDebug = false;
@@ -493,9 +494,24 @@ namespace API
             {"isDebug", {false, false}},
             {"allowDownload", {false, false}},
             {"allowSystemCommand", {false, true}},
+            {"disableAllAPI", {false, false}},
         };
+        
+        void Init_Flags()
+        {
+            std::map<std::string, bool> data = CreateAndReadJson();
+            for (const auto& [key, value] : data)
+            {
+                Feature_Flags[key].first = value;
+            }
+        }
+
         void set_flag(const char* flag_name, bool flag_value)
         {
+            if (Feature_Flags["disableAllAPI"].first == true)
+            {
+               return; 
+            }
             std::string flag_name_str = std::string(flag_name);
             auto it = Feature_Flags.find(flag_name_str);
             if (it != Feature_Flags.end()) {
@@ -516,6 +532,10 @@ namespace API
         {
             sol::state_view lua(s);
             sol::table tbl = lua.create_table();
+            if (Feature_Flags["disableAllAPI"].first == true)
+            {
+                return tbl;
+            }
             for (const auto& [flag_name, flag_values] : Feature_Flags)
             {
                 sol::table new_table = lua.create_table();
@@ -531,11 +551,19 @@ namespace API
 
     void test_api()
     {
+        if (FLAGS::Feature_Flags["disableAllAPI"].first == true)
+        {
+            return;
+        }
         std::cout << "[INFO-LUA] test_api!" << std::endl;
     }
 
     bool isDiscordRunning()
     {
+        if (FLAGS::Feature_Flags["disableAllAPI"].first == true)
+        {
+            return false;
+        }
         std::string command = "ps aux | grep '[d]iscord'"; // Avoid matching the grep command itself
         std::string output = runCommand(command);
         //std::cout << output << "\n";
@@ -557,6 +585,10 @@ namespace API
         const char* button1url, 
         const char* button2url)
         {
+            if (FLAGS::Feature_Flags["disableAllAPI"].first == true)
+            {
+                return;
+            }
             // Call function, constructing std::string from const char* on the fly
             UpdDiscordActivity(
                 std::string(details), 
@@ -576,15 +608,32 @@ namespace API
 
     void doCommand(const char* command)
     {
+        if (FLAGS::Feature_Flags["disableAllAPI"].first == true)
+        {
+            return;
+        }
+        if (FLAGS::Feature_Flags["allowSystemCommand"].first == false)
+        {
+            NSLog(@"[INFO-LUA-SYSTEM-COMMAND] Tried to run system command with permission!");
+            return;
+        }
         runCommand(std::string(command));
     }
 
     void createNotification(const char* title, const char* message, double timeout)
     {
+        if (FLAGS::Feature_Flags["disableAllAPI"].first == true)
+        {
+            return;
+        }
         CreateNotification(title, message, timeout);
     }
 
     std::string getDataFromURL(const char* urlString) {
+        if (FLAGS::Feature_Flags["disableAllAPI"].first == true)
+        {
+            return "";
+        }
         if (FLAGS::Feature_Flags["allowDownload"].first == false)
         {
             return "Downloading Disabled";
@@ -595,6 +644,11 @@ namespace API
     sol::table decodeJSON(sol::this_state s, const char* json_str)
     {
         sol::state_view lua(s);
+
+        if (FLAGS::Feature_Flags["disableAllAPI"].first == true)
+        {
+            return lua.create_table();
+        }
 
         // Parse the JSON string
         json json_data;
@@ -769,6 +823,7 @@ sol::state CreateNewLuaEnvironment(bool allowApi)
     lua["package"]["path"] = lua["package"]["path"].get<std::string>() + ";" + customLuaPath;
 
     if (allowApi) {
+        API::FLAGS::Init_Flags();
         lua.set_function("test_api", API::test_api);
         lua.set_function("isDiscordRunning", API::isDiscordRunning);
         lua.set_function("updDiscordActivity", API::UpdateDiscord);

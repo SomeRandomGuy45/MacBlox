@@ -1,0 +1,1 @@
+runCommand("echo 'Hello world!'") --does prints Hello world!
