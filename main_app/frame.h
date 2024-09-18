@@ -103,7 +103,7 @@ private:
         {"V2 Menu", false},
         {"V4 Menu", false},
         {"Chrome Menu", false},
-        {"Use Blue Color", false},
+        {"Use Foundation Colors", false},
         {"Use Default Color", false},
         {"Use Voxel Lighting", false},
         {"Use Shadowmap Lighting", false},
@@ -202,7 +202,7 @@ void MainFrame::SetColor(std::string selected)
     {
         std::string ClientAppSettingsJson = FileChecker(GetBasePath() + "/data.json");
         json ClientAppSettings = json::parse(ClientAppSettingsJson);
-        if (selected == "Use Blue Color")
+        if (selected == "Use Foundation Colors")
         {
             ClientAppSettings["FFlagLuaAppEnableFoundationColors"] = "True";
         }
