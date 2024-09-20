@@ -45,7 +45,7 @@ create_runner_app:
 	@cp -R $(CURDIR)/runner/display@2x.png $(BUILDPATH)/Macblox/"Play.app"/Contents/Resources/
 	@rm -f $(BUILDPATH)/runner
 	@./fixInstall.sh $(BUILDPATH)/Macblox/"Play.app"/Contents/MacOS/play $(BUILDPATH)/Macblox/"Play.app"/Contents/
-	$(CC) $(CXXFLAGS) $(LDFLAGS) -o $(BUILDPATH)/bootstrap $(CURDIR)/bootstrap/app.mm $(CURDIR)/bootstrap/helper.mm $(CURDIR)/bootstrap/tinyxml2.cpp $(CURDIR)/bootstrap/multi.mm
+	$(CC) $(CXXFLAGS) $(LDFLAGS) -o $(BUILDPATH)/bootstrap $(CURDIR)/bootstrap/app.mm $(CURDIR)/bootstrap/helper.mm $(CURDIR)/bootstrap/tinyxml2.cpp $(CURDIR)/bootstrap/multi.mm $(CURDIR)/bootstrap/autoUpdater.mm
 	@./appify -s build/bootstrap -n bootstrap -i Images/icon.icns
 	@codesign --sign - --entitlements Macblox.plist --deep bootstrap.app --force
 	@mv -f bootstrap.app $(BUILDPATH)/bootstrap.app

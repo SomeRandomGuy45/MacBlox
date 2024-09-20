@@ -40,6 +40,7 @@ bool shouldKill = false;
 bool isDiscordFound = true;
 bool errorOccurred = false;
 bool SBackground = false;
+bool hasStartedDiscordThread = false;
 
 // std::string
 std::string tempDirStr = getTemp();
@@ -111,7 +112,7 @@ std::string ScriptNeededToRun = R"(
                         do script "exit" in (selected tab of aWindow)
                     end tell
                 end repeat
-
+                delay 2
                 -- Quit the Terminal application
                 quit
             end tell
@@ -985,6 +986,8 @@ static void UpdDiscordActivity(
         executeScript(new_script);
     });
 
+    hasStartedDiscordThread = true;
+
     discordThread.detach();
 
     NSLog(@"[INFO] Updated activity" );
@@ -1782,6 +1785,23 @@ bool OpenAppWithPath(const std::string &appPath) {
     return true;
 }
 
+void luaThreadFunction() {
+    try {
+        NSLog(@"[INFO-LUA] Exiting lua thread");
+    } catch (const std::exception& e) {
+        NSLog(@"[ERROR] Exception in lua thread: %s", e.what());
+    }
+}
+
+void discordThreadFunction() {
+    try {
+        NSLog(@"[INFO] Stopping discord thread");
+
+    } catch (const std::exception& e) {
+        NSLog(@"[ERROR] Exception in discord thread: %s", e.what());
+    }
+}
+
 std::string getParentFolderOfApp() {
     // Get the bundle path
     NSString *bundlePath = [[NSBundle mainBundle] bundlePath];
@@ -1990,9 +2010,15 @@ int main_loop(NSArray *arguments, std::string supercoolvar, bool dis) {
                 std::condition_variable logUpdatedEvent;
                 std::ifstream logFile(logFilePath);
                 bool lastDiscord = false;
-                std::thread DiscordLookerThread([&lastDiscord]() {
+                bool killedDisLooker = false;
+                std::thread DiscordLookerThread([&lastDiscord, &killedDisLooker]() {
                     while (true)
                     {
+                        if (!isRobloxRunning())
+                        {
+                            killedDisLooker = true;
+                            break;
+                        }
                         isDiscordFound = foundDiscord();
                         if (lastDiscord != isDiscordFound)
                         {
@@ -2004,6 +2030,62 @@ int main_loop(NSArray *arguments, std::string supercoolvar, bool dis) {
                 });
                 while (true) {
                     if (!isRobloxRunning()) {
+                        std::string Command = GetBashPath() + "/GameWatcher.app/Contents/MacOS/GameWatcher -clearJsonGameData";
+                        std::cout << "[INFO] Command is: " << Command << "\n";
+                        system(Command.c_str());
+                        runAppleScriptAndGetOutput(ScriptNeededToRun);
+                        NSLog(@"[INFO] Killing threads");
+                        for (auto& thread : lua_threads) {
+                            thread = std::thread(luaThreadFunction);
+                        }
+
+                        NSLog(@"[INFO] Killed Lua threads");
+
+                        NSLog(@"[INFO] Killed Discord threads");
+                        if (hasStartedDiscordThread)
+                        {
+                            discordThread = std::thread(discordThreadFunction);
+                            // Join Discord threads
+                            if (discordThread.joinable()) {
+                                discordThread.join();
+                            }
+                        }
+                        NSLog(@"[INFO] Killed Discord 1 threads");
+                        if (!killedDisLooker)
+                        {
+                            DiscordLookerThread = std::thread(discordThreadFunction);
+                            if (DiscordLookerThread.joinable()) {
+                                DiscordLookerThread.join();
+                            }
+                        }
+                        NSLog(@"[INFO] Killed Discord 2 threads");
+                        // Join Lua threads
+                        for (auto& thread : lua_threads) {
+                            if (thread.joinable()) {
+                                thread.join();
+                            }
+                        }
+
+                        NSLog(@"[INFO] All threads have completed.");
+                        std::string filename = GetResourcesFolderPath() + "/kill.txt";
+
+                        std::ofstream outfile(filename);
+
+                        if (outfile.is_open()) {
+                            // Write to the file
+                            outfile << "if kill then kill_thing() end" << std::endl;
+                            outfile.close();
+                        }
+
+                        NSLog(@"[INFO] Did kill.txt file");
+
+                        try {
+                            if (std::filesystem::remove(filename)) {
+                                NSLog(@"[INFO] Successfully deleted kill.txt" );
+                            }
+                        } catch (const std::filesystem::filesystem_error& e) {
+                            std::cerr << "[ERROR] Filesystem error: " << e.what() << std::endl;
+                        }
                         break;
                     }
                     std::this_thread::sleep_for(std::chrono::milliseconds(250));
@@ -2018,45 +2100,12 @@ int main_loop(NSArray *arguments, std::string supercoolvar, bool dis) {
                         break;
                     }
                 }
-                std::string Command = GetBashPath() + "/GameWatcher.app/Contents/MacOS/GameWatcher -clearJsonGameData";
-                std::cout << "[INFO] Command is: " << Command << "\n";
-                system(Command.c_str());
-                runAppleScriptAndGetOutput(ScriptNeededToRun);
-                for (auto& thread : lua_threads)
-                {
-                    thread = std::thread([&]() {
-                        NSLog(@"[INFO-LUA] Exiting lua thread");
-                    });
-                }
-                discordThread = std::thread([&]() {
-                    NSLog(@"[INFO] Stopping discord thread");
-                });
-                DiscordLookerThread = std::thread([&]() {
-                    NSLog(@"[INFO] Stopping thread");
+                SBackground = true;
+                shouldEnd = false;
+                dispatch_sync(dispatch_get_main_queue(), ^{
+                    [NSApp terminate:nil];
                 });
             }
-            std::string filename = GetResourcesFolderPath() + "/kill.txt";
-
-            std::ofstream outfile(filename);
-
-            if (outfile.is_open()) {
-                // Write to the file
-                outfile << "if kill then kill_thing() end" << std::endl;
-                outfile.close();
-            }
-
-            try {
-                if (std::filesystem::remove(filename)) {
-                    NSLog(@"[INFO] Successfully deleted kill.txt" );
-                }
-            } catch (const std::filesystem::filesystem_error& e) {
-                std::cerr << "[ERROR] Filesystem error: " << e.what() << std::endl;
-            }
-            SBackground = true;
-            shouldEnd = false;
-            dispatch_sync(dispatch_get_main_queue(), ^{
-                [NSApp terminate:nil];
-            });
         //}
     });
     return 0;
