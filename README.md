@@ -24,9 +24,10 @@ Macblox is a funny project i wanted to do because there wasn't bloxstrap for mac
 
 # Building
 ### Libraries needed:
-* wxwidgets [Github](https://github.com/wxWidgets/wxWidgets)
+* wxwidgets [Github](https://github.com/wxWidgets/wxWidgets) (use brew install wxwidgets)
 * sol2 [Github](https://github.com/ThePhD/sol2)
 * lua [Github](https://github.com/lua/lua) (use brew install lua)
+* openssl [Github](https://github.com/openssl/openssl.git) (use brew install openssl)
 ### Building the project:
 Just run the following command
 ``
