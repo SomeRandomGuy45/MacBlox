@@ -258,6 +258,11 @@ std::string FileChecker(const std::string path) {
             return fileContent;
         } else {
             NSLog(@"[ERROR] Failed to open file: %@", nsPath);
+            if (fs::path(path).extension() == ".json") {
+                std::ofstream fileStream(path);
+                fileStream << "{}";
+                fileStream.close();
+            }
             return "";
         }
     } else {

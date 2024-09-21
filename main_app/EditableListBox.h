@@ -269,6 +269,9 @@ void wxEditableListBox::LoadFromFile(const wxString& filePath)
     std::ifstream file(filePath.ToStdString());
     if (!file.is_open()) {
         std::cerr << "[ERROR] Could not open file " << filePath.ToStdString() << std::endl;
+        std::ofstream file_of(filePath.ToStdString());
+        file_of << "{}";
+        file_of.close();
         return;
     }
 

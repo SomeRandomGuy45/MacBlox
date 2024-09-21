@@ -43,7 +43,7 @@ inline std::string ScriptNeededToRun = R"(
                         do script "exit" in (selected tab of aWindow)
                     end tell
                 end repeat
-
+                delay 2
                 -- Quit the Terminal application
                 quit
             end tell
@@ -236,10 +236,7 @@ bool isAppRunningTerminal() {
 }
 
 void quitTerminal() {
-    std::string command_ = "osascript -e " + ScriptNeededToRun;
-    std::string command = "osascript -e 'do shell script \"killall -QUIT Terminal\"'";
-    system(command_.c_str());
-    system(command.c_str());
+    return;
 }
 
 void runLoginInScript(const std::string& appName, const std::string& appPath) {
@@ -458,6 +455,26 @@ pid_t getAppPID(NSString *appName) {
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
         return;
     }
+    std::string filename = GetResourcesFolderPath() + "/kill.txt";
+
+    std::ofstream outfile(filename);
+
+    if (outfile.is_open()) {
+        // Write to the file
+        outfile << "if kill then kill_thing() end" << std::endl;
+        outfile.close();
+    }
+
+    NSLog(@"[INFO] Did kill.txt file");
+
+    try {
+        if (std::filesystem::remove(filename)) {
+            NSLog(@"[INFO] Successfully deleted kill.txt" );
+        }
+    } catch (const std::filesystem::filesystem_error& e) {
+        std::cerr << "[ERROR] Filesystem error: " << e.what() << std::endl;
+    }
+    quitTerminal();
     checkAndCloseRoblox();
     for (auto &app_copy : copyPaths)
     {

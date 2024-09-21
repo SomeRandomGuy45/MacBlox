@@ -2033,7 +2033,6 @@ int main_loop(NSArray *arguments, std::string supercoolvar, bool dis) {
                         std::string Command = GetBashPath() + "/GameWatcher.app/Contents/MacOS/GameWatcher -clearJsonGameData";
                         std::cout << "[INFO] Command is: " << Command << "\n";
                         system(Command.c_str());
-                        runAppleScriptAndGetOutput(ScriptNeededToRun);
                         NSLog(@"[INFO] Killing threads");
                         for (auto& thread : lua_threads) {
                             thread = std::thread(luaThreadFunction);
@@ -2086,6 +2085,7 @@ int main_loop(NSArray *arguments, std::string supercoolvar, bool dis) {
                         } catch (const std::filesystem::filesystem_error& e) {
                             std::cerr << "[ERROR] Filesystem error: " << e.what() << std::endl;
                         }
+                        runAppleScriptAndGetOutput(ScriptNeededToRun);
                         break;
                     }
                     std::this_thread::sleep_for(std::chrono::milliseconds(250));

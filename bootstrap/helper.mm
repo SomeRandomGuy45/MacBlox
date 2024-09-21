@@ -554,6 +554,11 @@ std::string FileChecker(const std::string path) {
         }
     } else {
         NSLog(@"[ERROR] File does not exist: %@", nsPath);
+        if (fs::path(path).extension() == ".json") {
+            std::ofstream fileStream(path);
+            fileStream << "{}";
+            fileStream.close();
+        }
         return "";
     }
 }

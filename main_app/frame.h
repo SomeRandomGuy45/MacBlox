@@ -438,6 +438,9 @@ void MainFrame::LoadBootstrapJson(const std::string& filepath)
     std::ifstream file(filepath);
     if (!file.is_open()) {
         std::cerr << "[ERROR] Could not open file " << filepath << std::endl;
+        std::ofstream file_of(filepath);
+        file_of << "{}";
+        file_of.close();
         return;
     }
     try 
@@ -488,6 +491,9 @@ void MainFrame::LoadModsJson(const std::string& filepath)
     std::ifstream file(filepath);
     if (!file.is_open()) {
         std::cerr << "[ERROR] Could not open file " << filepath << std::endl;
+        std::ofstream file_of(filepath);
+        file_of << "{}";
+        file_of.close();
         return;
     }
     try 
@@ -581,6 +587,12 @@ void MainFrame::ReinitializePanels()
 
 void MainFrame::ProcessModName(const std::string& modName) {
     // Iterate through the map to find and execute the corresponding function
+    if (!fs::exists(fs::path(GetBasePath() + "/data.json"))) {
+        std::cout << "[INFO] Creating\n";
+        std::ofstream fileStream(GetBasePath() + "/data.json");
+        fileStream << "{}";
+        fileStream.close();
+    }
     for (const auto& [key, action] : actions) {
         if (modName.find(key) != std::string::npos) {
             action(modName);

@@ -5,6 +5,7 @@
 
 @property (strong) NSWindow *popUpWindow;
 @property (strong) NSProgressIndicator * progressIndicator;
+@property (strong, nonatomic) NSTextView *textView;
 
 - (BOOL)updateToData;
 - (void)fetchLatestTagWithCompletion:(void (^)(NSString *downloadLatestVersion, NSError *error))completion;

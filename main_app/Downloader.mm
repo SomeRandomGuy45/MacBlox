@@ -4,6 +4,9 @@
 #import "Downloader.h"
 
 #include <fstream>
+#include <filesystem>
+
+namespace fs = std::filesystem;
 
 std::string GetMacOSAppearance()
 {

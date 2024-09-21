@@ -453,6 +453,11 @@ void BootstrapperFrame::UpdateProgress(double progress)
 
 json GetModData()
 {
+    if (!fs::exists(GetPath() + "/config_data.json")) {
+        std::ofstream file(GetPath() + "/config_data.json");
+        file << "{}";
+        file.close();
+    }
     json Data;
     std::ifstream file(GetPath() + "/config_data.json");
     if (!file.is_open()) {

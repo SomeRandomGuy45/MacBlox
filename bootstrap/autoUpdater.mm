@@ -142,14 +142,30 @@ std::string localuser = getenv("USER");
 - (void)doUpdate
 {
     NSLog(@"[INFO] Doing updates");
-    self.popUpWindow = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 200, 100)
+    self.popUpWindow = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 200, 200)
                                             styleMask:(NSWindowStyleMaskBorderless | NSWindowStyleMaskClosable)
                                             backing:NSBackingStoreBuffered
                                             defer:NO];
     [self.popUpWindow setLevel:NSModalPanelWindowLevel];
     [self.popUpWindow setMovableByWindowBackground:YES];
 
-    self.progressIndicator = [[NSProgressIndicator alloc] initWithFrame:NSMakeRect(85, 40, 32, 32)];
+    /*
+    NSRect textViewFrame = NSMakeRect(20, 50, 360, 200);
+    self.textView = [[NSTextView alloc] initWithFrame:NSMakeRect(0, 0, 300, 200)];
+    [self.textView setMinSize:NSMakeSize(0.0, 200.0)];
+    [self.textView setMaxSize:NSMakeSize(FLT_MAX, FLT_MAX)];
+    [self.textView setVerticallyResizable:YES];
+    [self.textView setHorizontallyResizable:NO];
+    [self.textView setAutoresizingMask:NSViewWidthSizable];
+    
+    [self.popUpWindow.contentView addSubview:self.textView];
+
+    // Set text attributes and initial content
+    [self.textView setString:@"Hello, NSTextView!"];
+    [self.textView setEditable:NO];
+    */
+
+    self.progressIndicator = [[NSProgressIndicator alloc] initWithFrame:NSMakeRect(80, 80, 42, 42)];
     [self.progressIndicator setStyle:NSProgressIndicatorSpinningStyle];
     
     // Add the progress indicator to the window's content view
