@@ -37,6 +37,8 @@ make
 Just install NPM and run this command
 ```
 npm install -g appdmg
+cd CreateMacbloxInstaller
+./CreateInstaller.sh
 ```
 
 # Credits
