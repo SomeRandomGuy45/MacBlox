@@ -13,3 +13,4 @@ settings.json
 /GameWatcherApp
 *.spec
 /dist
+/__MACOSX
