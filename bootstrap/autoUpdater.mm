@@ -143,11 +143,23 @@ std::string localuser = getenv("USER");
 {
     NSLog(@"[INFO] Doing updates");
     self.popUpWindow = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 200, 200)
-                                            styleMask:(NSWindowStyleMaskBorderless | NSWindowStyleMaskClosable)
+                                            styleMask:(NSWindowStyleMaskClosable | NSWindowStyleMaskResizable | NSWindowStyleMaskFullSizeContentView)
                                             backing:NSBackingStoreBuffered
                                             defer:NO];
-    [self.popUpWindow setLevel:NSModalPanelWindowLevel];
-    [self.popUpWindow setMovableByWindowBackground:YES];
+    self.popUpWindow.titlebarAppearsTransparent = YES;
+    self.popUpWindow.titleVisibility = NSWindowTitleHidden;
+    self.popUpWindow.styleMask &= ~NSWindowStyleMaskTitled;
+    self.popUpWindow.movableByWindowBackground = YES;
+    [self.popUpWindow setHasShadow:NO];
+    NSVisualEffectView *visualEffect = [[NSVisualEffectView alloc] init];
+    visualEffect.blendingMode = NSVisualEffectBlendingModeBehindWindow;
+    visualEffect.state = NSVisualEffectStateActive;
+    visualEffect.material = NSVisualEffectMaterialDark;
+    self.popUpWindow.contentView = visualEffect;
+    
+    // Show the window
+    [self.popUpWindow setLevel:NSFloatingWindowLevel];
+    [self.popUpWindow makeKeyAndOrderFront:nil];
 
     /*
     NSRect textViewFrame = NSMakeRect(20, 50, 360, 200);
