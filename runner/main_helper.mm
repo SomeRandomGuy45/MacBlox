@@ -105,16 +105,15 @@ std::string ScriptNeededToRun = R"(
             tell application "Terminal"
                 -- Get a list of all windows
                 set terminalWindows to windows
-                
+
                 -- Loop through each window and execute `exit`
                 repeat with aWindow in terminalWindows
                     tell aWindow
                         do script "exit" in (selected tab of aWindow)
+                        delay 2
+                        quit
                     end tell
                 end repeat
-                delay 2
-                -- Quit the Terminal application
-                do shell script "killall -QUIT Terminal"
             end tell
             )";
 //vector
@@ -941,7 +940,7 @@ static void UpdDiscordActivity(
                          std::to_string(startTimestamp) + " " +
                          "\"" + key_large + "\" \"" + key_small + "\" \"" + largeImgText + "\" \"" + smallImageText + "\" " +
                          "\"" + button1Text + "\" \"" + button2Text + "\" \"" + button1url + "\" \"" + button2url + "\" " +
-                         "\"/" + tempDirStr + "/discord-ipc-0\"" + " " + std::to_string(endTimestamp);
+                         "\"/" + tempDirStr + "/discord-ipc-0\"" + " " + std::to_string(endTimestamp) + " " + GetResourcesFolderPath();
 
     NSString* scriptFix = toNSString(new_script);
     NSString* msg = [NSString stringWithFormat:@"[INFO] Running script: %@", scriptFix];
@@ -1434,6 +1433,8 @@ void doFunc(const std::string& logtxt) {
         } catch (const std::filesystem::filesystem_error& e) {
             std::cerr << "[ERROR] Filesystem error: " << e.what() << std::endl;
         }
+
+        runAppleScriptAndGetOutput(ScriptNeededToRun);
 
         for (auto const& [key, val] : endTime_ForGame)
         {

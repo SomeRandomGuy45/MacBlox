@@ -434,9 +434,6 @@ void createStatusBarIcon(const std::string &imagePath)
 
     [menu addItem:openMenuItem];
 
-    [menu addItem:[NSMenuItem separatorItem]];
-    [menu addItemWithTitle:@"Quit" action:@selector(terminate:) keyEquivalent:@""];
-
     NSLog(@"[DEBUG] Menu item enabled state: %d", [openMenuItem isEnabled]);
     
     [statusItem setMenu:menu];

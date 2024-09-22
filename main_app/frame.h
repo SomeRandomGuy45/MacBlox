@@ -276,6 +276,7 @@ void MainFrame::SetMenu(std::string selected)
             ClientAppSettings["FFlagEnableMenuControlsABTest"] = "False";
             ClientAppSettings["FFlagEnableV3MenuABTest3"] = "False";
             ClientAppSettings["FFlagEnableInGameMenuChromeABTest3"] = "False";
+            ClientAppSettings["FFlagFixReportButtonCutOff"] = "False";
             if (ClientAppSettings.contains("FStringNewInGameMenuForcedUserIds"))
             {
                 ClientAppSettings.erase("FStringNewInGameMenuForcedUserIds");
@@ -295,6 +296,10 @@ void MainFrame::SetMenu(std::string selected)
                 std::string USER_ID = PromptUserForRobloxID();
                 ClientAppSettings["FStringNewInGameMenuForcedUserIds"] = USER_ID;
             }
+            if (ClientAppSettings.contains("FFlagFixReportButtonCutOff"))
+            {
+                ClientAppSettings.erase("FFlagFixReportButtonCutOff");
+            }
         }
         else if (selected == "V4 Menu")
         {
@@ -309,6 +314,10 @@ void MainFrame::SetMenu(std::string selected)
             {
                 ClientAppSettings.erase("FStringNewInGameMenuForcedUserIds");
             }
+            if (ClientAppSettings.contains("FFlagFixReportButtonCutOff"))
+            {
+                ClientAppSettings.erase("FFlagFixReportButtonCutOff");
+            }
         }
         else if (selected == "Chrome Menu")
         {
@@ -322,6 +331,10 @@ void MainFrame::SetMenu(std::string selected)
             if (ClientAppSettings.contains("FStringNewInGameMenuForcedUserIds"))
             {
                 ClientAppSettings.erase("FStringNewInGameMenuForcedUserIds");
+            }
+            if (ClientAppSettings.contains("FFlagFixReportButtonCutOff"))
+            {
+                ClientAppSettings.erase("FFlagFixReportButtonCutOff");
             }
         }
         std::ofstream ClientJSONDump(GetBasePath() + "/data.json");

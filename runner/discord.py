@@ -6,8 +6,9 @@ from pypresence import Presence
 class DiscordRPC:
     def __init__(self):
         self.client_id = '1267308900420419664'
-        self.current_script_path = os.path.abspath(__file__)
-        self.path_to_rpc = os.path.dirname(self.current_script_path)
+        self.current_script_path = os.path.abspath(sys.argv[14])
+        self.path_to_rpc = os.path.dirname(self.current_script_path) + "/Resources"
+        print(self.path_to_rpc)
 
     def print_usage_and_exit(self):
         print("Usage: python discord_rpc.py <details> <state> <startTimestamp> <AssetIDLarge> <AssetIDSmall> <largeImgText> <smallImageText> <button1label> <button2label> <button1url> <button2url> <pipe_location> <timeend>")

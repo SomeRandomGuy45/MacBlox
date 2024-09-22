@@ -36,16 +36,15 @@ inline std::string ScriptNeededToRun = R"(
             tell application "Terminal"
                 -- Get a list of all windows
                 set terminalWindows to windows
-                
+
                 -- Loop through each window and execute `exit`
                 repeat with aWindow in terminalWindows
                     tell aWindow
                         do script "exit" in (selected tab of aWindow)
+                        delay 2
+                        quit
                     end tell
                 end repeat
-                delay 2
-                -- Quit the Terminal application
-                do shell script "killall -QUIT Terminal"
             end tell
             )";
 
@@ -374,8 +373,9 @@ pid_t getAppPID(NSString *appName) {
                 json JsonData = json::parse(bootstrapData);
                 if (JsonData.contains("Allow Multiple Instance"))
                 {
-                    std::string AllowMultiple = convertToLowercase(JsonData["Allow Multiple Instance"].get<std::string>());
-                    if (AllowMultiple.find("true") != std::string::npos)
+                    std::string AllowMultiple = convertToLowercase(JsonData["Allow Multiple Instance"]);
+                    NSLog(@"[INFO] Allow Multiple Instance: %s", AllowMultiple.c_str());
+                    if (AllowMultiple == "true")
                     {
                         shouldAllow = true;
                     }
