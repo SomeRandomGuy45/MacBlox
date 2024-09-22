@@ -45,7 +45,7 @@ inline std::string ScriptNeededToRun = R"(
                 end repeat
                 delay 2
                 -- Quit the Terminal application
-                quit
+                do shell script "killall -QUIT Terminal"
             end tell
             )";
 
@@ -173,7 +173,7 @@ std::string generateRandomName() {
 
 // Function to create a new copy of Roblox and rename it with a random name
 Copy NewCopy() {
-    std::string sourcePath = "/tmp/Roblox.app";
+    std::string sourcePath = fs::temp_directory_path().string() + "/Roblox.app";
     std::string destDir = copyDestDir();
 
     // Copy Roblox.app to the destination directory
@@ -404,7 +404,7 @@ pid_t getAppPID(NSString *appName) {
             }
             else
             {
-                std::string run_to_open_lol = "open -a \"/tmp/Roblox.app\" \"" + finalURLString + "\"";
+                std::string run_to_open_lol = "open -a \"" + fs::temp_directory_path().string() + "/Roblox.app\" \"" + finalURLString + "\"";
                 NSLog(@"[INFO] Ok got it running this command %s", run_to_open_lol.c_str());
                 system(run_to_open_lol.c_str());
             }

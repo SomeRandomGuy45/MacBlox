@@ -572,7 +572,7 @@ std::string modifyPath(const std::string& path) {
 void searchFolders(const std::string& rootPath, bool returnFullPath) {
     std::map<std::string, std::string> filePaths = findFilesInFolder(rootPath);
     for (const auto& [key, value] : filePaths) {
-        std::string valueCopy = "/tmp/Roblox.app/Contents/Resources/" + modifyPath(value);
+        std::string valueCopy = fs::temp_directory_path().string() + "/Roblox.app/Contents/Resources/" + modifyPath(value);
         //std::cout << "[INFO] Key info: " << key << ": " << value << " value copy: " << valueCopy << std::endl;
         copyFile(value, valueCopy);
     }
@@ -649,9 +649,9 @@ int countCurrentMods(std::string& directoryPath)
 
 void BootstrapperFrame::CopyAndResignRoblox()
 {
-    std::string DownloadPath = "/tmp/Roblox.app/Contents/Resources/AppIcon.icns";
+    std::string DownloadPath = fs::temp_directory_path().string() + "/Roblox.app/Contents/Resources/AppIcon.icns";
     std::string TypeOfDownload = "Default";
-    std::string CopyPath = "/tmp/Roblox.app/Contents/Info.plist";
+    std::string CopyPath = fs::temp_directory_path().string() + "/Roblox.app/Contents/Info.plist";
     std::string toPath = Download + "/Info.plist";
     static const std::unordered_map<std::string, std::string> Types = {
         {"2008 Bootstrap icon", "2008"},
@@ -676,7 +676,7 @@ void BootstrapperFrame::CopyAndResignRoblox()
     std::cout << "[INFO] Successfully copied " << CopyPath << "\n";
     std::this_thread::sleep_for(std::chrono::seconds(1));
     fs::rename(toPath, CopyPath);
-    std::string redo = "codesign --sign - --entitlements " + GetResourcesFolderPath() + "/Macblox.plist \"" + "/tmp" + "/Roblox.app\"" + "--force --deep";
+    std::string redo = "codesign --force --deep --sign - " + fs::temp_directory_path().string() + "/Roblox.app";
     std::cout << "[INFO] Resigning command is: " << redo << std::endl;
     system(redo.c_str());
 }
@@ -753,7 +753,7 @@ bool compareFiles(const std::string& path1, const std::string& path2) {
 }
 
 void BootstrapperFrame::DoEmojiLogic() {
-    std::string DownloadPath = "/tmp/Roblox.app/Contents/Resources/content/fonts/TwemojiMozilla.ttf";
+    std::string DownloadPath = fs::temp_directory_path().string() + "/Roblox.app/Contents/Resources/content/fonts/TwemojiMozilla.ttf";
     std::string TypeOfDownload = "Default";  // Default type
 
     // Mapping Mod_Data keys to their corresponding download types
@@ -782,14 +782,14 @@ void BootstrapperFrame::DoEmojiLogic() {
 void BootstrapperFrame::DoFontLogic()
 {
     //https://github.com/pizzaboxer/bloxstrap/blob/6d8d4824498853952d133650ab165fd89f3ef0e8/Bloxstrap/Bootstrapper.cs#L886
-    if (!fs::exists("/tmp/Roblox.app/Contents/Resources/content/fonts/families"))
+    if (!fs::exists(fs::temp_directory_path().string() + "/Roblox.app/Contents/Resources/content/fonts/families"))
     {
         return;
     }
     std::string modFamilyFolder = fs::path(ModFolder) / "content/fonts/families";
     if (fs::exists(ModFolder + "/content/fonts/CustomFont.ttf")) {
         fs::create_directories(modFamilyFolder);
-        for (const auto& jsonFilePath : fs::directory_iterator("/tmp/Roblox.app/Contents/Resources/content/fonts/families"))
+        for (const auto& jsonFilePath : fs::directory_iterator(fs::temp_directory_path().string() + "/Roblox.app/Contents/Resources/content/fonts/families"))
         {
             std::string jsonFilename = jsonFilePath.path().filename().string();
             std::string modFilepath = fs::path(modFamilyFolder) / jsonFilename;
@@ -847,7 +847,7 @@ std::string convertToLowercase(const std::string& str)
 
 void BootstrapperFrame::DoLogic()
 {
-    std::string TmpPath = "/tmp";
+    std::string TmpPath = fs::temp_directory_path().string();
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         DoFontLogic();
         int JsonCount = loadFolderCount(GetBasePath + "/mod_count_data.json");
@@ -856,21 +856,21 @@ void BootstrapperFrame::DoLogic()
         {
             NeedToReinstall = true;
         }
-        if (FolderExists("/tmp/Roblox.app/Contents/"))
+        if (FolderExists(fs::temp_directory_path().string() + "/Roblox.app/Contents/"))
         {
-            RobloxApplicationPath = "/tmp/Roblox.app/Contents/MacOS";
+            RobloxApplicationPath = fs::temp_directory_path().string() + "/Roblox.app/Contents/MacOS";
             if (!CanAccessFolder(RobloxApplicationPath))
             {
                 RobloxApplicationPath = ShowOpenFileDialog("file://localhost"+RobloxApplicationPath);
             }
-            if (!FolderExists("/tmp/Roblox.app/Contents/MacOS/ClientSettings"))
+            if (!FolderExists(fs::temp_directory_path().string() + "/Roblox.app/Contents/MacOS/ClientSettings"))
             {
-                CreateFolder("/tmp/Roblox.app/Contents/MacOS/ClientSettings");
+                CreateFolder(fs::temp_directory_path().string() + "/Roblox.app/Contents/MacOS/ClientSettings");
             }
         }
         else
         {
-            RobloxApplicationPath = "/tmp/Roblox.app/Contents/MacOS";
+            RobloxApplicationPath = fs::temp_directory_path().string() + "/Roblox.app/Contents/MacOS";
             NeedToReinstall = true;
         }
         Mod_Data = GetModData();
@@ -937,7 +937,7 @@ void BootstrapperFrame::DoLogic()
                 }
             }
         }
-        if (RobloxApplicationPath != "/tmp/Roblox.app/Contents/MacOS")
+        if (RobloxApplicationPath != fs::temp_directory_path().string() + "/Roblox.app/Contents/MacOS")
         {
             dispatch_async(dispatch_get_main_queue(), ^{
                 std::cerr << "[ERROR] Thats not the right path!" << std::endl;
@@ -1056,7 +1056,7 @@ void BootstrapperFrame::DoLogic()
             fixInstall(Download + "/RobloxPlayer.app");
             removeQuarantineAttribute(Download + "/RobloxPlayer.app");
             std::string RobloxPlayerPath  = Download + "/RobloxPlayer.app";
-            std::string RobloxCopyPath = "/tmp/Roblox.app";
+            std::string RobloxCopyPath = fs::temp_directory_path().string() + "Roblox.app";
             RenameFile(RobloxPlayerPath.c_str(), RobloxCopyPath.c_str());
             std::this_thread::sleep_for(std::chrono::seconds(1));
             std::string command1 = "chmod +x \"" + TmpPath + "/Roblox.app/Contents/MacOS/RobloxPlayer\"";
@@ -1075,7 +1075,7 @@ void BootstrapperFrame::DoLogic()
             fixInstall(spam);
             ChangeMultiInstance(TmpPath + "/Roblox.app/Contents/Info.plist", shouldAllow);
             ModifyPlist(TmpPath + "/Roblox.app/Contents/Info.plist");
-            std::string redo = "codesign --sign - --entitlements " + GetResourcesFolderPath() + "/Macblox.plist \"" + TmpPath + "/Roblox.app\"" + " --force --deep";
+            std::string redo = "codesign --force --deep --sign - " + fs::temp_directory_path().string() + "/Roblox.app";
             std::cout << "[INFO] Resigning command is: " << redo << std::endl;
             std::filesystem::remove(TmpPath + "/Roblox.app/Contents/Resources/Assets.car");
             system(redo.c_str());

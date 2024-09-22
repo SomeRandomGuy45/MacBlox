@@ -33,6 +33,7 @@ create_runner_app:
 		rm -d -r -rf $(BUILDPATH); \
 	fi
 	@rm -rf $(CURDIR)/GameWatcherApp 
+	@rm -rf $(CURDIR)/__MACOSX
 	@mkdir $(BUILDPATH)
 	@mkdir $(BUILDPATH)/Macblox
 	$(CC) $(CXXFLAGS) $(LDFLAGS) -o $(BUILDPATH)/runner $(CURDIR)/runner/main.m $(CURDIR)/runner/helper.mm $(CURDIR)/runner/AppDelegate.mm $(CURDIR)/runner/main_helper.mm

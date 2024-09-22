@@ -751,14 +751,6 @@ void MainFrame::OnLaunchButtonClick(wxCommandEvent& event)
     std::string basePath = GetBasePath();
     std::string robloxInstallAppPath = basePath +"/RobloxPlayerInstaller.app";
     std::string robloxZip = basePath + "/Roblox.zip";
-    if (!fs::exists("/tmp/Roblox.app")) 
-    {
-        /*
-        
-            TODO
-        
-        */
-    }
     wxMessageBox("Added config to Roblox app","Info", wxOK | wxICON_INFORMATION);
     std::string command__ = "open " + getParentFolderOfApp() + "/Play.app --args --supercoolhackthing";
     std::cout << "[INFO] Command is: " << command__ << "\n";

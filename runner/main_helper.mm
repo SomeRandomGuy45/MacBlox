@@ -114,7 +114,7 @@ std::string ScriptNeededToRun = R"(
                 end repeat
                 delay 2
                 -- Quit the Terminal application
-                quit
+                do shell script "killall -QUIT Terminal"
             end tell
             )";
 //vector
@@ -1853,29 +1853,10 @@ int main_loop(NSArray *arguments, std::string supercoolvar, bool dis) {
             InitTable();
 
             std::string defaultPath = "/Users/" + localuser + "/Library/Logs/Roblox";
-            if (!CanAccessFolder(defaultPath))
+            logfile = defaultPath;
+            if (!std::filesystem::exists(defaultPath) && std::filesystem::is_directory(defaultPath))
             {
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    logfile = ShowOpenFileDialog("file://localhost" + defaultPath);
-
-                    if (logfile != "/Users/" + localuser + "/Library/Logs/Roblox")
-                    {
-                        std::string path = "The location of the Roblox log file isn't correct. The location is /Users/" + localuser + "/Library/Logs/Roblox";
-                        wxString toWxString(path.c_str(), wxConvUTF8);
-                        wxMessageBox(toWxString, "Error", wxOK | wxICON_ERROR);
-
-                        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-                            errorOccurred = true;
-                        });
-
-                        return;
-                    }
-                });
-
-            }
-            else
-            {
-                logfile = defaultPath;
+                std::filesystem::create_directory(defaultPath);
             }
             bool shouldEnd = false;
             while (!isRobloxRunning() && shouldEnd == false) {
@@ -1886,11 +1867,11 @@ int main_loop(NSArray *arguments, std::string supercoolvar, bool dis) {
                     do {} while (isBootstrapRunning());
                     if (supercoolvar.empty())
                     {
-                        runApp("/tmp/Roblox.app", false);
+                        runApp(fs::temp_directory_path().string() + "/Roblox.app", false);
                     }
                     else
                     {
-                        std::string run_to_open_lol = "open -a \"/tmp/Roblox.app\" \"" + supercoolvar + "\"";
+                        std::string run_to_open_lol = "open -a \"" +  fs::temp_directory_path().string() + "/Roblox.app\" \"" + supercoolvar + "\"";
                         NSLog(@"[INFO] Ok got it running this command %s", run_to_open_lol.c_str());
                         system(run_to_open_lol.c_str());
                     }
@@ -1942,7 +1923,7 @@ int main_loop(NSArray *arguments, std::string supercoolvar, bool dis) {
                         NSLog(@"[INFO] Updating roblox!");
                         //std::cout << "[WARN] Couldn't find roblox_version.json after downloading, assuming the client is not up to date." << std::endl;
                     }
-                    if (!doesAppExist("/tmp/Roblox.app")) {
+                    if (!doesAppExist(fs::temp_directory_path().string() + "/Roblox.app")) {
                         NSLog(@"Couldn't find /tmp/Roblox.app");
                         current_version = "";
                     }
