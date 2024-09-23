@@ -1,7 +1,10 @@
 #include <string>
 #include <fstream>
 #include <filesystem>
+#include <map>
+#include <cstdlib>
 
+#import "helper.h"
 #import "autoUpdater.h"
 
 #include "json.hpp"
@@ -11,6 +14,13 @@ namespace fs = std::filesystem;
 using json = nlohmann::json;
 
 std::string localuser = getenv("USER");
+
+std::string download_branch = "main";
+
+std::map<std::string, std::string> DownloadURLS = {
+    {"main", "https://github.com/SomeRandomGuy45/CreateMacbloxInstaller/raw/dc8ad65d3d274aeb89b6c2f358178633a62f7bcc/Install.sh"},
+    {"testing", "https://github.com/SomeRandomGuy45/CreateMacbloxInstaller/raw/dc8ad65d3d274aeb89b6c2f358178633a62f7bcc/Install_Testing.sh"},
+};
 
 @implementation autoUpdater : NSObject
 
@@ -37,6 +47,10 @@ std::string localuser = getenv("USER");
     }
     std::string branch = file_data["branch"];
     std::string version = file_data["version"];
+    if (branch == "super_secret_test_branch_which_skips_version_check_lol")
+    {
+        return YES;
+    }
     if (branch == "main")
     {
         dispatch_semaphore_t semaphore = dispatch_semaphore_create(0); // Create a semaphore to wait for the completion
@@ -56,6 +70,7 @@ std::string localuser = getenv("USER");
     }
     else
     {
+        download_branch = "testing";
         dispatch_semaphore_t semaphore = dispatch_semaphore_create(0); // Create a semaphore to wait for the completion
 
         [self fetchLatestTagWithCompletion:^(NSString *downloadLatestVersion, NSError *error) {
@@ -193,12 +208,32 @@ std::string localuser = getenv("USER");
     // Execute the update asynchronously
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         // Simulate the update process
+        std::string installerPath = GetResourcesFolderPath() + "/installer.sh";
         [NSThread sleepForTimeInterval:3.0]; //TODO
+        downloadFile(DownloadURLS[download_branch].c_str(), installerPath.c_str());
+        std::string chmodCommand = "chmod +x " + installerPath;
+        system(chmodCommand.c_str());
 
+        // Run the installer script
+        int result = system(installerPath.c_str());
+        if (result != 0) {
+            // Handle error
+            std::cerr << "[ERROR] Failed to run installer.sh: " << result << std::endl;
+        }
         // Close the popup on the main thread
         dispatch_async(dispatch_get_main_queue(), ^{
             [self.progressIndicator stopAnimation:nil];
             [self.popUpWindow close];
+            fs::remove(GetResourcesFolderPath() + "/installer.sh");
+            NSAlert *alert = [[NSAlert alloc] init];
+            alert.messageText = @"Alert";
+            alert.informativeText = @"Updated Application! When you relaunch the app it will be updated.";
+            [alert addButtonWithTitle:@"Confirm"];
+            [alert addButtonWithTitle:@"Cancel"];
+
+            alert.icon = [NSImage imageNamed:NSImageNameCaution]; // Use the warning icon
+
+            [alert runModal];
             // Notify the app that the update is complete
         });
     });

@@ -167,35 +167,26 @@ std::string generateRandomName() {
     std::mt19937 generator(rd());
     std::uniform_int_distribution<int> distribution(1000, 9999);
 
-    return "Roblox_" + std::to_string(distribution(generator)) + ".app";
+    return fs::temp_directory_path().string() + "Roblox_" + std::to_string(distribution(generator)) + ".app";
 }
 
 // Function to create a new copy of Roblox and rename it with a random name
 Copy NewCopy() {
     std::string sourcePath = fs::temp_directory_path().string() + "/Roblox.app";
     std::string destDir = copyDestDir();
+    std::string randomName = generateRandomName();
+
 
     // Copy Roblox.app to the destination directory
-    std::string command = "cp -a " + sourcePath + " " + destDir;
+    std::string command = "cp -a " + sourcePath + " " + randomName;
     int result = std::system(command.c_str());
 
     if (result != 0) {
         throw std::runtime_error("[ERROR] Failed to copy Roblox.app");
     }
 
-    // Generate a random name and rename the copied Roblox.app
-    std::string randomName = generateRandomName();
-    fs::path oldPath = destDir + "/Roblox.app";
-    fs::path newPath = destDir + "/" + randomName;
-    
-    try {
-        fs::rename(oldPath, newPath);
-    } catch (const std::exception& e) {
-        throw std::runtime_error("[ERROR] Failed to rename Roblox.app: " + std::string(e.what()));
-    }
-
     // Update dir_ to point to the renamed app
-    return Copy(newPath.string());
+    return Copy(randomName);
 }
 
 pid_t openAppAndGetPID(const std::string& appPath, const std::string& url) {

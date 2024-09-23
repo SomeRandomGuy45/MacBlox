@@ -102,7 +102,7 @@ cat <<EOF > $DIR/Info.plist
    <key>LSUIElement</key>
    <true/>
    <key>LSMultipleInstancesProhibited</key>
-   <true/>
+   <false/>
    <key>LSBackgroundOnly</key>
    <string>1</string>
    <key>CFBundleURLTypes</key>

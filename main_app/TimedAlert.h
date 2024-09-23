@@ -7,6 +7,8 @@ BOOL showTimedAlert() {
     [alert addButtonWithTitle:@"Confirm"];
     [alert addButtonWithTitle:@"Cancel"];
 
+    alert.icon = [NSImage imageNamed:NSImageNameCaution]; // Use the warning icon
+
     NSButton *confirmButton = alert.buttons[0];
     confirmButton.enabled = NO;
 
