@@ -18,8 +18,8 @@ std::string localuser = getenv("USER");
 std::string download_branch = "main";
 
 std::map<std::string, std::string> DownloadURLS = {
-    {"main", "https://github.com/SomeRandomGuy45/CreateMacbloxInstaller/raw/dc8ad65d3d274aeb89b6c2f358178633a62f7bcc/Install.sh"},
-    {"testing", "https://github.com/SomeRandomGuy45/CreateMacbloxInstaller/raw/dc8ad65d3d274aeb89b6c2f358178633a62f7bcc/Install_Testing.sh"},
+    {"main", "https://raw.githubusercontent.com/SomeRandomGuy45/CreateMacbloxInstaller/refs/heads/main/Install.sh"},
+    {"testing", "https://raw.githubusercontent.com/SomeRandomGuy45/CreateMacbloxInstaller/refs/heads/main/Install_Testing.sh"},
 };
 
 @implementation autoUpdater : NSObject
@@ -210,15 +210,24 @@ std::map<std::string, std::string> DownloadURLS = {
         // Simulate the update process
         std::string installerPath = GetResourcesFolderPath() + "/installer.sh";
         downloadFile(DownloadURLS[download_branch].c_str(), installerPath.c_str());
+
+        // Make the installer script executable
         std::string chmodCommand = "chmod +x " + installerPath;
         system(chmodCommand.c_str());
 
-        // Run the installer script
-        int result = system(installerPath.c_str());
+        // Kill the current app and other related processes
+        system("killall play");
+        system("killall GameWatcher");
+        system("killall Macblox");
+
+        // Open a new terminal and run the installer script
+        std::string terminalCommand = "open -a Terminal " + installerPath;
+        int result = system(terminalCommand.c_str());
         if (result != 0) {
             // Handle error
-            std::cerr << "[ERROR] Failed to run installer.sh: " << result << std::endl;
+            std::cerr << "[ERROR] Failed to open terminal and run installer.sh: " << result << std::endl;
         }
+        [NSApp terminate:nil];
 
         [NSThread sleepForTimeInterval:120.0];
 
