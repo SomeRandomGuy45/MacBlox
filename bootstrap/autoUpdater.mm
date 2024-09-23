@@ -209,7 +209,6 @@ std::map<std::string, std::string> DownloadURLS = {
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         // Simulate the update process
         std::string installerPath = GetResourcesFolderPath() + "/installer.sh";
-        [NSThread sleepForTimeInterval:3.0]; //TODO
         downloadFile(DownloadURLS[download_branch].c_str(), installerPath.c_str());
         std::string chmodCommand = "chmod +x " + installerPath;
         system(chmodCommand.c_str());
@@ -220,6 +219,9 @@ std::map<std::string, std::string> DownloadURLS = {
             // Handle error
             std::cerr << "[ERROR] Failed to run installer.sh: " << result << std::endl;
         }
+
+        [NSThread sleepForTimeInterval:120.0];
+
         // Close the popup on the main thread
         dispatch_async(dispatch_get_main_queue(), ^{
             [self.progressIndicator stopAnimation:nil];
