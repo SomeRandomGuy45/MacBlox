@@ -48,11 +48,9 @@ void CreateNotification(const wxString &title, const wxString &message, int Time
     if (!notification.Show(Timeout))
     {
         std::cerr << "[ERROR] Failed to show notification" << std::endl;
+        return;
     }
-    else
-    {
-        std::cout << "[INFO] Notification shown successfully" << std::endl;
-    }
+    std::cout << "[INFO] Notification shown successfully" << std::endl;
 }
 
 std::string getApplicationSupportPath() {
