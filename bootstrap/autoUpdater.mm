@@ -28,8 +28,6 @@ std::map<std::string, std::string> DownloadURLS = {
 {
     __block std::string latestVersion;
 
-    // Proceed with the rest of the method
-    BOOL result = YES;
     NSLog(@"[INFO] Checking for updates");
     if (!std::filesystem::exists(fs::path("/Users/" + localuser + "/Library/Application Support/Macblox_Installer_Data/config.json")))
     {
@@ -93,9 +91,9 @@ std::map<std::string, std::string> DownloadURLS = {
     
     if (latestVersion != version)
     {
-        result = NO;
+        return NO;
     }
-    return result;
+    return YES;
 }
 
 - (void)fetchLatestTagWithCompletion:(void (^)(NSString *downloadLatestVersion, NSError *error))completion
