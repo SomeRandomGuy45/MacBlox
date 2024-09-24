@@ -70,7 +70,11 @@ std::map<std::string, std::string> DownloadURLS = {
     }
     else
     {
-        download_branch = "testing";
+        auto it = DownloadURLS.find(branch);
+        if (it != DownloadURLS.end())
+        {
+            download_branch = "testing";
+        }
         dispatch_semaphore_t semaphore = dispatch_semaphore_create(0); // Create a semaphore to wait for the completion
 
         [self fetchLatestTagWithCompletion:^(NSString *downloadLatestVersion, NSError *error) {
