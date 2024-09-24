@@ -1,18 +1,6 @@
 #import "AppDelegate.h"
 #import "Logger.h"
 
-NSString *convertToValidJSONString(NSString *inputString) {
-    // Use a regular expression to add double quotes around keys
-    NSRegularExpression *regexKeys = [NSRegularExpression regularExpressionWithPattern:@"(?<!\")\\b(\\w+)\\b(?!\")" options:0 error:nil];
-    NSString *quotedKeysString = [regexKeys stringByReplacingMatchesInString:inputString options:0 range:NSMakeRange(0, inputString.length) withTemplate:@"\"$1\""];
-    
-    // Use a regular expression to add double quotes around string values that are not already quoted
-    NSRegularExpression *regexValues = [NSRegularExpression regularExpressionWithPattern:@":\\s*([^\\d{,}][^\",\\}]+)(?=,|\\})" options:0 error:nil];
-    NSString *quotedValuesString = [regexValues stringByReplacingMatchesInString:quotedKeysString options:0 range:NSMakeRange(0, quotedKeysString.length) withTemplate:@": \"$1\""];
-    
-    return quotedValuesString;
-}
-
 @implementation AppDelegate
 
 @synthesize window;
