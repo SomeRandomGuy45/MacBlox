@@ -1832,6 +1832,10 @@ std::string GetExPath() {
 }
 
 int main_loop(NSArray *arguments, std::string supercoolvar, bool dis) {
+    if (fs::exists(GetExPath() + "/Bootstrap.app/Resources/hello_data.txt"))
+    {
+        fs::remove(GetExPath() + "/Bootstrap.app/Resources/hello_data.txt");
+    }
     std::vector<std::string> stdArguments;
     TestLuaFunctions();
     for (NSString *arg in arguments) {
@@ -1866,6 +1870,12 @@ int main_loop(NSArray *arguments, std::string supercoolvar, bool dis) {
                     NSLog(@"[INFO] Opening app");
                     OpenAppWithPath(GetExPath() + "/Bootstrap.app");
                     do {} while (isBootstrapRunning());
+                    if (fs::exists(GetExPath() + "/Bootstrap.app/Resources/hello_data.txt"))
+                    {
+                        fs::remove(GetExPath() + "/Bootstrap.app/Resources/hello_data.txt");
+                        std::this_thread::sleep_for(std::chrono::milliseconds(250));
+                        [NSApp terminate:nil];
+                    }
                     if (supercoolvar.empty())
                     {
                         runApp(fs::temp_directory_path().string() + "/Roblox.app", false);
