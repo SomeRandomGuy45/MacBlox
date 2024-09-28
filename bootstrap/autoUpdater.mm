@@ -162,7 +162,7 @@ std::map<std::string, std::string> DownloadURLS = {
     NSLog(@"[INFO] Doing updates");
     std::string resourcePath = [[[NSBundle mainBundle] resourcePath] UTF8String]; //hopefully returns a const char* so we can just change that to a std::string
     std::ofstream doText(resourcePath + "/hello_data.txt");
-    doText << "Oh hey its super cool and cool don't delete me plz it hurts :(";
+    doText << "Oh hey its super cool and cool don't delete me plz it hurts D:";
     doText.close();
     /*
     The stuff that does the update
