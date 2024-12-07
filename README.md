@@ -9,8 +9,7 @@
 Macblox is a funny project i wanted to do because there wasn't bloxstrap for macos (there is but its in py and its a api)!
 (insp for top is bloxstrap!!!!)
 
-### DELAYED INDEFINITELY, WILL NOT COMEOUT ANYTIME SOON!
-
+### SOON
 # The TODO List
 - [ ] aarch64 support (currently unknown since I don't have a aarch64 mac)
 - [x] Some basic bootstrap support
