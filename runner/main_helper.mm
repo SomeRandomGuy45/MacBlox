@@ -797,6 +797,7 @@ void executeScript(const std::string& script) {
                 -- If no windows are open, open a new window and run the script
                 do script ")" + path_script + R"("
             end if
+            set miniaturized of every window to true
         end tell')";
     NSString* appleScriptStr = toNSString(appleScript);
     NSString* msg = [NSString stringWithFormat:@"[INFO] Running AppleScript command: %@", appleScriptStr];
